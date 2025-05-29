@@ -1,18 +1,16 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext"; // Asegúrate de que el hook useAuth está correctamente importado
+import { useAuth } from "../contexts/AuthContext";
 
 function Navbar() {
-  const { user, logout } = useAuth(); // Accede al contexto de autenticación
+  const { user, logout } = useAuth();
 
   return (
     <div className="sticky top-0 bg-slate-600 shadow-md z-10">
       <nav className="flex justify-between items-center px-8 py-4">
-        {/* Logo o título */}
         <div className="text-2xl font-bold text-black">
           <Link to="/">The Elder Cards</Link>
         </div>
 
-        {/* Links del Navbar */}
         <ul className="flex space-x-8">
           <li>
             <Link to="/" className="hover:text-gray-500">
@@ -36,7 +34,6 @@ function Navbar() {
           </li>
         </ul>
 
-        {/* Links de autenticación (Login/Registro o Perfil y Logout) */}
         <ul className="flex space-x-8">
           {!user ? (
             <>
@@ -60,7 +57,7 @@ function Navbar() {
               </li>
               <li>
                 <button
-                  onClick={logout} // Al hacer logout, se ejecuta la función logout del contexto
+                  onClick={logout}
                   className="text-gray-500 hover:text-red-500"
                 >
                   Cerrar sesión

@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Landing from "./components/Landing";
-import Register from "./components/Register";
-import Login from "./components/Login";
+import Landing from "./Components/Landing";
+import Register from "./Components/Register";
+import Login from "./Components/Login";
 import { AuthProvider } from "./contexts/AuthContext"; // Asegúrate de que la ruta es correcta
 
 function App() {
