@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiFetch } from "./api";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
@@ -13,32 +14,56 @@ function Register() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const usernameRegex = /^.{3,}$/;
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     if (id === "username") setUsername(value);
     if (id === "email") setEmail(value);
     if (id === "password") setPassword(value);
   };
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setSuccessMessage("");
+    setErrorMessage("");
     if (!username || !email || !password) {
       setErrorMessage("Todos los campos son obligatorios.");
-      setSuccessMessage("");
     } else if (!usernameRegex.test(username)) {
       setErrorMessage("El nombre de usuario debe tener al menos 3 caracteres.");
-      setSuccessMessage("");
     } else if (!passwordRegex.test(password)) {
       setErrorMessage(
         "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo especial."
       );
-      setSuccessMessage("");
     } else {
-      setErrorMessage("");
-      setSuccessMessage("¡Registro exitoso! Ahora puedes iniciar sesión.");
-      setUsername("");
-      setEmail("");
-      setPassword("");
+      try {
+        const response = await apiFetch("/users/register", {
+          method: "post",
+          body: { username, email, password },
+        });
+
+        if (response.status === 409) {
+          if (response.data?.message === "Usuario ya existente") {
+            setErrorMessage(
+              "Ya existe un usuario con este nombre único. Por favor, introduce otro username."
+            );
+          } else {
+            setErrorMessage(
+              "Ya existe un usuario con este correo electrónico. Por favor, introduce otro correo."
+            );
+          }
+          return;
+        } else if (response.status !== 201) {
+          setErrorMessage(
+            "Hubo un error al intentar registrarse. Por favor, inténtalo más tarde."
+          );
+        }
+        setSuccessMessage("¡Registro exitoso! Ahora puedes iniciar sesión.");
+        setUsername("");
+        setEmail("");
+        setPassword("");
+      } catch (error: any) {
+        setErrorMessage(error?.response?.data?.message || "Error de conexión.");
+      }
     }
   };
   return (

@@ -2,7 +2,9 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Landing from "./Components/Landing";
 import Register from "./Components/Register";
 import Login from "./Components/Login";
-import { AuthProvider } from "./contexts/AuthContext"; // Asegúrate de que la ruta es correcta
+import Cards from "./Components/Cards";
+import { AuthProvider } from "./contexts/AuthContext";
+import Factions from "./Components/Factions";
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/cards" element={<Cards />} />
+          <Route path="/factions" element={<Factions />} />
         </Routes>
       </Router>
     </AuthProvider>

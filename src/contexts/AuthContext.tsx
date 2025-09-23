@@ -1,8 +1,18 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface AuthContextType {
-  user: string | null;
-  login: (username: string) => void;
+  user: {
+    email: string;
+    userId: string;
+    token: string;
+    role: string;
+  } | null;
+  login: (data: {
+    email: string;
+    userId: string;
+    token: string;
+    role: string;
+  }) => void;
   logout: () => void;
 }
 
@@ -13,14 +23,41 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<string | null>(null);
+  const [user, setUser] = useState<{
+    email: string;
+    userId: string;
+    token: string;
+    role: string;
+  } | null>(() => {
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("user");
+    const email = localStorage.getItem("email");
+    const role = localStorage.getItem("role");
+    if (token && userId && email && role) {
+      return { email, userId, token, role };
+    }
+    return null;
+  });
 
-  const login = (username: string) => {
-    setUser(username); // Simula el login
+  const login = (data: {
+    email: string;
+    userId: string;
+    token: string;
+    role: string;
+  }) => {
+    setUser(data);
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", data.userId);
+    localStorage.setItem("email", data.email);
+    localStorage.setItem("role", data.role);
   };
 
   const logout = () => {
-    setUser(null); // Simula el logout
+    setUser(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
   };
 
   return (
@@ -30,7 +67,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Custom hook para acceder al contexto
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

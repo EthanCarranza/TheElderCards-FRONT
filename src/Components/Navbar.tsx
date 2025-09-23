@@ -18,14 +18,19 @@ function Navbar() {
             </Link>
           </li>
           <li>
-            <a href="#cartas" className="hover:text-gray-500">
+            <Link to="/cards" className="hover:text-gray-500">
               Cartas
-            </a>
+            </Link>
           </li>
           <li>
             <a href="#colecciones" className="hover:text-gray-500">
               Colecciones
             </a>
+          </li>
+          <li>
+            <Link to="/factions" className="hover:text-gray-500">
+              Facciones
+            </Link>
           </li>
           <li>
             <a href="#contacto" className="hover:text-gray-500">

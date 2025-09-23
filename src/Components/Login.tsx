@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiFetch } from "./api";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
@@ -19,20 +20,44 @@ function Login() {
     if (id === "email") setEmail(value);
     if (id === "password") setPassword(value);
   };
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrorMessage("");
+    setSuccessMessage("");
     if (!email || !password) {
       setErrorMessage("Todos los campos son obligatorios.");
-      setSuccessMessage("");
     } else if (!emailRegex.test(email)) {
       setErrorMessage("El correo electrónico no es válido.");
-      setSuccessMessage("");
     } else {
-      setErrorMessage("");
-      setSuccessMessage("¡Inicio de sesión exitoso!");
-      login(email);
-      setEmail("");
-      setPassword("");
+      try {
+        const response = await apiFetch("/users/login", {
+          method: "post",
+          body: { email, password },
+        });
+        if (response.status === 401) {
+          setErrorMessage(
+            response.data?.message || "Credenciales incorrectas."
+          );
+          return;
+        } else if (response.status !== 200) {
+          setErrorMessage(
+            "Hubo un error al intentar iniciar sesión. Por favor, inténtalo más tarde."
+          );
+          return;
+        }
+        const respuestaFinal = response.data;
+        setSuccessMessage("¡Inicio de sesión exitoso!");
+        login({
+          email: respuestaFinal.user.email,
+          userId: respuestaFinal.user.id,
+          token: respuestaFinal.token,
+          role: respuestaFinal.user.role,
+        });
+        setEmail("");
+        setPassword("");
+      } catch (error: any) {
+        setErrorMessage(error?.response?.data?.message || "Error de conexión.");
+      }
     }
   };
   return (
