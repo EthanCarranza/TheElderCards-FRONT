@@ -3,6 +3,7 @@ import Landing from "./Components/Landing";
 import Register from "./Components/Register";
 import Login from "./Components/Login";
 import Cards from "./Components/Cards";
+import CardDetail from "./Components/CardDetail";
 import { AuthProvider } from "./contexts/AuthContext";
 import Factions from "./Components/Factions";
 
@@ -17,6 +18,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/cards" element={<Cards />} />
+          <Route path="/cards/:id" element={<CardDetail />} />
           <Route path="/factions" element={<Factions />} />
         </Routes>
       </Router>

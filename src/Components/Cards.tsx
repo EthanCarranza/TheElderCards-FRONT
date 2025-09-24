@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CreateCard from "./CreateCard";
 import { CARD_TYPES } from "../constants/cardTypes";
@@ -22,6 +23,7 @@ interface Card {
   faction: string | Faction;
   creator: string;
   cost: number;
+  img?: string;
   attack?: number;
   defense?: number;
 }
@@ -252,63 +254,46 @@ const Cards = () => {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {cards.map((card) => {
-                        // Try to find the faction object for this card
                         let factionObj: Faction | undefined = undefined;
-                        if (
-                          typeof card.faction === "object" &&
-                          card.faction !== null
-                        ) {
+                        if (typeof card.faction === "object" && card.faction !== null) {
                           factionObj = card.faction as Faction;
                         } else if (typeof card.faction === "string") {
-                          factionObj = factions.find(
-                            (f) => f._id === card.faction
-                          );
+                          factionObj = factions.find((f) => f._id === card.faction);
                         }
                         return (
-                          <div
+                          <Link
                             key={card._id}
-                            className="bg-white rounded shadow p-4"
+                            to={`/cards/${card._id}`}
+                            state={{ card, faction: factionObj }}
+                            className="group relative block overflow-hidden rounded-lg border border-gray-700 bg-gray-900 shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-2xl"
                           >
-                            <h3 className="font-bold text-lg">{card.title}</h3>
-                            <div>Tipo: {card.type}</div>
-                            {factionObj ? (
-                              <div className="mt-2 p-2 rounded bg-gray-100 border border-gray-300">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span
-                                    className="inline-block w-4 h-4 border border-gray-400 rounded-full"
-                                    style={{
-                                      backgroundColor: factionObj.color,
-                                    }}
-                                    title={factionObj.color}
-                                  ></span>
-                                  <span className="font-semibold">
-                                    {factionObj.title}
-                                  </span>
-                                  <span className="text-xs text-gray-500 ml-2">
-                                    ({factionObj.territory})
-                                  </span>
-                                </div>
-                                <div className="text-xs text-gray-700">
-                                  {factionObj.description}
-                                </div>
-                              </div>
+                            {card.img ? (
+                              <img
+                                src={card.img}
+                                alt={`Carta ${card.title}`}
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
                             ) : (
-                              <div>
-                                Facción:{" "}
-                                {typeof card.faction === "string"
-                                  ? card.faction
-                                  : "-"}
+                              <div className="flex h-full min-h-[320px] w-full flex-col items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900 p-6 text-center text-white">
+                                <div className="text-lg font-semibold">{card.title}</div>
+                                <div className="mt-2 text-sm opacity-80">
+                                  {card.type} - Coste {card.cost}
+                                </div>
+                                <div className="mt-4 text-xs text-gray-200">
+                                  Pulsa para ver detalles
+                                </div>
                               </div>
                             )}
-                            <div>Creador: {card.creator}</div>
-                            <div>Coste: {card.cost}</div>
-                            {card.type === "Creature" && (
-                              <>
-                                <div>Ataque: {card.attack}</div>
-                                <div>Defensa: {card.defense}</div>
-                              </>
-                            )}
-                          </div>
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                              <div className="text-base font-semibold text-white">
+                                {card.title}
+                              </div>
+                              <div className="text-xs text-gray-200">
+                                {card.type} - Coste {card.cost}
+                              </div>
+                            </div>
+                          </Link>
                         );
                       })}
                     </div>
