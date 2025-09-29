@@ -5,13 +5,17 @@ function Navbar() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="sticky top-0 bg-slate-600 shadow-md z-10">
+    <div className="sticky top-0 bg-black/80 shadow-md z-10">
       <nav className="flex justify-between items-center px-8 py-4">
-        <div className="text-2xl font-bold text-black">
-          <Link to="/">The Elder Cards</Link>
-        </div>
+        <Link to="/" className="flex items-center  duration-200 gap-3">
+          <img
+            src="/banner.png"
+            alt="The Elder Cards"
+            className="h-30 w-60 object-contain filter drop-shadow-[0_0_12px_rgba(255,255,255,0.6)] transition duration-300 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.85)]"
+          />
+        </Link>
 
-        <ul className="flex space-x-8">
+        <ul className="flex text-white text-2xl space-x-8">
           <li>
             <Link to="/" className="hover:text-gray-500">
               Inicio
@@ -39,7 +43,7 @@ function Navbar() {
           </li>
         </ul>
 
-        <ul className="flex space-x-8">
+        <ul className="flex text-white text-2xl space-x-8">
           {!user ? (
             <>
               <li>
@@ -61,10 +65,7 @@ function Navbar() {
                 </Link>
               </li>
               <li>
-                <button
-                  onClick={logout}
-                  className="text-gray-500 hover:text-red-500"
-                >
+                <button onClick={logout} className="hover:text-red-500">
                   Cerrar sesión
                 </button>
               </li>

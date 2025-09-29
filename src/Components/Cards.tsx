@@ -8,6 +8,13 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SideBanner from "./SideBanner";
 
+import {
+  handleCardBlur,
+  handleCardFocus,
+  handleCardPointerLeave,
+  handleCardPointerMove,
+} from "../utils/card3d";
+
 interface Faction {
   _id: string;
   title: string;
@@ -38,75 +45,6 @@ interface Filters {
   defense?: string;
   sort?: string;
 }
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
-
-const resetCardStyles = (node: HTMLElement) => {
-  node.style.removeProperty("--card-rotate-x");
-  node.style.removeProperty("--card-rotate-y");
-  node.style.removeProperty("--card-translate-y");
-  node.style.removeProperty("--card-shadow");
-  node.style.removeProperty("--card-depth");
-};
-
-const handleCardPointerMove = (
-  event: React.PointerEvent<HTMLAnchorElement>
-) => {
-  if (event.pointerType !== "mouse" && event.pointerType !== "pen") {
-    return;
-  }
-  const target = event.currentTarget;
-  const rect = target.getBoundingClientRect();
-
-  if (!rect.width || !rect.height) {
-    return;
-  }
-
-  const offsetX = event.clientX - rect.left;
-  const offsetY = event.clientY - rect.top;
-
-  if (
-    offsetX < 0 ||
-    offsetY < 0 ||
-    offsetX > rect.width ||
-    offsetY > rect.height
-  ) {
-    resetCardStyles(target);
-    return;
-  }
-
-  const centerX = rect.width / 2;
-  const centerY = rect.height / 2;
-
-  const rotateY = clamp(((offsetX - centerX) / centerX) * 12, -12, 12);
-  const rotateX = clamp(((offsetY - centerY) / centerY) * -12, -12, 12);
-
-  target.style.setProperty("--card-rotate-x", `${rotateX.toFixed(2)}deg`);
-  target.style.setProperty("--card-rotate-y", `${rotateY.toFixed(2)}deg`);
-  target.style.setProperty("--card-translate-y", "-6px");
-  target.style.setProperty("--card-shadow", "0 28px 48px rgba(0, 0, 0, 0.45)");
-  target.style.setProperty("--card-depth", "18px");
-};
-
-const handleCardPointerLeave = (
-  event: React.PointerEvent<HTMLAnchorElement>
-) => {
-  resetCardStyles(event.currentTarget);
-};
-
-const handleCardFocus = (event: React.FocusEvent<HTMLAnchorElement>) => {
-  const target = event.currentTarget;
-  target.style.setProperty("--card-rotate-x", "0deg");
-  target.style.setProperty("--card-rotate-y", "0deg");
-  target.style.setProperty("--card-translate-y", "-6px");
-  target.style.setProperty("--card-shadow", "0 24px 48px rgba(0, 0, 0, 0.4)");
-  target.style.setProperty("--card-depth", "18px");
-};
-
-const handleCardBlur = (event: React.FocusEvent<HTMLAnchorElement>) => {
-  resetCardStyles(event.currentTarget);
-};
 
 const Cards = () => {
   const [cards, setCards] = useState<Card[]>([]);
@@ -165,7 +103,6 @@ const Cards = () => {
 
   useEffect(() => {
     fetchCards();
-    // eslint-disable-next-line
   }, [page, filters]);
 
   useEffect(() => {
@@ -176,7 +113,11 @@ const Cards = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+    const nextValue =
+      name === "type" && typeof value === "string" && value
+        ? `${value.charAt(0).toUpperCase()}${value.slice(1)}`
+        : value;
+    setFilters((prev) => ({ ...prev, [name]: nextValue }));
     setPage(1);
   };
 
@@ -216,7 +157,7 @@ const Cards = () => {
               <div className="mb-4 flex flex-wrap gap-4">
                 <select
                   name="type"
-                  value={filters.type || ""}
+                  value={filters.type ? filters.type.toLowerCase() : ""}
                   onChange={handleFilterChange}
                   className="p-2 rounded"
                 >

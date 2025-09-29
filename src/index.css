@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Cyrodiil";
+  src: url("./fonts/Cyrodiil.otf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: "Cyrodiil", serif;
+}
+
 * {
   margin: 0;
   box-sizing: border-box;
@@ -19,8 +30,8 @@
   --card-depth: 0px;
   transform-style: preserve-3d;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  transform: rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg))
-    translateY(var(--card-translate-y, 0px));
+  transform: rotateX(var(--card-rotate-x, 0deg))
+    rotateY(var(--card-rotate-y, 0deg)) translateY(var(--card-translate-y, 0px));
   box-shadow: var(--card-shadow, 0 18px 32px rgba(0, 0, 0, 0.35));
   will-change: transform, box-shadow;
 }
@@ -42,4 +53,3 @@
   transition: transform 0.2s ease;
   will-change: transform;
 }
-

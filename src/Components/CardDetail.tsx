@@ -5,6 +5,7 @@ import Footer from "./Footer";
 import SideBanner from "./SideBanner";
 import { apiFetch } from "./api";
 
+import { handleCardBlur, handleCardFocus, handleCardPointerLeave, handleCardPointerMove } from "../utils/card3d";
 interface Faction {
   _id: string;
   title: string;
@@ -153,18 +154,30 @@ const CardDetail = () => {
             ) : card ? (
               <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
                 <div className="flex justify-center">
-                  {card.img ? (
-                    <img
-                      src={card.img}
-                      alt={`Carta ${card.title}`}
-                      className="w-full max-w-xl rounded-lg border border-gray-700 shadow-2xl"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-full min-h-[400px] w-full max-w-xl items-center justify-center rounded-lg border border-dashed border-gray-500 bg-gray-800 text-center text-white">
-                      <div>Esta carta no tiene imagen asociada.</div>
+                  <div className="card-3d-wrapper w-full max-w-xl">
+                    <div
+                      className="card-3d relative block h-full w-full overflow-hidden rounded-lg border border-black/30 shadow-2xl"
+                      onPointerMove={handleCardPointerMove}
+                      onPointerLeave={handleCardPointerLeave}
+                      onPointerCancel={handleCardPointerLeave}
+                      onFocus={handleCardFocus}
+                      onBlur={handleCardBlur}
+                      tabIndex={0}
+                    >
+                      {card.img ? (
+                        <img
+                          src={card.img}
+                          alt={`Carta ${card.title}`}
+                          className="card-3d-element h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="card-3d-element flex h-full min-h-[400px] w-full items-center justify-center border border-dashed border-gray-500 bg-gray-800 text-center text-white">
+                          <div>Esta carta no tiene imagen asociada.</div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
                 <div className="rounded-lg bg-white/90 p-6 shadow-lg backdrop-blur">
                   <h1 className="text-2xl font-bold text-gray-900">
