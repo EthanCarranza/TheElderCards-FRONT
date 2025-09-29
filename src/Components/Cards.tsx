@@ -39,6 +39,75 @@ interface Filters {
   sort?: string;
 }
 
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
+const resetCardStyles = (node: HTMLElement) => {
+  node.style.removeProperty("--card-rotate-x");
+  node.style.removeProperty("--card-rotate-y");
+  node.style.removeProperty("--card-translate-y");
+  node.style.removeProperty("--card-shadow");
+  node.style.removeProperty("--card-depth");
+};
+
+const handleCardPointerMove = (
+  event: React.PointerEvent<HTMLAnchorElement>
+) => {
+  if (event.pointerType !== "mouse" && event.pointerType !== "pen") {
+    return;
+  }
+  const target = event.currentTarget;
+  const rect = target.getBoundingClientRect();
+
+  if (!rect.width || !rect.height) {
+    return;
+  }
+
+  const offsetX = event.clientX - rect.left;
+  const offsetY = event.clientY - rect.top;
+
+  if (
+    offsetX < 0 ||
+    offsetY < 0 ||
+    offsetX > rect.width ||
+    offsetY > rect.height
+  ) {
+    resetCardStyles(target);
+    return;
+  }
+
+  const centerX = rect.width / 2;
+  const centerY = rect.height / 2;
+
+  const rotateY = clamp(((offsetX - centerX) / centerX) * 12, -12, 12);
+  const rotateX = clamp(((offsetY - centerY) / centerY) * -12, -12, 12);
+
+  target.style.setProperty("--card-rotate-x", `${rotateX.toFixed(2)}deg`);
+  target.style.setProperty("--card-rotate-y", `${rotateY.toFixed(2)}deg`);
+  target.style.setProperty("--card-translate-y", "-6px");
+  target.style.setProperty("--card-shadow", "0 28px 48px rgba(0, 0, 0, 0.45)");
+  target.style.setProperty("--card-depth", "18px");
+};
+
+const handleCardPointerLeave = (
+  event: React.PointerEvent<HTMLAnchorElement>
+) => {
+  resetCardStyles(event.currentTarget);
+};
+
+const handleCardFocus = (event: React.FocusEvent<HTMLAnchorElement>) => {
+  const target = event.currentTarget;
+  target.style.setProperty("--card-rotate-x", "0deg");
+  target.style.setProperty("--card-rotate-y", "0deg");
+  target.style.setProperty("--card-translate-y", "-6px");
+  target.style.setProperty("--card-shadow", "0 24px 48px rgba(0, 0, 0, 0.4)");
+  target.style.setProperty("--card-depth", "18px");
+};
+
+const handleCardBlur = (event: React.FocusEvent<HTMLAnchorElement>) => {
+  resetCardStyles(event.currentTarget);
+};
+
 const Cards = () => {
   const [cards, setCards] = useState<Card[]>([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -61,8 +130,25 @@ const Cards = () => {
       const response = await apiFetch(`/cards${query}`);
       setCards(response.data.cards || []);
       setTotalPages(response.data.totalPages || 1);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Error al cargar cartas");
+    } catch (err: unknown) {
+      if (
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "message" in err.response.data
+      ) {
+        setError(
+          (err.response as { data: { message?: string } }).data.message ||
+            "Error al cargar cartas"
+        );
+      } else {
+        setError("Error al cargar cartas");
+      }
     } finally {
       setLoading(false);
     }
@@ -255,45 +341,51 @@ const Cards = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {cards.map((card) => {
                         let factionObj: Faction | undefined = undefined;
-                        if (typeof card.faction === "object" && card.faction !== null) {
+                        if (
+                          typeof card.faction === "object" &&
+                          card.faction !== null
+                        ) {
                           factionObj = card.faction as Faction;
                         } else if (typeof card.faction === "string") {
-                          factionObj = factions.find((f) => f._id === card.faction);
+                          factionObj = factions.find(
+                            (f) => f._id === card.faction
+                          );
                         }
                         return (
-                          <Link
-                            key={card._id}
-                            to={`/cards/${card._id}`}
-                            state={{ card, faction: factionObj }}
-                            className="group relative block overflow-hidden rounded-lg border border-gray-700 bg-gray-900 shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-2xl"
-                          >
-                            {card.img ? (
-                              <img
-                                src={card.img}
-                                alt={`Carta ${card.title}`}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="flex h-full min-h-[320px] w-full flex-col items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900 p-6 text-center text-white">
-                                <div className="text-lg font-semibold">{card.title}</div>
-                                <div className="mt-2 text-sm opacity-80">
-                                  {card.type} - Coste {card.cost}
+                          <div className="card-3d-wrapper">
+                            <Link
+                              key={card._id}
+                              to={`/cards/${card._id}`}
+                              state={{ card, faction: factionObj }}
+                              className="card-3d group relative block h-full w-full overflow-hidden rounded-lg border border-black/30 shadow-lg"
+                              onPointerMove={handleCardPointerMove}
+                              onPointerLeave={handleCardPointerLeave}
+                              onPointerCancel={handleCardPointerLeave}
+                              onFocus={handleCardFocus}
+                              onBlur={handleCardBlur}
+                            >
+                              {card.img ? (
+                                <img
+                                  src={card.img}
+                                  alt={`Carta ${card.title}`}
+                                  className="card-3d-element h-full w-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="card-3d-element flex h-full min-h-[320px] w-full flex-col items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900 p-6 text-center text-white">
+                                  <div className="text-lg font-semibold">
+                                    {card.title}
+                                  </div>
+                                  <div className="mt-2 text-sm opacity-80">
+                                    {card.type} - Coste {card.cost}
+                                  </div>
+                                  <div className="mt-4 text-xs text-gray-200">
+                                    Pulsa para ver detalles
+                                  </div>
                                 </div>
-                                <div className="mt-4 text-xs text-gray-200">
-                                  Pulsa para ver detalles
-                                </div>
-                              </div>
-                            )}
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                              <div className="text-base font-semibold text-white">
-                                {card.title}
-                              </div>
-                              <div className="text-xs text-gray-200">
-                                {card.type} - Coste {card.cost}
-                              </div>
-                            </div>
-                          </Link>
+                              )}
+                            </Link>
+                          </div>
                         );
                       })}
                     </div>
