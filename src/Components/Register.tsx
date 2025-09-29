@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiFetch } from "./api";
+import { extractErrorMessage } from "../utils/errors";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
@@ -42,7 +43,8 @@ function Register() {
         });
 
         if (response.status === 409) {
-          if (response.data?.message === "Usuario ya existente") {
+          const message = (response.data as { message?: string })?.message;
+          if (message === "Usuario ya existente") {
             setErrorMessage(
               "Ya existe un usuario con este nombre único. Por favor, introduce otro username."
             );
@@ -61,8 +63,8 @@ function Register() {
         setUsername("");
         setEmail("");
         setPassword("");
-      } catch (error: any) {
-        setErrorMessage(error?.response?.data?.message || "Error de conexión.");
+      } catch (error: unknown) {
+        setErrorMessage(extractErrorMessage(error, "Error de conexión."));
       }
     }
   };
@@ -73,8 +75,8 @@ function Register() {
         <div className="w-4/6 flex flex-col justify-between bg-black bg-opacity-90 min-h-screen">
           <Navbar />
           <div className="flex items-center justify-center py-12">
-            <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
-              <h2 className="text-3xl font-bold mb-6 text-center text-black">
+            <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg text-2xl">
+              <h2 className="text-4xl font-bold mb-6 text-center text-black">
                 Crea tu cuenta
               </h2>
               <Message message={errorMessage} type="error" />

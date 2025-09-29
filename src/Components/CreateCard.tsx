@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiFetch } from "./api";
 import { CARD_TYPES } from "../constants/cardTypes";
+import { extractErrorMessage } from "../utils/errors";
 
 interface FactionOption {
   _id: string;
@@ -110,8 +111,8 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       });
       setImage(null);
       if (onCreated) onCreated();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Error al crear carta");
+    } catch (error: unknown) {
+      setError(extractErrorMessage(error, "Error al crear carta"));
     } finally {
       setLoading(false);
     }

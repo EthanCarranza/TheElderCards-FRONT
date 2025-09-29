@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiFetch } from "./api";
+import { extractErrorMessage } from "../utils/errors";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
@@ -55,8 +56,8 @@ function Login() {
         });
         setEmail("");
         setPassword("");
-      } catch (error: any) {
-        setErrorMessage(error?.response?.data?.message || "Error de conexión.");
+      } catch (error: unknown) {
+        setErrorMessage(extractErrorMessage(error, "Error de conexión."));
       }
     }
   };

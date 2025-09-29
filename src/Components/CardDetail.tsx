@@ -4,6 +4,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SideBanner from "./SideBanner";
 import { apiFetch } from "./api";
+import { extractErrorMessage } from "../utils/errors";
 
 import { handleCardBlur, handleCardFocus, handleCardPointerLeave, handleCardPointerMove } from "../utils/card3d";
 interface Faction {
@@ -95,7 +96,7 @@ const CardDetail = () => {
                 `/factions/${cardData.faction}`
               );
               setFaction(factionResponse.data || null);
-            } catch (fetchFactionError) {
+            } catch (fetchFactionError: unknown) {
               console.error("Error al cargar la faccion", fetchFactionError);
               setFaction(null);
             }
@@ -103,9 +104,9 @@ const CardDetail = () => {
         } else {
           setFaction(null);
         }
-      } catch (err: any) {
-        console.error("Error al cargar la carta", err);
-        setError(err?.response?.data?.message || "Error al cargar la carta");
+      } catch (error: unknown) {
+        console.error("Error al cargar la carta", error);
+        setError(extractErrorMessage(error, "Error al cargar la carta"));
       } finally {
         setLoading(false);
       }

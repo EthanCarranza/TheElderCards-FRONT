@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "./api";
+import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext"; // Importing useAuth
 import SideBanner from "./SideBanner";
 import Navbar from "./Navbar";
@@ -29,8 +30,8 @@ const Factions: React.FC = () => {
       try {
         const response = await apiFetch("/factions");
         setFactions(response.data);
-      } catch (err: any) {
-        setError("Error al cargar facciones");
+      } catch (error: unknown) {
+        setError(extractErrorMessage(error, "Error al cargar facciones"));
       } finally {
         setLoading(false);
       }
@@ -119,8 +120,8 @@ const Factions: React.FC = () => {
                     try {
                       const response = await apiFetch("/factions");
                       setFactions(response.data);
-                    } catch (err: any) {
-                      setError("Error al cargar facciones");
+                    } catch (error: unknown) {
+                      setError(extractErrorMessage(error, "Error al cargar facciones"));
                     } finally {
                       setLoading(false);
                     }
@@ -182,7 +183,7 @@ function CreateFactionForm({ onCreated }: { onCreated: () => void }) {
       }
       await apiFetch("/factions", {
         method: "POST",
-        data: formData,
+        body: formData,
         headers: {
           ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
         },
@@ -191,8 +192,8 @@ function CreateFactionForm({ onCreated }: { onCreated: () => void }) {
       setForm({ title: "", description: "", territory: "", color: "" });
       setImg(null);
       if (onCreated) onCreated();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Error al crear facción");
+    } catch (error: unknown) {
+      setError(extractErrorMessage(error, "Error al crear facción"));
     } finally {
       setLoading(false);
     }
