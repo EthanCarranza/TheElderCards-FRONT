@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CreateCard from "./CreateCard";
@@ -57,7 +57,7 @@ const Cards = () => {
   const [error, setError] = useState("");
   const [factions, setFactions] = useState<Faction[]>([]);
 
-  const fetchCards = async () => {
+  const fetchCards = useCallback(async () => {
     setLoading(true);
     setError("");
     let query = `?page=${page}&limit=20`;
@@ -90,24 +90,24 @@ const Cards = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, page]);
 
-  const fetchFactions = async () => {
+  const fetchFactions = useCallback(async () => {
     try {
       const response = await apiFetch("/factions");
       setFactions(response.data || []);
     } catch {
       setFactions([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCards();
-  }, [page, filters]);
+  }, [fetchCards]);
 
   useEffect(() => {
     fetchFactions();
-  }, []);
+  }, [fetchFactions]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

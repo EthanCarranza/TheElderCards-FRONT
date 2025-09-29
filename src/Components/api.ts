@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = /*import.meta.env.VITE_API_URL ||*/ "http://localhost:4200/api/v1";
+const BASE_URL =
+  /*import.meta.env.VITE_API_URL ||*/ "http://localhost:4200/api/v1";
 
 export const apiFetch = async (endpoint: string, options: any = {}) => {
   const url = `${BASE_URL}${endpoint}`;
@@ -12,7 +13,6 @@ export const apiFetch = async (endpoint: string, options: any = {}) => {
     ...options,
   };
 
-  // Si no es FormData, agrega Content-Type
   if (!(options.body instanceof FormData)) {
     config.headers["Content-Type"] = "application/json";
   }
