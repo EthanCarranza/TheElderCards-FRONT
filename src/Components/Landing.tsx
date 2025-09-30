@@ -5,9 +5,9 @@ import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import SideBanner from "./SideBanner";
 import HeroSection from "./HeroSection";
 import FloatingToast from "./FloatingToast";
+import PageLayout from "./PageLayout";
 
 function Landing() {
   const location = useLocation();
@@ -99,20 +99,17 @@ function Landing() {
   };
 
   return (
-    <div className="relative min-h-screen bg-cover bg-center">
+    <PageLayout>
       <FloatingToast message={toastMessage} onClose={handleCloseToast} />
-      <div className="flex">
-        <SideBanner image="/bg.webp" position="left" />
-        <div className="w-4/6 bg-black bg-opacity-90 min-h-screen">
-          <Navbar />
-          <HeroSection title="" image="logo.png" />
-          <HeroSection title="¡Crea tus propias cartas!" image="hero.jpg" />
-          <Footer />
-        </div>
-        <SideBanner image="/bg.webp" position="right" />
+      <Navbar />
+      <div className="flex-1 overflow-y-auto">
+        <HeroSection title="" image="logo.png" />
+        <HeroSection title="¿Crea tus propias cartas!" image="hero.jpg" />
       </div>
-    </div>
+      <Footer />
+    </PageLayout>
   );
 }
+
 
 export default Landing;

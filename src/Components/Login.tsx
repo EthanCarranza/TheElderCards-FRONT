@@ -7,7 +7,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import FormInput from "./FormInput";
 import Message from "./Message";
-import SideBanner from "./SideBanner";
+import PageLayout from "./PageLayout";
 
 function Login() {
   const [email, setEmail] = useState<string>("");
@@ -62,51 +62,45 @@ function Login() {
     }
   };
   return (
-    <div className="relative min-h-screen bg-cover bg-center">
-      <div className="flex">
-        <SideBanner image="/bg.webp" position="left" />
-        <div className="w-4/6 flex flex-col justify-between bg-black bg-opacity-90 min-h-screen">
-          <Navbar />
-          <div className="flex items-center justify-center py-12">
-            <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
-              <h2 className="text-3xl font-bold mb-6 text-center text-black">
-                Inicia sesión
-              </h2>
-              <Message message={errorMessage} type="error" />
-              <Message message={successMessage} type="success" />
-              <form onSubmit={handleSubmit}>
-                <FormInput
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={handleChange}
-                  placeholder="Correo electrónico"
-                  icon={<FaEnvelope />}
-                  autoComplete="email"
-                />
-                <FormInput
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={handleChange}
-                  placeholder="Contraseña"
-                  icon={<FaLock />}
-                  autoComplete="current-password"
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800 transition-colors font-bold mt-4"
-                >
-                  Iniciar sesión
-                </button>
-              </form>
-            </div>
-          </div>
-          <Footer />
+    <PageLayout>
+      <Navbar />
+      <div className="flex flex-1 items-center justify-center py-12">
+        <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
+          <h2 className="text-3xl font-bold mb-6 text-center text-black">
+            Inicia sesi��n
+          </h2>
+          <Message message={errorMessage} type="error" />
+          <Message message={successMessage} type="success" />
+          <form onSubmit={handleSubmit}>
+            <FormInput
+              id="email"
+              type="email"
+              value={email}
+              onChange={handleChange}
+              placeholder="Correo electr��nico"
+              icon={<FaEnvelope />}
+              autoComplete="email"
+            />
+            <FormInput
+              id="password"
+              type="password"
+              value={password}
+              onChange={handleChange}
+              placeholder="Contrase��a"
+              icon={<FaLock />}
+              autoComplete="current-password"
+            />
+            <button
+              type="submit"
+              className="w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800 transition-colors font-bold mt-4"
+            >
+              Iniciar sesi��n
+            </button>
+          </form>
         </div>
-        <SideBanner image="/bg.webp" position="right" />
       </div>
-    </div>
+      <Footer />
+    </PageLayout>
   );
 }
 

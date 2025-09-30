@@ -2,7 +2,7 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import SideBanner from "./SideBanner";
+import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 
@@ -135,12 +135,9 @@ const CardDetail = () => {
   }, [card?.date]);
 
   return (
-    <div className="relative min-h-screen bg-cover bg-center">
-      <div className="flex">
-        <SideBanner image="/bg.webp" position="left" />
-        <div className="w-4/6 bg-black bg-opacity-90 min-h-screen flex flex-col">
-          <Navbar />
-          <div className="flex-1 overflow-y-auto p-6">
+    <PageLayout>
+      <Navbar />
+      <div className="flex-1 overflow-y-auto p-6">
             <button
               onClick={handleGoBack}
               className="mb-6 rounded bg-gray-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-600"
@@ -252,12 +249,9 @@ const CardDetail = () => {
                 No se encontro la carta solicitada.
               </div>
             )}
-          </div>
-          <Footer />
-        </div>
-        <SideBanner image="/bg.webp" position="right" />
       </div>
-    </div>
+      <Footer />
+    </PageLayout>
   );
 };
 
