@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import Navbar from "./Navbar";
@@ -13,7 +14,7 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
   const usernameRegex = /^.{3,}$/;
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -25,7 +26,6 @@ function Register() {
   };
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSuccessMessage("");
     setErrorMessage("");
     if (!username || !email || !password) {
       setErrorMessage("Todos los campos son obligatorios.");
@@ -36,6 +36,7 @@ function Register() {
         "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo especial."
       );
     } else {
+      const credentials = { email, password };
       try {
         const response = await apiFetch("/users/register", {
           method: "post",
@@ -58,11 +59,12 @@ function Register() {
           setErrorMessage(
             "Hubo un error al intentar registrarse. Por favor, inténtalo más tarde."
           );
+          return;
         }
-        setSuccessMessage("¡Registro exitoso! Ahora puedes iniciar sesión.");
         setUsername("");
         setEmail("");
         setPassword("");
+        navigate("/", { state: { registrationSuccess: true, credentials } });
       } catch (error: unknown) {
         setErrorMessage(extractErrorMessage(error, "Error de conexión."));
       }
@@ -80,7 +82,6 @@ function Register() {
                 Crea tu cuenta
               </h2>
               <Message message={errorMessage} type="error" />
-              <Message message={successMessage} type="success" />
               <form onSubmit={handleSubmit}>
                 <FormInput
                   id="username"
