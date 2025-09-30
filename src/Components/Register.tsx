@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
@@ -18,22 +18,25 @@ function Register() {
   const usernameRegex = /^.{3,}$/;
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = event.target;
     if (id === "username") setUsername(value);
     if (id === "email") setEmail(value);
     if (id === "password") setPassword(value);
   };
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setErrorMessage("");
+
     if (!username || !email || !password) {
       setErrorMessage("Todos los campos son obligatorios.");
     } else if (!usernameRegex.test(username)) {
       setErrorMessage("El nombre de usuario debe tener al menos 3 caracteres.");
     } else if (!passwordRegex.test(password)) {
       setErrorMessage(
-        "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo especial."
+        "La contrasena debe tener al menos 8 caracteres, una mayuscula, una minuscula, un numero y un simbolo especial."
       );
     } else {
       const credentials = { email, password };
@@ -47,35 +50,39 @@ function Register() {
           const message = (response.data as { message?: string })?.message;
           if (message === "Usuario ya existente") {
             setErrorMessage(
-              "Ya existe un usuario con este nombre único. Por favor, introduce otro username."
+              "Ya existe un usuario con este nombre unico. Por favor, introduce otro username."
             );
           } else {
             setErrorMessage(
-              "Ya existe un usuario con este correo electrónico. Por favor, introduce otro correo."
+              "Ya existe un usuario con este correo electronico. Por favor, introduce otro correo."
             );
           }
           return;
-        } else if (response.status !== 201) {
+        }
+
+        if (response.status !== 201) {
           setErrorMessage(
-            "Hubo un error al intentar registrarse. Por favor, inténtalo más tarde."
+            "Hubo un error al intentar registrarse. Por favor, intentalo mas tarde."
           );
           return;
         }
+
         setUsername("");
         setEmail("");
         setPassword("");
         navigate("/", { state: { registrationSuccess: true, credentials } });
       } catch (error: unknown) {
-        setErrorMessage(extractErrorMessage(error, "Error de conexión."));
+        setErrorMessage(extractErrorMessage(error, "Error de conexion."));
       }
     }
   };
+
   return (
     <PageLayout>
       <Navbar />
       <div className="flex flex-1 items-center justify-center py-12">
-        <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-lg text-2xl">
-          <h2 className="text-4xl font-bold mb-6 text-center text-black">
+        <div className="w-full max-w-lg rounded-lg bg-white p-8 text-2xl shadow-2xl">
+          <h2 className="mb-6 text-center text-4xl font-bold text-black">
             Crea tu cuenta
           </h2>
           <Message message={errorMessage} type="error" />
@@ -94,7 +101,7 @@ function Register() {
               type="email"
               value={email}
               onChange={handleChange}
-              placeholder="Correo electr��nico"
+              placeholder="Correo electronico"
               icon={<FaEnvelope />}
               autoComplete="email"
             />
@@ -103,13 +110,13 @@ function Register() {
               type="password"
               value={password}
               onChange={handleChange}
-              placeholder="Contrase��a"
+              placeholder="Contrasena"
               icon={<FaLock />}
               autoComplete="new-password"
             />
             <button
               type="submit"
-              className="w-full bg-black text-white py-2 px-4 rounded hover:bg-gray-800 transition-colors font-bold mt-4"
+              className="mt-4 w-full rounded bg-black px-4 py-2 font-bold text-white transition-colors hover:bg-gray-800"
             >
               Registrarse
             </button>

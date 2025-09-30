@@ -33,10 +33,10 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
 
   const fieldHelp: Record<string, string> = {
     title:
-      "El nombre de la carta. Máximo 20 caracteres. Debe ser único y descriptivo.",
-    description: "Descripción larga de la carta. Máximo 100 caracteres.",
+      "El nombre de la carta. Maximo 20 caracteres. Debe ser unico y descriptivo.",
+    description: "Descripcion larga de la carta. Maximo 100 caracteres.",
     type: "El tipo de carta: Criatura, Artefacto o Hechizo.",
-    faction: "La facción a la que pertenece la carta.",
+    faction: "La faccion a la que pertenece la carta.",
     cost: "Coste de jugar la carta (0-10).",
     attack: "Poder de ataque de la criatura (0-10). Solo para criaturas.",
     defense: "Defensa de la criatura (1-10). Solo para criaturas.",
@@ -86,10 +86,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
         formData.append("defense", form.defense);
       }
 
-      if (image) {
-        console.log(image);
-        console.log(image instanceof File);
-        formData.append("img", image);
+      if (image) {        formData.append("img", image);
       }
       const token = localStorage.getItem("token");
       await apiFetch("/cards", {
@@ -129,7 +126,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           name="title"
           value={form.title}
           onChange={handleChange}
-          placeholder="Título"
+          placeholder="Titulo"
           className="p-2 rounded flex-1"
           required
           maxLength={20}
@@ -179,7 +176,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           name="description"
           value={form.description}
           onChange={handleChange}
-          placeholder="Descripción"
+          placeholder="Descripcion"
           className="p-2 rounded flex-1 resize-none"
           required
           maxLength={100}
@@ -210,7 +207,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           disabled={factions.length === 0}
         >
           <option value="">
-            {factions.length === 0 ? "No hay facciones disponibles" : "Facción"}
+            {factions.length === 0 ? "No hay facciones disponibles" : "Faccion"}
           </option>
           {factions.map((f) => (
             <option key={f._id} value={f._id}>
@@ -350,3 +347,4 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
 };
 
 export default CreateCard;
+

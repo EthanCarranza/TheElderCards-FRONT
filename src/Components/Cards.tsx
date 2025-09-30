@@ -146,7 +146,7 @@ const Cards = () => {
               className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mb-4"
               onClick={() => setShowCreate(false)}
             >
-              ← Volver al listado
+              &lt; Volver al listado
             </button>
             <CreateCard
               onCreated={() => {
@@ -160,7 +160,7 @@ const Cards = () => {
             />
           </>
         ) : (
-          <div className="mb-4 flex flex-wrap gap-4">
+          <div className="mb-4 flex text-gray-800 flex-wrap gap-4">
             <select
               name="type"
               value={filters.type ? filters.type.toLowerCase() : ""}
@@ -182,7 +182,7 @@ const Cards = () => {
               disabled={factions.length === 0}
             >
               <option value="">
-                {factions.length === 0 ? "Sin facciones" : "Facción"}
+                {factions.length === 0 ? "Sin facciones" : "Faccion"}
               </option>
               {factions.map((f) => (
                 <option key={f._id} value={f._id}>
@@ -194,7 +194,7 @@ const Cards = () => {
               name="title"
               value={filters.title || ""}
               onChange={handleFilterChange}
-              placeholder="Título"
+              placeholder="Titulo"
               className="p-2 text-xl rounded"
             />
             <input
@@ -234,7 +234,7 @@ const Cards = () => {
                   value={filters.defense || ""}
                   onChange={handleFilterChange}
                   placeholder="Defensa"
-                  className="w-30 p-2 pl-4 pr-2 text-xl rounded"
+                  className="w-28 p-2 pl-4 pr-2 text-xl rounded"
                 />
               </>
             )}
@@ -244,21 +244,21 @@ const Cards = () => {
               onChange={handleSortChange}
               className="p-2 pr-4 text-xl rounded"
             >
-              <option value="">Ordenar por…</option>
-              <option value="title_asc">Título A-Z</option>
-              <option value="title_desc">Título Z-A</option>
+              <option value="">Ordenar por...</option>
+              <option value="title_asc">Titulo A-Z</option>
+              <option value="title_desc">Titulo Z-A</option>
               <option value="creator_asc">Creador A-Z</option>
               <option value="creator_desc">Creador Z-A</option>
-              <option value="faction_asc">Facción A-Z</option>
-              <option value="faction_desc">Facción Z-A</option>
+              <option value="faction_asc">Faccion A-Z</option>
+              <option value="faction_desc">Faccion Z-A</option>
               <option value="type_asc">Tipo A-Z</option>
               <option value="type_desc">Tipo Z-A</option>
-              <option value="cost_asc">Coste ↑</option>
-              <option value="cost_desc">Coste ↓</option>
-              <option value="attack_asc">Ataque ↑</option>
-              <option value="attack_desc">Ataque ↓</option>
-              <option value="defense_asc">Defensa ↑</option>
-              <option value="defense_desc">Defensa ↓</option>
+              <option value="cost_asc">Coste asc</option>
+              <option value="cost_desc">Coste desc</option>
+              <option value="attack_asc">Ataque asc</option>
+              <option value="attack_desc">Ataque desc</option>
+              <option value="defense_asc">Defensa asc</option>
+              <option value="defense_desc">Defensa desc</option>
             </select>
             {user && (
               <button
@@ -344,7 +344,7 @@ const Cards = () => {
                   </button>
                 )}
                 <span className="text-white text-2xl">
-                  Página {page} de {totalPages}
+                  Pagina {page} de {totalPages}
                 </span>
                 {page < totalPages && totalPages > 1 && (
                   <button

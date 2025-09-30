@@ -66,7 +66,7 @@ function Navbar() {
               </li>
               <li>
                 <button onClick={logout} className="hover:text-red-500">
-                  Cerrar sesión
+                  Cerrar sesion
                 </button>
               </li>
             </>
