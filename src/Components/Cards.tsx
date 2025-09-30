@@ -215,7 +215,7 @@ const Cards = () => {
                   value={filters.cost || ""}
                   onChange={handleFilterChange}
                   placeholder="Coste"
-                  className="p-2 px-5 text-xl rounded"
+                  className="w-24 p-2 pl-4 pr-2 text-xl rounded"
                 />
                 {filters.type === "Creature" && (
                   <>
@@ -227,7 +227,7 @@ const Cards = () => {
                       value={filters.attack || ""}
                       onChange={handleFilterChange}
                       placeholder="Ataque"
-                      className="p-2 text-xl rounded"
+                      className="w-28 p-2 pl-4 pr-2 text-xl rounded"
                     />
                     <input
                       name="defense"
@@ -237,7 +237,7 @@ const Cards = () => {
                       value={filters.defense || ""}
                       onChange={handleFilterChange}
                       placeholder="Defensa"
-                      className="p-2 text-xl rounded"
+                      className="w-30 p-2 pl-4 pr-2 text-xl rounded"
                     />
                   </>
                 )}
@@ -245,7 +245,7 @@ const Cards = () => {
                   name="sort"
                   value={filters.sort || ""}
                   onChange={handleSortChange}
-                  className="p-2 text-xl rounded"
+                  className="p-2 pr-4 text-xl rounded"
                 >
                   <option value="">Ordenar por…</option>
                   <option value="title_asc">Título A-Z</option>
