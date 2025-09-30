@@ -35,6 +35,11 @@ interface Card {
   defense?: number;
 }
 
+interface CardsResponse {
+  cards?: Card[];
+  totalPages?: number;
+}
+
 interface Filters {
   type?: string;
   faction?: string;
@@ -65,9 +70,11 @@ const Cards = () => {
       if (value) query += `&${key}=${encodeURIComponent(value)}`;
     });
     try {
-      const response = await apiFetch(`/cards${query}`);
-      setCards(response.data.cards || []);
-      setTotalPages(response.data.totalPages || 1);
+      const response = await apiFetch<CardsResponse>(`/cards${query}`);
+      const { cards: fetchedCards = [], totalPages: fetchedTotalPages = 1 } =
+        response.data;
+      setCards(fetchedCards);
+      setTotalPages(fetchedTotalPages);
     } catch (err: unknown) {
       if (
         err &&
@@ -94,8 +101,8 @@ const Cards = () => {
 
   const fetchFactions = useCallback(async () => {
     try {
-      const response = await apiFetch("/factions");
-      setFactions(response.data || []);
+      const response = await apiFetch<Faction[]>("/factions");
+      setFactions(response.data ?? []);
     } catch {
       setFactions([]);
     }
@@ -340,7 +347,7 @@ const Cards = () => {
                         Anterior
                       </button>
                     )}
-                    <span className="text-white">
+                    <span className="text-white text-2xl">
                       Página {page} de {totalPages}
                     </span>
                     {page < totalPages && totalPages > 1 && (
