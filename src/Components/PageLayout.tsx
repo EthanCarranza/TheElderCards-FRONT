@@ -44,7 +44,7 @@ const PageLayout = ({
         />
         <main
           className={classNames(
-            "relative z-10 flex min-h-screen w-full flex-1 flex-col bg-black/90 px-8 py-10 lg:px-12",
+            "relative z-10 flex min-h-screen w-full flex-1 flex-col bg-zinc-950 pb-10",
             contentClassName
           )}
         >

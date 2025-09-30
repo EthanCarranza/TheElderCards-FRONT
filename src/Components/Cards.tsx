@@ -136,7 +136,7 @@ const Cards = () => {
   return (
     <PageLayout>
       <Navbar />
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto py-16 px-24">
         <h2 className="text-5xl text-center font-light py-4 pb-16 text-white">
           Cartas
         </h2>
@@ -284,7 +284,7 @@ const Cards = () => {
                   </span>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-16">
                   {cards.map((card) => {
                     let factionObj: Faction | undefined = undefined;
                     if (
@@ -296,7 +296,7 @@ const Cards = () => {
                       factionObj = factions.find((f) => f._id === card.faction);
                     }
                     return (
-                      <div className="card-3d-wrapper">
+                      <div className="card-3d-wrapper w-full max-w-[325px]">
                         <Link
                           key={card._id}
                           to={`/cards/${card._id}`}

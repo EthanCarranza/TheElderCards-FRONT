@@ -5,8 +5,8 @@ function Navbar() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="sticky top-0 bg-black/80 shadow-md z-10">
-      <nav className="flex justify-between items-center px-8 py-4">
+    <div className="sticky top-0 bg-black shadow-md z-10">
+      <nav className="flex justify-between items-center px-10 py-6">
         <Link to="/" className="flex items-center  duration-200 gap-3">
           <img
             src="/banner.png"

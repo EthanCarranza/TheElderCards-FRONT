@@ -86,7 +86,8 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
         formData.append("defense", form.defense);
       }
 
-      if (image) {        formData.append("img", image);
+      if (image) {
+        formData.append("img", image);
       }
       const token = localStorage.getItem("token");
       await apiFetch("/cards", {
@@ -121,7 +122,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       className="bg-gray-800 rounded p-6 mt-6 w-full max-w-lg mx-auto flex flex-col gap-4"
     >
       <h3 className="text-xl font-bold text-white mb-2">Crear nueva carta</h3>
-      <div className="relative flex items-center">
+      <div className="relative text-black flex items-center">
         <input
           name="title"
           value={form.title}
@@ -347,4 +348,3 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
 };
 
 export default CreateCard;
-
