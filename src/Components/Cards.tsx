@@ -140,7 +140,9 @@ const Cards = () => {
         <div className="w-4/6 bg-black bg-opacity-90 min-h-screen flex flex-col">
           <Navbar />
           <div className="flex-1 overflow-y-auto p-6">
-            <h2 className="text-2xl font-bold mb-4 text-white">Cartas</h2>
+            <h2 className="text-5xl text-center font-light py-4 pb-16 text-white">
+              Cartas
+            </h2>
             {showCreate && user ? (
               <>
                 <button
@@ -166,7 +168,7 @@ const Cards = () => {
                   name="type"
                   value={filters.type ? filters.type.toLowerCase() : ""}
                   onChange={handleFilterChange}
-                  className="p-2 rounded"
+                  className="p-2 text-xl rounded"
                 >
                   <option value="">Tipo</option>
                   {CARD_TYPES.map((type) => (
@@ -179,7 +181,7 @@ const Cards = () => {
                   name="faction"
                   value={filters.faction || ""}
                   onChange={handleFilterChange}
-                  className="p-2 rounded"
+                  className="p-2 text-xl rounded"
                   disabled={factions.length === 0}
                 >
                   <option value="">
@@ -196,14 +198,14 @@ const Cards = () => {
                   value={filters.title || ""}
                   onChange={handleFilterChange}
                   placeholder="Título"
-                  className="p-2 rounded"
+                  className="p-2 text-xl rounded"
                 />
                 <input
                   name="creator"
                   value={filters.creator || ""}
                   onChange={handleFilterChange}
                   placeholder="Creador (username)"
-                  className="p-2 rounded"
+                  className="p-2 text-xl rounded"
                 />
                 <input
                   name="cost"
@@ -213,7 +215,7 @@ const Cards = () => {
                   value={filters.cost || ""}
                   onChange={handleFilterChange}
                   placeholder="Coste"
-                  className="p-2 rounded"
+                  className="p-2 px-5 text-xl rounded"
                 />
                 {filters.type === "Creature" && (
                   <>
@@ -225,7 +227,7 @@ const Cards = () => {
                       value={filters.attack || ""}
                       onChange={handleFilterChange}
                       placeholder="Ataque"
-                      className="p-2 rounded"
+                      className="p-2 text-xl rounded"
                     />
                     <input
                       name="defense"
@@ -235,7 +237,7 @@ const Cards = () => {
                       value={filters.defense || ""}
                       onChange={handleFilterChange}
                       placeholder="Defensa"
-                      className="p-2 rounded"
+                      className="p-2 text-xl rounded"
                     />
                   </>
                 )}
@@ -243,7 +245,7 @@ const Cards = () => {
                   name="sort"
                   value={filters.sort || ""}
                   onChange={handleSortChange}
-                  className="p-2 rounded"
+                  className="p-2 text-xl rounded"
                 >
                   <option value="">Ordenar por…</option>
                   <option value="title_asc">Título A-Z</option>
@@ -263,7 +265,7 @@ const Cards = () => {
                 </select>
                 {user && (
                   <button
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-2"
+                    className="bg-gray-600 hover:bg-gray-700 text-white text-2xl font-light py-3 px-6 rounded-lg"
                     onClick={() => setShowCreate(true)}
                   >
                     Crear carta
@@ -280,7 +282,6 @@ const Cards = () => {
                 <>
                   {cards.length === 0 ? (
                     <div className="flex flex-col items-center justify-center w-full py-12">
-                      {/* añadir ilustración o icono aquí */}
                       <span className="text-lg text-gray-300 font-semibold">
                         No se han encontrado cartas
                       </span>
