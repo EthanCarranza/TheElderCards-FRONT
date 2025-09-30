@@ -119,10 +119,10 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-gray-800 rounded p-6 mt-6 w-full max-w-lg mx-auto flex flex-col gap-4"
+      className="bg-gray-800 text-xl rounded p-8 w-full max-w-lg mx-auto flex flex-col gap-4"
     >
-      <h3 className="text-xl font-bold text-white mb-2">Crear nueva carta</h3>
-      <div className="relative text-black flex items-center">
+      <h3 className="text-3xl font-bold text-white mb-2">Crear nueva carta</h3>
+      <div className="relative text-black  flex items-center">
         <input
           name="title"
           value={form.title}
@@ -145,7 +145,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           </div>
         )}
       </div>
-      <div className="relative flex items-center">
+      <div className="relative text-black flex items-center">
         <select
           name="type"
           value={form.type}
@@ -172,7 +172,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           </div>
         )}
       </div>
-      <div className="relative flex items-center">
+      <div className="relative text-black flex items-center">
         <textarea
           name="description"
           value={form.description}
@@ -198,7 +198,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           </div>
         )}
       </div>
-      <div className="relative flex items-center">
+      <div className="relative text-black flex items-center">
         <select
           name="faction"
           value={form.faction}
@@ -208,7 +208,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           disabled={factions.length === 0}
         >
           <option value="">
-            {factions.length === 0 ? "No hay facciones disponibles" : "Faccion"}
+            {factions.length === 0 ? "No hay facciones disponibles" : "Facción"}
           </option>
           {factions.map((f) => (
             <option key={f._id} value={f._id}>
@@ -229,7 +229,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           </div>
         )}
       </div>
-      <div className="relative flex items-center">
+      <div className="relative text-black flex items-center">
         <input
           name="cost"
           type="number"

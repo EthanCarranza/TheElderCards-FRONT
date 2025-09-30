@@ -3,8 +3,6 @@ import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 import FormInput from "./FormInput";
 import Message from "./Message";
 import PageLayout from "./PageLayout";
@@ -104,9 +102,7 @@ function Login() {
   };
 
   return (
-    <PageLayout>
-      <Navbar />
-      <div className="flex flex-1 items-center justify-center py-12">
+    <PageLayout contentClassName="flex flex-1 items-center justify-center py-12">
         <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-2xl">
           <h2 className="mb-6 text-center text-3xl font-bold text-black">
             Inicia sesion
@@ -140,8 +136,6 @@ function Login() {
             </button>
           </form>
         </div>
-      </div>
-      <Footer />
     </PageLayout>
   );
 }

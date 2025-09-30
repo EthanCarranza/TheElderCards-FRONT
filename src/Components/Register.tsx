@@ -2,8 +2,6 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import FormInput from "./FormInput";
 import Message from "./Message";
@@ -78,9 +76,7 @@ function Register() {
   };
 
   return (
-    <PageLayout>
-      <Navbar />
-      <div className="flex flex-1 items-center justify-center py-12">
+    <PageLayout contentClassName="flex flex-1 items-center justify-center py-12">
         <div className="w-full max-w-lg rounded-lg bg-white p-8 text-2xl shadow-2xl">
           <h2 className="mb-6 text-center text-4xl font-bold text-black">
             Crea tu cuenta
@@ -122,8 +118,6 @@ function Register() {
             </button>
           </form>
         </div>
-      </div>
-      <Footer />
     </PageLayout>
   );
 }

@@ -1,4 +1,6 @@
-﻿import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
 
 type ClassValue = string | false | null | undefined;
 
@@ -9,21 +11,29 @@ const COLUMN_WIDTH_CLASSES = "w-[200px] lg:w-[220px] xl:w-[260px]";
 
 interface PageLayoutProps extends PropsWithChildren {
   wallpaperImage?: string;
-  contentClassName?: string;
   containerClassName?: string;
+  contentClassName?: string;
+  mainClassName?: string;
   hideWallpaperOnMobile?: boolean;
   wallpaperSize?: string;
   wallpaperPosition?: string;
+  overlay?: ReactNode;
+  showNavbar?: boolean;
+  showFooter?: boolean;
 }
 
 const PageLayout = ({
   children,
   wallpaperImage = "/bg.webp",
-  contentClassName,
   containerClassName,
+  contentClassName,
+  mainClassName,
   hideWallpaperOnMobile = true,
   wallpaperSize = "cover",
   wallpaperPosition = "center",
+  overlay,
+  showNavbar = true,
+  showFooter = true,
 }: PageLayoutProps) => {
   const showWallpaperOnMobile = !hideWallpaperOnMobile;
 
@@ -34,6 +44,7 @@ const PageLayout = ({
         containerClassName
       )}
     >
+      {overlay}
       <div className="mx-auto flex min-h-screen w-full max-w-[2800px] px-4">
         <WallpaperColumn
           image={wallpaperImage}
@@ -44,11 +55,15 @@ const PageLayout = ({
         />
         <main
           className={classNames(
-            "relative z-10 flex min-h-screen w-full flex-1 flex-col bg-zinc-950 pb-10",
-            contentClassName
+            "relative z-10 flex min-h-screen w-full flex-1 flex-col bg-zinc-950",
+            mainClassName
           )}
         >
-          {children}
+          {showNavbar && <Navbar />}
+          <div className={classNames("flex-1", contentClassName)}>
+            {children}
+          </div>
+          {showFooter && <Footer />}
         </main>
         <WallpaperColumn
           image={wallpaperImage}

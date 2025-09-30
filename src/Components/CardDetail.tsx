@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
@@ -143,9 +141,7 @@ const CardDetail = () => {
   }, [card?.date]);
 
   return (
-    <PageLayout>
-      <Navbar />
-      <div className="flex-1 overflow-y-auto p-6">
+    <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
         <button
           onClick={handleGoBack}
           className="mb-6 rounded bg-gray-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-600"
@@ -237,8 +233,6 @@ const CardDetail = () => {
         ) : (
           <div className="text-white">No se encontro la carta solicitada.</div>
         )}
-      </div>
-      <Footer />
     </PageLayout>
   );
 };

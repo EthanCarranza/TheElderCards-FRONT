@@ -2,8 +2,6 @@ import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } fr
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 import PageLayout from "./PageLayout";
 
 interface Faction {
@@ -45,9 +43,7 @@ const Factions = () => {
   };
 
   return (
-    <PageLayout>
-      <Navbar />
-      <div className="flex-1 overflow-y-auto p-6">
+    <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
         <h3 className="mb-2 text-xl font-bold text-white">Facciones</h3>
         {showCreate ? null : loading ? (
           <div className="text-white">Cargando...</div>
@@ -118,8 +114,6 @@ const Factions = () => {
             />
           </div>
         )}
-      </div>
-      <Footer />
     </PageLayout>
   );
 };

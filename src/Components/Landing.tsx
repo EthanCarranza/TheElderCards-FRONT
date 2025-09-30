@@ -3,8 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
 import HeroSection from "./HeroSection";
 import FloatingToast from "./FloatingToast";
 import PageLayout from "./PageLayout";
@@ -99,14 +97,12 @@ function Landing() {
   };
 
   return (
-    <PageLayout>
-      <FloatingToast message={toastMessage} onClose={handleCloseToast} />
-      <Navbar />
-      <div className="flex-1 overflow-y-auto">
-        <HeroSection title="" image="logo.png" />
-        <HeroSection title="Crea tus propias cartas!" image="hero.jpg" />
-      </div>
-      <Footer />
+    <PageLayout
+      overlay={<FloatingToast message={toastMessage} onClose={handleCloseToast} />}
+      contentClassName="overflow-y-auto"
+    >
+      <HeroSection title="" image="logo.png" />
+      <HeroSection title="Crea tus propias cartas!" image="hero.jpg" />
     </PageLayout>
   );
 }
