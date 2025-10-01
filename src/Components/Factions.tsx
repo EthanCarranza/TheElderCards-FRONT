@@ -10,7 +10,9 @@ interface Faction {
   description: string;
   territory: string;
   color: string;
+  img?: string;
 }
+
 
 const Factions = () => {
   const { user } = useAuth();
@@ -58,6 +60,14 @@ const Factions = () => {
                 key={factionItem._id}
                 className="relative flex flex-col items-start rounded-lg border-2 border-gray-700 bg-gray-800 p-4 shadow-lg transition-all hover:border-green-500"
               >
+                {factionItem.img && (
+                  <img
+                    src={factionItem.img}
+                    alt={`Imagen de ${factionItem.title}`}
+                    className="mb-3 h-40 w-full rounded-md object-cover"
+                    loading="lazy"
+                  />
+                )}
                 <div className="mb-2 flex w-full items-center gap-2">
                   <span
                     className="inline-block h-5 w-5 border border-gray-400"
