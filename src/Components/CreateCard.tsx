@@ -58,9 +58,10 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       return;
     }
     if (name === "type") {
+      const normalizedType = value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
       setForm((prev) => ({
         ...prev,
-        type: value,
+        type: normalizedType,
         attack: "",
         defense: "",
       }));
@@ -148,7 +149,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       <div className="relative text-black flex items-center">
         <select
           name="type"
-          value={form.type}
+          value={form.type.toLowerCase()}
           onChange={handleChange}
           className="p-2 rounded flex-1"
           required
@@ -348,3 +349,4 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
 };
 
 export default CreateCard;
+
