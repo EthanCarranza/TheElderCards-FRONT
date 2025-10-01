@@ -190,7 +190,7 @@ const Cards = () => {
             name="title"
             value={filters.title || ""}
             onChange={handleFilterChange}
-            placeholder="Titulo"
+            placeholder="Título"
             className="p-2 text-xl rounded"
           />
           <input
@@ -241,12 +241,12 @@ const Cards = () => {
             className="p-2 pr-4 text-xl rounded"
           >
             <option value="">Ordenar por...</option>
-            <option value="title_asc">Titulo A-Z</option>
-            <option value="title_desc">Titulo Z-A</option>
+            <option value="title_asc">Título A-Z</option>
+            <option value="title_desc">ítulo Z-A</option>
             <option value="creator_asc">Creador A-Z</option>
             <option value="creator_desc">Creador Z-A</option>
-            <option value="faction_asc">Faccion A-Z</option>
-            <option value="faction_desc">Faccion Z-A</option>
+            <option value="faction_asc">Facción A-Z</option>
+            <option value="faction_desc">Facción Z-A</option>
             <option value="type_asc">Tipo A-Z</option>
             <option value="type_desc">Tipo Z-A</option>
             <option value="cost_asc">Coste asc</option>
