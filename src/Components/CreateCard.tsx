@@ -33,10 +33,10 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
 
   const fieldHelp: Record<string, string> = {
     title:
-      "El nombre de la carta. Maximo 20 caracteres. Debe ser unico y descriptivo.",
-    description: "Descripcion larga de la carta. Maximo 100 caracteres.",
+      "El nombre de la carta. Máximo 20 caracteres. Debe ser único y descriptivo.",
+    description: "Descripción larga de la carta. Máximo 100 caracteres.",
     type: "El tipo de carta: Criatura, Artefacto o Hechizo.",
-    faction: "La faccion a la que pertenece la carta.",
+    faction: "La facción a la que pertenece la carta.",
     cost: "Coste de jugar la carta (0-10).",
     attack: "Poder de ataque de la criatura (0-10). Solo para criaturas.",
     defense: "Defensa de la criatura (1-10). Solo para criaturas.",
@@ -58,7 +58,9 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       return;
     }
     if (name === "type") {
-      const normalizedType = value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+      const normalizedType = value
+        ? value.charAt(0).toUpperCase() + value.slice(1)
+        : value;
       setForm((prev) => ({
         ...prev,
         type: normalizedType,
@@ -178,7 +180,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
           name="description"
           value={form.description}
           onChange={handleChange}
-          placeholder="Descripcion"
+          placeholder="Descripción"
           className="p-2 rounded flex-1 resize-none"
           required
           maxLength={100}
@@ -266,7 +268,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
               value={form.attack}
               onChange={handleChange}
               placeholder="Ataque"
-              className="p-2 rounded w-full"
+              className="p-2 text-black rounded w-full"
               required
             />
             <span
@@ -293,7 +295,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
               value={form.defense}
               onChange={handleChange}
               placeholder="Defensa"
-              className="p-2 rounded w-full"
+              className="p-2 text-black rounded w-full"
               required
             />
             <span
@@ -349,4 +351,3 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
 };
 
 export default CreateCard;
-
