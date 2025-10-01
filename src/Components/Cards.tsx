@@ -178,7 +178,7 @@ const Cards = () => {
             disabled={factions.length === 0}
           >
             <option value="">
-              {factions.length === 0 ? "Sin facciones" : "Faccion"}
+              {factions.length === 0 ? "Sin facciones" : "Facción"}
             </option>
             {factions.map((f) => (
               <option key={f._id} value={f._id}>
