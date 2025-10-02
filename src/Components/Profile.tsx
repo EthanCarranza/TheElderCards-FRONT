@@ -170,7 +170,7 @@ const Profile = () => {
     resetFeedback();
 
     if (!user || !profile) {
-      setErrorMessage("Sesion no valida. Vuelve a iniciar sesion.");
+      setErrorMessage("Sesión no válida. Vuelve a iniciar sesión.");
       return;
     }
 
@@ -220,7 +220,7 @@ const Profile = () => {
         });
 
         if (response.status !== 200) {
-          setErrorMessage("No fue posible actualizar los datos basicos.");
+          setErrorMessage("No fue posible actualizar los datos básicos.");
           return;
         }
         updatedUser = response.data;

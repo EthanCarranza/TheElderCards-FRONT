@@ -34,7 +34,7 @@ function Register() {
       setErrorMessage("El nombre de usuario debe tener al menos 3 caracteres.");
     } else if (!passwordRegex.test(password)) {
       setErrorMessage(
-        "La contrasena debe tener al menos 8 caracteres, una mayuscula, una minuscula, un numero y un simbolo especial."
+        "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo especial."
       );
     } else {
       const credentials = { email, password };
@@ -48,11 +48,11 @@ function Register() {
           const message = (response.data as { message?: string })?.message;
           if (message === "Usuario ya existente") {
             setErrorMessage(
-              "Ya existe un usuario con este nombre unico. Por favor, introduce otro username."
+              "Ya existe un usuario con este nombre único. Por favor, introduce otro username."
             );
           } else {
             setErrorMessage(
-              "Ya existe un usuario con este correo electronico. Por favor, introduce otro correo."
+              "Ya existe un usuario con este correo electrónico. Por favor, introduce otro correo."
             );
           }
           return;
@@ -60,7 +60,7 @@ function Register() {
 
         if (response.status !== 201) {
           setErrorMessage(
-            "Hubo un error al intentar registrarse. Por favor, intentalo mas tarde."
+            "Hubo un error al intentar registrarse. Por favor, inténtalo más tarde."
           );
           return;
         }
@@ -70,7 +70,7 @@ function Register() {
         setPassword("");
         navigate("/", { state: { registrationSuccess: true, credentials } });
       } catch (error: unknown) {
-        setErrorMessage(extractErrorMessage(error, "Error de conexion."));
+        setErrorMessage(extractErrorMessage(error, "Error de conexión."));
       }
     }
   };
@@ -97,7 +97,7 @@ function Register() {
               type="email"
               value={email}
               onChange={handleChange}
-              placeholder="Correo electronico"
+              placeholder="Correo electrónico"
               icon={<FaEnvelope />}
               autoComplete="email"
             />
@@ -106,7 +106,7 @@ function Register() {
               type="password"
               value={password}
               onChange={handleChange}
-              placeholder="Contrasena"
+              placeholder="Contraseña"
               icon={<FaLock />}
               autoComplete="new-password"
             />

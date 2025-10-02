@@ -24,7 +24,7 @@ function Landing() {
 
     if (!state?.registrationSuccess) return;
 
-    setToastMessage("Registro exitoso. Iniciando sesion...");
+    setToastMessage("Registro exitoso. Iniciando sesión...");
 
     const credentials = state.credentials;
     const cleanupNavigation = () => {
@@ -48,7 +48,7 @@ function Landing() {
 
         if (response.status !== 200) {
           setToastMessage(
-            "Registro exitoso, pero no pudimos iniciar sesion automaticamente."
+            "Registro exitoso, pero no pudimos iniciar sesión automáticamente."
           );
           return;
         }
@@ -67,12 +67,12 @@ function Landing() {
           image: data.user.image ?? DEFAULT_PROFILE_IMAGE,
         });
 
-        setToastMessage("Registro exitoso. Sesion iniciada automaticamente.");
+        setToastMessage("Registro exitoso. Sesión iniciada automáticamente.");
       } catch (error) {
         setToastMessage(
           extractErrorMessage(
             error,
-            "Registro exitoso, pero fallo el inicio de sesion automatico."
+            "Registro exitoso, pero falló el inicio de sesión automático."
           )
         );
       } finally {
@@ -105,7 +105,7 @@ function Landing() {
       contentClassName="overflow-y-auto"
     >
       <HeroSection title="" image="logo.png" />
-      <HeroSection title="Crea tus propias cartas!" image="hero.jpg" />
+      <HeroSection title="¡Crea tus propias cartas!" image="hero.jpg" />
     </PageLayout>
   );
 }

@@ -61,7 +61,7 @@ function Login() {
       return;
     }
     if (!emailRegex.test(email)) {
-      setErrorMessage("El correo electronico no es valido.");
+      setErrorMessage("El correo electrónico no es válido.");
       return;
     }
 
@@ -79,7 +79,7 @@ function Login() {
 
       if (response.status !== 200) {
         setErrorMessage(
-          "Hubo un error al intentar iniciar sesion. Por favor, intentalo mas tarde."
+          "Hubo un error al intentar iniciar sesión. Por favor, inténtalo más tarde."
         );
         return;
       }
@@ -90,7 +90,7 @@ function Login() {
         return;
       }
 
-      setSuccessMessage("Inicio de sesion exitoso!");
+      setSuccessMessage("¡Inicio de sesión exitoso!");
       login({
         email: data.user.email,
         userId: data.user.id,
@@ -102,7 +102,7 @@ function Login() {
       setEmail("");
       setPassword("");
     } catch (error: unknown) {
-      setErrorMessage(extractErrorMessage(error, "Error de conexion."));
+      setErrorMessage(extractErrorMessage(error, "Error de conexión."));
     }
   };
 

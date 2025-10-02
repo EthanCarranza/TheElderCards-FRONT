@@ -79,7 +79,7 @@ const CardDetail = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
-        setError("Identificador de carta no valido");
+        setError("Identificador de carta no válido");
         setLoading(false);
         return;
       }
