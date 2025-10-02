@@ -3,6 +3,7 @@ import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
+import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import FormInput from "./FormInput";
 import Message from "./Message";
 import PageLayout from "./PageLayout";
@@ -11,6 +12,8 @@ interface LoginUser {
   email: string;
   id: string;
   role: string;
+  username?: string;
+  image?: string;
 }
 
 interface LoginSuccessResponse {
@@ -93,6 +96,8 @@ function Login() {
         userId: data.user.id,
         token: data.token,
         role: data.user.role,
+        username: data.user.username ?? "",
+        image: data.user.image ?? DEFAULT_PROFILE_IMAGE,
       });
       setEmail("");
       setPassword("");

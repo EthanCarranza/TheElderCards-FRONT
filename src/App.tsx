@@ -6,12 +6,11 @@ import Cards from "./Components/Cards";
 import CardDetail from "./Components/CardDetail";
 import { AuthProvider } from "./contexts/AuthContext";
 import Factions from "./Components/Factions";
+import Profile from "./Components/Profile";
 
 function App() {
   return (
     <AuthProvider>
-      {" "}
-      {/* Proveemos el contexto de autenticación a toda la aplicación */}
       <Router>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -20,6 +19,7 @@ function App() {
           <Route path="/cards" element={<Cards />} />
           <Route path="/cards/:id" element={<CardDetail />} />
           <Route path="/factions" element={<Factions />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </Router>
     </AuthProvider>

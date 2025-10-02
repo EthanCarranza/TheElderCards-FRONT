@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import HeroSection from "./HeroSection";
 import FloatingToast from "./FloatingToast";
 import PageLayout from "./PageLayout";
+import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 
 function Landing() {
   const location = useLocation();
@@ -54,7 +55,7 @@ function Landing() {
 
         const data = response.data as {
           token: string;
-          user: { email: string; id: string; role: string };
+          user: { email: string; id: string; role: string; username?: string; image?: string };
         };
 
         login({
@@ -62,6 +63,8 @@ function Landing() {
           userId: data.user.id,
           token: data.token,
           role: data.user.role,
+          username: data.user.username ?? "",
+          image: data.user.image ?? DEFAULT_PROFILE_IMAGE,
         });
 
         setToastMessage("Registro exitoso. Sesion iniciada automaticamente.");

@@ -1,19 +1,20 @@
 import { createContext, useContext, useState, ReactNode } from "react";
+import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
+
+interface AuthUser {
+  email: string;
+  userId: string;
+  token: string;
+  role: string;
+  username: string;
+  image: string;
+}
 
 interface AuthContextType {
-  user: {
-    email: string;
-    userId: string;
-    token: string;
-    role: string;
-  } | null;
-  login: (data: {
-    email: string;
-    userId: string;
-    token: string;
-    role: string;
-  }) => void;
+  user: AuthUser | null;
+  login: (data: AuthUser) => void;
   logout: () => void;
+  updateUser: (data: Partial<Omit<AuthUser, "userId">>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,34 +23,47 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const persistUser = (data: AuthUser) => {
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("user", data.userId);
+  localStorage.setItem("email", data.email);
+  localStorage.setItem("role", data.role);
+  localStorage.setItem("username", data.username);
+  localStorage.setItem("image", data.image);
+};
+
+const normaliseUser = (data: AuthUser): AuthUser => ({
+  ...data,
+  username: data.username ?? "",
+  image: data.image ?? DEFAULT_PROFILE_IMAGE,
+});
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<{
-    email: string;
-    userId: string;
-    token: string;
-    role: string;
-  } | null>(() => {
+  const [user, setUser] = useState<AuthUser | null>(() => {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("user");
     const email = localStorage.getItem("email");
     const role = localStorage.getItem("role");
+    const username = localStorage.getItem("username") ?? "";
+    const image = localStorage.getItem("image") ?? DEFAULT_PROFILE_IMAGE;
+
     if (token && userId && email && role) {
-      return { email, userId, token, role };
+      return {
+        email,
+        userId,
+        token,
+        role,
+        username,
+        image,
+      };
     }
     return null;
   });
 
-  const login = (data: {
-    email: string;
-    userId: string;
-    token: string;
-    role: string;
-  }) => {
-    setUser(data);
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", data.userId);
-    localStorage.setItem("email", data.email);
-    localStorage.setItem("role", data.role);
+  const login = (data: AuthUser) => {
+    const userData = normaliseUser(data);
+    setUser(userData);
+    persistUser(userData);
   };
 
   const logout = () => {
@@ -58,10 +72,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("email");
     localStorage.removeItem("role");
+    localStorage.removeItem("username");
+    localStorage.removeItem("image");
+  };
+
+  const updateUser = (data: Partial<Omit<AuthUser, "userId">>) => {
+    setUser((current) => {
+      if (!current) return current;
+      const updated: AuthUser = normaliseUser({
+        ...current,
+        ...data,
+        userId: current.userId,
+        token: data.token ?? current.token,
+        role: data.role ?? current.role,
+        email: data.email ?? current.email,
+      });
+      persistUser(updated);
+      return updated;
+    });
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
