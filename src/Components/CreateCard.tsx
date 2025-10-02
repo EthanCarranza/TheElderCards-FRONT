@@ -84,6 +84,13 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
     void updateCanvas();
   }, [form, previewImage, factions]);
 
+  // Función para contar caracteres (mayúsculas cuentan doble)
+  const countCharacters = (text: string): number => {
+    return text.split("").reduce((count, char) => {
+      return count + (/[A-Z]/.test(char) ? 2 : 1);
+    }, 0);
+  };
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -95,6 +102,14 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       type: inputType,
       files,
     } = e.target as HTMLInputElement;
+
+    // Manejo especial para el campo de descripción
+    if (name === "description") {
+      if (countCharacters(value) <= 322) {
+        setForm((prev) => ({ ...prev, description: value }));
+      }
+      return;
+    }
 
     if (inputType === "file" && files) {
       setImage(files[0] || null);
@@ -254,31 +269,37 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
             </div>
           )}
         </div>
-        <div className="relative text-black flex items-center">
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Descripción"
-            className="p-2 rounded flex-1 resize-none"
-            required
-            maxLength={322}
-            rows={4}
-          />
-          <span
-            className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-            onMouseEnter={() =>
-              setTooltip({ field: "description", visible: true })
-            }
-            onMouseLeave={() => setTooltip({ field: "", visible: false })}
-          >
-            &#x2753;
-          </span>
-          {tooltip.visible && tooltip.field === "description" && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-              {fieldHelp.description}
+        <div className="relative text-black flex flex-col gap-1">
+          <div className="flex items-center">
+            <div className="relative flex-1">
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Descripción"
+                className="p-2 rounded w-full resize-none"
+                required
+                rows={4}
+              />
+              <div className="absolute right-0 bottom-[-20px] text-xs text-gray-400">
+                {322 - countCharacters(form.description)} caracteres restantes
+              </div>
             </div>
-          )}
+            <span
+              className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+              onMouseEnter={() =>
+                setTooltip({ field: "description", visible: true })
+              }
+              onMouseLeave={() => setTooltip({ field: "", visible: false })}
+            >
+              &#x2753;
+            </span>
+            {tooltip.visible && tooltip.field === "description" && (
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+                {fieldHelp.description}
+              </div>
+            )}
+          </div>
         </div>
         <div className="relative text-black flex items-center">
           <select

@@ -152,7 +152,7 @@ const Cards = () => {
             factions={factions.map((f) => ({
               _id: f._id,
               title: f.title,
-              color: f.color
+              color: f.color,
             }))}
           />
         </>

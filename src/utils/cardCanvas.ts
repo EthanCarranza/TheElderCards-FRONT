@@ -123,15 +123,38 @@ export async function drawCard(
     ctx.closePath();
     ctx.clip();
     const imgX = border;
-    const imgY =
-      Math.floor(
-        (imageHeight -
-          (canvasWidth - 2 * border) *
-            (imageElement.height / imageElement.width)) /
-          2
-      ) + border;
+    const imgY = border;
     const drawWidth = canvasWidth - 2 * border;
-    ctx.drawImage(imageElement, imgX, imgY, drawWidth, imageHeight);
+    const drawHeight = imageHeight;
+
+    // Calcular las dimensiones manteniendo el aspect ratio y cubriendo el área
+    let finalWidth = drawWidth;
+    let finalHeight = drawHeight;
+
+    const imageRatio = imageElement.width / imageElement.height;
+    const areaRatio = drawWidth / drawHeight;
+
+    if (imageRatio > areaRatio) {
+      // Imagen más ancha que el área
+      finalHeight = drawHeight;
+      finalWidth = drawHeight * imageRatio;
+    } else {
+      // Imagen más alta que el área
+      finalWidth = drawWidth;
+      finalHeight = drawWidth / imageRatio;
+    }
+
+    // Centrar la imagen
+    const offsetX = (drawWidth - finalWidth) / 2;
+    const offsetY = (drawHeight - finalHeight) / 2;
+
+    ctx.drawImage(
+      imageElement,
+      imgX + offsetX,
+      imgY + offsetY,
+      finalWidth,
+      finalHeight
+    );
     ctx.restore();
   }
 
@@ -287,9 +310,9 @@ export async function drawCard(
   } // Pie con nombre del creador
   const footerY = canvasHeight - border - footerHeight;
   ctx.save();
-  const footerLabelFont = 14;
-  const footerNameFont = 18;
-  const footerGap = 6;
+  const footerLabelFont = 12;
+  const footerNameFont = 14;
+  const footerGap = 4;
   const footerPaddingBottom = 12;
   const footerBaseline = footerY + footerHeight - footerPaddingBottom;
   const footerLabel = "Created by:";
