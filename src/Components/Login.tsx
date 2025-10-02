@@ -108,42 +108,41 @@ function Login() {
 
   return (
     <PageLayout contentClassName="flex flex-1 items-center justify-center py-12">
-        <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-2xl">
-          <h2 className="mb-6 text-center text-3xl font-bold text-black">
-            Inicia sesion
-          </h2>
-          <Message message={errorMessage} type="error" />
-          <Message message={successMessage} type="success" />
-          <form onSubmit={handleSubmit}>
-            <FormInput
-              id="email"
-              type="email"
-              value={email}
-              onChange={handleChange}
-              placeholder="Correo electronico"
-              icon={<FaEnvelope />}
-              autoComplete="email"
-            />
-            <FormInput
-              id="password"
-              type="password"
-              value={password}
-              onChange={handleChange}
-              placeholder="Contrasena"
-              icon={<FaLock />}
-              autoComplete="current-password"
-            />
-            <button
-              type="submit"
-              className="mt-4 w-full rounded bg-black px-4 py-2 font-bold text-white transition-colors hover:bg-gray-800"
-            >
-              Iniciar sesion
-            </button>
-          </form>
-        </div>
+      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-2xl">
+        <h2 className="mb-6 text-center text-3xl font-bold text-black">
+          Inicia sesión
+        </h2>
+        <Message message={errorMessage} type="error" />
+        <Message message={successMessage} type="success" />
+        <form onSubmit={handleSubmit}>
+          <FormInput
+            id="email"
+            type="email"
+            value={email}
+            onChange={handleChange}
+            placeholder="Correo electrónico"
+            icon={<FaEnvelope />}
+            autoComplete="email"
+          />
+          <FormInput
+            id="password"
+            type="password"
+            value={password}
+            onChange={handleChange}
+            placeholder="Contraseña"
+            icon={<FaLock />}
+            autoComplete="current-password"
+          />
+          <button
+            type="submit"
+            className="mt-4 w-full rounded bg-black px-4 py-2 font-bold text-white transition-colors hover:bg-gray-800"
+          >
+            Iniciar sesión
+          </button>
+        </form>
+      </div>
     </PageLayout>
   );
 }
 
 export default Login;
-

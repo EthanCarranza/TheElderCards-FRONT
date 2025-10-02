@@ -1,4 +1,11 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUser, FaCamera } from "react-icons/fa";
 import { useAuth } from "../contexts/AuthContext";
@@ -23,7 +30,8 @@ interface UpdateImageResponse {
   user: UserProfile;
 }
 
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+const passwordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 const Profile = () => {
   const { user, updateUser, logout } = useAuth();
@@ -98,7 +106,10 @@ const Profile = () => {
           }
         }
       } catch (error) {
-        const message = extractErrorMessage(error, "No fue posible cargar el perfil.");
+        const message = extractErrorMessage(
+          error,
+          "No fue posible cargar el perfil."
+        );
         setErrorMessage(message);
         if (
           error &&
@@ -123,7 +134,10 @@ const Profile = () => {
     void fetchProfile();
   }, [user?.userId, user?.token, navigate]);
 
-  const currentImage = useMemo(() => imagePreview || DEFAULT_PROFILE_IMAGE, [imagePreview]);
+  const currentImage = useMemo(
+    () => imagePreview || DEFAULT_PROFILE_IMAGE,
+    [imagePreview]
+  );
 
   useEffect(() => {
     return () => {
@@ -174,12 +188,12 @@ const Profile = () => {
 
     if (password) {
       if (password !== confirmPassword) {
-        setErrorMessage("Las contrasenas no coinciden.");
+        setErrorMessage("Las contraseñas no coinciden.");
         return;
       }
       if (!passwordRegex.test(password)) {
         setErrorMessage(
-          "La contrasena debe tener al menos 8 caracteres, una mayuscula, una minuscula, un numero y un simbolo especial."
+          "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo especial."
         );
         return;
       }
@@ -218,13 +232,16 @@ const Profile = () => {
       if (selectedFile) {
         const formData = new FormData();
         formData.append("img", selectedFile);
-        const response = await apiFetch<UpdateImageResponse>(`/users/profileImage/${user.userId}`, {
-          method: "put",
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        });
+        const response = await apiFetch<UpdateImageResponse>(
+          `/users/profileImage/${user.userId}`,
+          {
+            method: "put",
+            body: formData,
+            headers: {
+              Authorization: `Bearer ${user.token}`,
+            },
+          }
+        );
 
         if (response.status !== 200) {
           setErrorMessage("No fue posible actualizar la imagen de perfil.");
@@ -241,7 +258,8 @@ const Profile = () => {
         updatedUser = response.data.user;
       }
 
-      const resolvedImage = updatedUser.image ?? imagePreview ?? DEFAULT_PROFILE_IMAGE;
+      const resolvedImage =
+        updatedUser.image ?? imagePreview ?? DEFAULT_PROFILE_IMAGE;
       updateUser({
         username: updatedUser.username ?? username,
         email: updatedUser.email ?? email,
@@ -251,7 +269,9 @@ const Profile = () => {
       setConfirmPassword("");
       setSuccessMessage("Perfil actualizado correctamente.");
     } catch (error) {
-      setErrorMessage(extractErrorMessage(error, "No fue posible guardar los cambios."));
+      setErrorMessage(
+        extractErrorMessage(error, "No fue posible guardar los cambios.")
+      );
     } finally {
       setSaving(false);
     }
@@ -292,7 +312,9 @@ const Profile = () => {
             </label>
           </div>
           <div className="text-center sm:text-left">
-            <p className="text-xl font-semibold">{username || profile?.username}</p>
+            <p className="text-xl font-semibold">
+              {username || profile?.username}
+            </p>
             <p className="text-sm text-gray-600">{email || profile?.email}</p>
             <p className="mt-1 text-xs uppercase tracking-wide text-gray-500">
               Rol: {profile?.role}
@@ -318,7 +340,7 @@ const Profile = () => {
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="Correo electronico"
+            placeholder="Correo electrónico"
             icon={<FaEnvelope />}
             autoComplete="email"
           />
@@ -327,7 +349,7 @@ const Profile = () => {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="Nueva contrasena"
+            placeholder="Nueva contraseña"
             icon={<FaLock />}
             autoComplete="new-password"
           />
@@ -336,7 +358,7 @@ const Profile = () => {
             type="password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Confirmar contrasena"
+            placeholder="Confirmar contraseña"
             icon={<FaLock />}
             autoComplete="new-password"
           />

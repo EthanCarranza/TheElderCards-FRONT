@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -54,7 +53,7 @@ function Navbar() {
               </li>
               <li>
                 <Link to="/login" className="hover:text-gray-500">
-                  Iniciar Sesión
+                  Login
                 </Link>
               </li>
             </>
@@ -62,19 +61,12 @@ function Navbar() {
             <>
               <li>
                 <Link to="/profile" className="hover:text-gray-500">
-                  <span className="flex items-center gap-4">
-                    <img
-                      src={user.image || DEFAULT_PROFILE_IMAGE}
-                      alt="Avatar"
-                      className="h-8 w-8 rounded-full object-cover border border-white/30 shadow-sm"
-                    />
-                    <span>Perfil</span>
-                  </span>
+                  Perfil
                 </Link>
               </li>
               <li>
                 <button onClick={logout} className="hover:text-red-500">
-                  Cerrar sesión
+                  Cerrar sesion
                 </button>
               </li>
             </>
