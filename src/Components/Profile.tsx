@@ -67,6 +67,8 @@ const Profile = () => {
       return;
     }
 
+    setLoading(true);
+
     const currentUsername = user.username ?? "";
     const currentEmail = user.email ?? "";
     const currentImage = user.image ?? DEFAULT_PROFILE_IMAGE;
@@ -132,7 +134,7 @@ const Profile = () => {
     };
 
     void fetchProfile();
-  }, [user?.userId, user?.token, navigate]);
+  }, [user, navigate]);
 
   const currentImage = useMemo(
     () => imagePreview || DEFAULT_PROFILE_IMAGE,
