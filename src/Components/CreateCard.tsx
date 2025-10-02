@@ -46,7 +46,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
   const fieldHelp: Record<string, string> = {
     title:
       "El nombre de la carta. Máximo 20 caracteres. Debe ser único y descriptivo.",
-    description: "Descripción de la carta. Máximo 220 caracteres.",
+    description: "Descripción de la carta. Máximo 322 caracteres.",
     type: "El tipo de carta: Criatura, Artefacto o Hechizo.",
     faction: "La facción a la que pertenece la carta.",
     cost: "Coste de jugar la carta (0-10).",
@@ -262,7 +262,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
             placeholder="Descripción"
             className="p-2 rounded flex-1 resize-none"
             required
-            maxLength={220}
+            maxLength={322}
             rows={4}
           />
           <span

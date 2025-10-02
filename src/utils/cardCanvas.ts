@@ -194,11 +194,14 @@ export async function drawCard(
 
   // Descripción
   const descY = imageHeight + titleBarHeight + typeBarHeight;
+  // Calcular el espacio disponible teniendo en cuenta el área de ataque/defensa
+  const defenseHeight = 38; // Altura del recuadro de ataque/defensa
+  const defenseMargin = 8; // Margen adicional para separación
   const availableDescHeight = Math.max(
-    canvasHeight - footerHeight - border - descY - 16,
+    canvasHeight - border - descY - defenseHeight - defenseMargin,
     0
   );
-  const descHeight = Math.min(availableDescHeight, 200);
+  const descHeight = availableDescHeight; // Usar todo el espacio disponible
 
   if (descHeight > 0) {
     ctx.save();
@@ -268,10 +271,13 @@ export async function drawCard(
       lines.push(currentLine);
     }
 
-    // Dibujar las líneas centradas verticalmente
+    // Asegurar márgenes iguales arriba y abajo
+    const fixedPadding = 16; // Padding fijo arriba y abajo
+    const availableHeight = descHeight - fixedPadding * 2; // Espacio disponible entre paddings
     const totalLines = Math.min(lines.length, maxLines);
-    const totalHeight = totalLines * lineHeight;
-    const startY = descY + (descHeight - totalHeight) / 2 + lineHeight / 2;
+    const totalTextHeight = totalLines * lineHeight;
+    const extraSpace = Math.max(availableHeight - totalTextHeight, 0);
+    const startY = descY + fixedPadding + extraSpace / 2;
 
     lines.slice(0, maxLines).forEach((line, index) => {
       const y = startY + index * lineHeight;
@@ -287,7 +293,7 @@ export async function drawCard(
   const footerPaddingBottom = 12;
   const footerBaseline = footerY + footerHeight - footerPaddingBottom;
   const footerLabel = "Created by:";
-  const footerName = creator || "Anonimo";
+  const footerName = creator && creator !== "undefined" ? creator : "Anónimo";
   const footerLabelFontStr = "400 " + footerLabelFont + "px Cyrodiil";
   const footerNameFontStr = "600 " + footerNameFont + "px Cyrodiil";
 
