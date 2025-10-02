@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { apiFetch } from "./api";
 import { CARD_TYPES } from "../constants/cardTypes";
 import { extractErrorMessage } from "../utils/errors";
+import { drawCard, CARD_DIMENSIONS_EXPORT } from "../utils/cardCanvas";
+import {
+  handleCardBlur,
+  handleCardFocus,
+  handleCardPointerLeave,
+  handleCardPointerMove,
+} from "../utils/card3d";
 
 interface FactionOption {
   _id: string;
   title: string;
+  color: string;
 }
 interface Props {
   onCreated?: () => void;
@@ -13,6 +21,10 @@ interface Props {
 }
 
 const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [previewImage, setPreviewImage] = useState<HTMLImageElement | null>(
+    null
+  );
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -34,7 +46,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
   const fieldHelp: Record<string, string> = {
     title:
       "El nombre de la carta. Máximo 20 caracteres. Debe ser único y descriptivo.",
-    description: "Descripción larga de la carta. Máximo 100 caracteres.",
+    description: "Descripción de la carta. Máximo 220 caracteres.",
     type: "El tipo de carta: Criatura, Artefacto o Hechizo.",
     faction: "La facción a la que pertenece la carta.",
     cost: "Coste de jugar la carta (0-10).",
@@ -42,6 +54,36 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
     defense: "Defensa de la criatura (1-10). Solo para criaturas.",
     image: "Imagen de la carta. Formatos permitidos: JPG, PNG, GIF.",
   };
+
+  useEffect(() => {
+    const updateCanvas = async () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const faction = factions.find((f) => f._id === form.faction);
+      const frameColor = faction ? faction.color : "#999999";
+
+      await drawCard(ctx, {
+        title: form.title || "Título",
+        type: form.type,
+        cost: parseInt(form.cost) || 0,
+        description: form.description || "Descripción",
+        frameColor,
+        creator: localStorage.getItem("username") || "Anónimo",
+        imageElement: previewImage || undefined,
+        ...(form.type === "Creature"
+          ? {
+              attack: parseInt(form.attack) || 0,
+              defense: parseInt(form.defense) || 1,
+            }
+          : {}),
+      });
+    };
+    void updateCanvas();
+  }, [form, previewImage, factions]);
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -53,10 +95,23 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       type: inputType,
       files,
     } = e.target as HTMLInputElement;
+
     if (inputType === "file" && files) {
       setImage(files[0] || null);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const img = new Image();
+          img.onload = () => {
+            setPreviewImage(img);
+          };
+          img.src = event.target.result as string;
+        }
+      };
+      reader.readAsDataURL(files[0]);
       return;
     }
+
     if (name === "type") {
       const normalizedType = value
         ? value.charAt(0).toUpperCase() + value.slice(1)
@@ -120,233 +175,260 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-gray-800 text-xl rounded p-8 w-full max-w-lg mx-auto flex flex-col gap-4"
-    >
-      <h3 className="text-3xl font-bold text-white mb-2">Crear nueva carta</h3>
-      <div className="relative text-black  flex items-center">
-        <input
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          placeholder="Titulo"
-          className="p-2 rounded flex-1"
-          required
-          maxLength={20}
-        />
-        <span
-          className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-          onMouseEnter={() => setTooltip({ field: "title", visible: true })}
-          onMouseLeave={() => setTooltip({ field: "", visible: false })}
-        >
-          &#x2753;
-        </span>
-        {tooltip.visible && tooltip.field === "title" && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-            {fieldHelp.title}
-          </div>
-        )}
-      </div>
-      <div className="relative text-black flex items-center">
-        <select
-          name="type"
-          value={form.type.toLowerCase()}
-          onChange={handleChange}
-          className="p-2 rounded flex-1"
-          required
-        >
-          {CARD_TYPES.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </select>
-        <span
-          className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-          onMouseEnter={() => setTooltip({ field: "type", visible: true })}
-          onMouseLeave={() => setTooltip({ field: "", visible: false })}
-        >
-          &#x2753;
-        </span>
-        {tooltip.visible && tooltip.field === "type" && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-            {fieldHelp.type}
-          </div>
-        )}
-      </div>
-      <div className="relative text-black flex items-center">
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Descripción"
-          className="p-2 rounded flex-1 resize-none"
-          required
-          maxLength={100}
-          rows={2}
-        />
-        <span
-          className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-          onMouseEnter={() =>
-            setTooltip({ field: "description", visible: true })
-          }
-          onMouseLeave={() => setTooltip({ field: "", visible: false })}
-        >
-          &#x2753;
-        </span>
-        {tooltip.visible && tooltip.field === "description" && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-            {fieldHelp.description}
-          </div>
-        )}
-      </div>
-      <div className="relative text-black flex items-center">
-        <select
-          name="faction"
-          value={form.faction}
-          onChange={handleChange}
-          className="p-2 rounded flex-1"
-          required
-          disabled={factions.length === 0}
-        >
-          <option value="">
-            {factions.length === 0 ? "No hay facciones disponibles" : "Facción"}
-          </option>
-          {factions.map((f) => (
-            <option key={f._id} value={f._id}>
-              {f.title}
-            </option>
-          ))}
-        </select>
-        <span
-          className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-          onMouseEnter={() => setTooltip({ field: "faction", visible: true })}
-          onMouseLeave={() => setTooltip({ field: "", visible: false })}
-        >
-          &#x2753;
-        </span>
-        {tooltip.visible && tooltip.field === "faction" && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-            {fieldHelp.faction}
-          </div>
-        )}
-      </div>
-      <div className="relative text-black flex items-center">
-        <input
-          name="cost"
-          type="number"
-          min={0}
-          max={10}
-          value={form.cost}
-          onChange={handleChange}
-          placeholder="Coste"
-          className="p-2 rounded flex-1"
-          required
-        />
-        <span
-          className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-          onMouseEnter={() => setTooltip({ field: "cost", visible: true })}
-          onMouseLeave={() => setTooltip({ field: "", visible: false })}
-        >
-          &#x2753;
-        </span>
-        {tooltip.visible && tooltip.field === "cost" && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-            {fieldHelp.cost}
-          </div>
-        )}
-      </div>
-      {form.type === "Creature" && (
-        <div className="flex gap-4">
-          <div className="relative flex-1 flex items-center">
-            <input
-              name="attack"
-              type="number"
-              min={0}
-              max={10}
-              value={form.attack}
-              onChange={handleChange}
-              placeholder="Ataque"
-              className="p-2 text-black rounded w-full"
-              required
-            />
-            <span
-              className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-              onMouseEnter={() =>
-                setTooltip({ field: "attack", visible: true })
-              }
-              onMouseLeave={() => setTooltip({ field: "", visible: false })}
-            >
-              &#x2753;
-            </span>
-            {tooltip.visible && tooltip.field === "attack" && (
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-                {fieldHelp.attack}
-              </div>
-            )}
-          </div>
-          <div className="relative flex-1 flex items-center">
-            <input
-              name="defense"
-              type="number"
-              min={1}
-              max={10}
-              value={form.defense}
-              onChange={handleChange}
-              placeholder="Defensa"
-              className="p-2 text-black rounded w-full"
-              required
-            />
-            <span
-              className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-              onMouseEnter={() =>
-                setTooltip({ field: "defense", visible: true })
-              }
-              onMouseLeave={() => setTooltip({ field: "", visible: false })}
-            >
-              &#x2753;
-            </span>
-            {tooltip.visible && tooltip.field === "defense" && (
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-                {fieldHelp.defense}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-      <div className="relative flex items-center">
-        <input
-          name="image"
-          type="file"
-          accept="image/*"
-          onChange={handleChange}
-          className="p-2 rounded flex-1 bg-gray-700 text-white"
-          required
-        />
-        <span
-          className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
-          onMouseEnter={() => setTooltip({ field: "image", visible: true })}
-          onMouseLeave={() => setTooltip({ field: "", visible: false })}
-        >
-          &#x2753;
-        </span>
-        {tooltip.visible && tooltip.field === "image" && (
-          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
-            {fieldHelp.image}
-          </div>
-        )}
-      </div>
-      <button
-        type="submit"
-        className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
-        disabled={loading}
+    <div className="flex gap-8 justify-center items-start">
+      <div
+        className="card-3d-wrapper"
+        style={{ width: `${CARD_DIMENSIONS_EXPORT.canvasWidth + 32}px` }}
       >
-        {loading ? "Creando..." : "Crear carta"}
-      </button>
-      {error && <div className="text-red-500">{error}</div>}
-      {success && <div className="text-green-500">{success}</div>}
-    </form>
+        <div
+          className="card-3d relative block h-full w-full overflow-hidden rounded-lg border border-black/30 shadow-2xl bg-gray-800 p-4"
+          onPointerMove={handleCardPointerMove}
+          onPointerLeave={handleCardPointerLeave}
+          onPointerCancel={handleCardPointerLeave}
+          onFocus={handleCardFocus}
+          onBlur={handleCardBlur}
+          tabIndex={0}
+        >
+          <canvas
+            ref={canvasRef}
+            width={CARD_DIMENSIONS_EXPORT.canvasWidth}
+            height={CARD_DIMENSIONS_EXPORT.canvasHeight}
+            className="card-3d-element"
+          />
+        </div>
+      </div>
+      <form
+        onSubmit={handleSubmit}
+        className="bg-gray-800 text-xl rounded p-8 w-full max-w-lg flex flex-col gap-4"
+      >
+        <h3 className="text-3xl font-bold text-white mb-2">
+          Crear nueva carta
+        </h3>
+        <div className="relative text-black  flex items-center">
+          <input
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Titulo"
+            className="p-2 rounded flex-1"
+            required
+            maxLength={20}
+          />
+          <span
+            className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+            onMouseEnter={() => setTooltip({ field: "title", visible: true })}
+            onMouseLeave={() => setTooltip({ field: "", visible: false })}
+          >
+            &#x2753;
+          </span>
+          {tooltip.visible && tooltip.field === "title" && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+              {fieldHelp.title}
+            </div>
+          )}
+        </div>
+        <div className="relative text-black flex items-center">
+          <select
+            name="type"
+            value={form.type.toLowerCase()}
+            onChange={handleChange}
+            className="p-2 rounded flex-1"
+            required
+          >
+            {CARD_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+          <span
+            className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+            onMouseEnter={() => setTooltip({ field: "type", visible: true })}
+            onMouseLeave={() => setTooltip({ field: "", visible: false })}
+          >
+            &#x2753;
+          </span>
+          {tooltip.visible && tooltip.field === "type" && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+              {fieldHelp.type}
+            </div>
+          )}
+        </div>
+        <div className="relative text-black flex items-center">
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Descripción"
+            className="p-2 rounded flex-1 resize-none"
+            required
+            maxLength={220}
+            rows={4}
+          />
+          <span
+            className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+            onMouseEnter={() =>
+              setTooltip({ field: "description", visible: true })
+            }
+            onMouseLeave={() => setTooltip({ field: "", visible: false })}
+          >
+            &#x2753;
+          </span>
+          {tooltip.visible && tooltip.field === "description" && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+              {fieldHelp.description}
+            </div>
+          )}
+        </div>
+        <div className="relative text-black flex items-center">
+          <select
+            name="faction"
+            value={form.faction}
+            onChange={handleChange}
+            className="p-2 rounded flex-1"
+            required
+            disabled={factions.length === 0}
+          >
+            <option value="">
+              {factions.length === 0
+                ? "No hay facciones disponibles"
+                : "Facción"}
+            </option>
+            {factions.map((f) => (
+              <option key={f._id} value={f._id}>
+                {f.title}
+              </option>
+            ))}
+          </select>
+          <span
+            className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+            onMouseEnter={() => setTooltip({ field: "faction", visible: true })}
+            onMouseLeave={() => setTooltip({ field: "", visible: false })}
+          >
+            &#x2753;
+          </span>
+          {tooltip.visible && tooltip.field === "faction" && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+              {fieldHelp.faction}
+            </div>
+          )}
+        </div>
+        <div className="relative text-black flex items-center">
+          <input
+            name="cost"
+            type="number"
+            min={0}
+            max={10}
+            value={form.cost}
+            onChange={handleChange}
+            placeholder="Coste"
+            className="p-2 rounded flex-1"
+            required
+          />
+          <span
+            className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+            onMouseEnter={() => setTooltip({ field: "cost", visible: true })}
+            onMouseLeave={() => setTooltip({ field: "", visible: false })}
+          >
+            &#x2753;
+          </span>
+          {tooltip.visible && tooltip.field === "cost" && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+              {fieldHelp.cost}
+            </div>
+          )}
+        </div>
+        {form.type === "Creature" && (
+          <div className="flex gap-4">
+            <div className="relative flex-1 flex items-center">
+              <input
+                name="attack"
+                type="number"
+                min={0}
+                max={10}
+                value={form.attack}
+                onChange={handleChange}
+                placeholder="Ataque"
+                className="p-2 text-black rounded w-full"
+                required
+              />
+              <span
+                className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+                onMouseEnter={() =>
+                  setTooltip({ field: "attack", visible: true })
+                }
+                onMouseLeave={() => setTooltip({ field: "", visible: false })}
+              >
+                &#x2753;
+              </span>
+              {tooltip.visible && tooltip.field === "attack" && (
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+                  {fieldHelp.attack}
+                </div>
+              )}
+            </div>
+            <div className="relative flex-1 flex items-center">
+              <input
+                name="defense"
+                type="number"
+                min={1}
+                max={10}
+                value={form.defense}
+                onChange={handleChange}
+                placeholder="Defensa"
+                className="p-2 text-black rounded w-full"
+                required
+              />
+              <span
+                className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+                onMouseEnter={() =>
+                  setTooltip({ field: "defense", visible: true })
+                }
+                onMouseLeave={() => setTooltip({ field: "", visible: false })}
+              >
+                &#x2753;
+              </span>
+              {tooltip.visible && tooltip.field === "defense" && (
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+                  {fieldHelp.defense}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="relative flex items-center">
+          <input
+            name="image"
+            type="file"
+            accept="image/*"
+            onChange={handleChange}
+            className="p-2 rounded flex-1 bg-gray-700 text-white"
+            required
+          />
+          <span
+            className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+            onMouseEnter={() => setTooltip({ field: "image", visible: true })}
+            onMouseLeave={() => setTooltip({ field: "", visible: false })}
+          >
+            &#x2753;
+          </span>
+          {tooltip.visible && tooltip.field === "image" && (
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+              {fieldHelp.image}
+            </div>
+          )}
+        </div>
+        <button
+          type="submit"
+          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+          disabled={loading}
+        >
+          {loading ? "Creando..." : "Crear carta"}
+        </button>
+        {error && <div className="text-red-500">{error}</div>}
+        {success && <div className="text-green-500">{success}</div>}
+      </form>
+    </div>
   );
 };
 
