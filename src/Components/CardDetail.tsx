@@ -100,6 +100,7 @@ const CardDetail = () => {
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState("");
   const [actionErr, setActionErr] = useState("");
+  const [downloadingCard, setDownloadingCard] = useState(false);
   const [creatorInfo, setCreatorInfo] = useState<CreatorSummary | null>(null);
   const [creatorLoading, setCreatorLoading] = useState(false);
 
@@ -352,6 +353,60 @@ const CardDetail = () => {
     creatorInfo?.username ?? creatorInfo?.email ?? card?.creator ?? "Anónimo";
   const creatorAvatar = creatorInfo?.image || DEFAULT_PROFILE_IMAGE;
 
+  const handleDownloadCard = async () => {
+    if (!card?.img) return;
+    setDownloadingCard(true);
+    try {
+      const response = await fetch(card.img, { mode: "cors" });
+      if (!response.ok) {
+        throw new Error(`Respuesta inesperada: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      const urlInfo = (() => {
+        try {
+          return new URL(card.img, window.location.href);
+        } catch (error) {
+          return null;
+        }
+      })();
+      const fileNameFromUrl =
+        urlInfo?.pathname.split("/").pop()?.split("?").shift() ?? "";
+      const extension = (() => {
+        if (fileNameFromUrl.includes(".")) {
+          const ext = fileNameFromUrl.split(".").pop();
+          if (ext && ext.length <= 5) return ext;
+        }
+        return "png";
+      })();
+      const sanitizedTitle = (card.title ?? "carta")
+        .normalize("NFD")
+        .replace(/[^\w\s-]/g, "")
+        .replace(/[̀-ͯ]/g, "")
+        .trim();
+      const safeBase = sanitizedTitle
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+      const fileName = `${safeBase || "carta"}.${extension}`;
+      anchor.href = blobUrl;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (downloadError) {
+      console.error("Error al descargar la carta", downloadError);
+      setError(
+        extractErrorMessage(downloadError, "No se pudo descargar la carta")
+      );
+    } finally {
+      setDownloadingCard(false);
+    }
+  };
+
   const formattedDate = useMemo(() => {
     if (!card?.date) return "-";
     const parsed = new Date(card.date);
@@ -442,6 +497,16 @@ const CardDetail = () => {
                 </p>
               )}
             </div>
+            {card.img && (
+              <button
+                type="button"
+                onClick={() => void handleDownloadCard()}
+                disabled={downloadingCard}
+                className="mt-3 inline-flex items-center gap-2 rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {downloadingCard ? "Descargando..." : "Descargar carta"}
+              </button>
+            )}
             <p className="mt-1 text-sm text-gray-600">Fecha: {formattedDate}</p>
 
             {faction && (
