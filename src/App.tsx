@@ -9,6 +9,7 @@ import Factions from "./Components/Factions";
 import Profile from "./Components/Profile";
 import Collections from "./Components/Collections";
 import CollectionDetail from "./Components/CollectionDetail";
+import UserPublicProfile from "./Components/UserPublicProfile";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/collections/:id" element={<CollectionDetail />} />
           <Route path="/factions" element={<Factions />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/users/:userId" element={<UserPublicProfile />} />
         </Routes>
       </Router>
     </AuthProvider>

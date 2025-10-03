@@ -239,7 +239,7 @@ const Cards = () => {
           >
             <option value="">Ordenar por...</option>
             <option value="title_asc">Título A-Z</option>
-            <option value="title_desc">ítulo Z-A</option>
+            <option value="title_desc">Título Z-A</option>
             <option value="creator_asc">Creador A-Z</option>
             <option value="creator_desc">Creador Z-A</option>
             <option value="faction_asc">Facción A-Z</option>

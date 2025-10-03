@@ -4,6 +4,7 @@ import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
+import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import {
   handleCardBlur,
   handleCardFocus,
@@ -31,6 +32,14 @@ interface CardDetailData {
   attack?: number;
   defense?: number;
   date?: string;
+}
+
+interface CreatorSummary {
+  _id?: string;
+  id?: string;
+  username?: string;
+  email?: string;
+  image?: string;
 }
 
 interface CardDetailLocationState {
@@ -91,6 +100,8 @@ const CardDetail = () => {
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState("");
   const [actionErr, setActionErr] = useState("");
+  const [creatorInfo, setCreatorInfo] = useState<CreatorSummary | null>(null);
+  const [creatorLoading, setCreatorLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -155,6 +166,53 @@ const CardDetail = () => {
     };
     void loadMyCollections();
   }, [user]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadCreatorInfo = async () => {
+      if (!card?.creator) {
+        if (isActive) {
+          setCreatorInfo(null);
+          setCreatorLoading(false);
+        }
+        return;
+      }
+
+      setCreatorLoading(true);
+      try {
+        const response = await apiFetch<CreatorSummary[]>("/users");
+        const users = response.data ?? [];
+        const normalizedCreator = card.creator.toLowerCase();
+        const found = users.find((candidate) => {
+          const candidateUsername = candidate.username?.toLowerCase();
+          const candidateEmail = candidate.email?.toLowerCase();
+          return (
+            candidateUsername === normalizedCreator ||
+            candidateEmail === normalizedCreator
+          );
+        });
+        if (isActive) {
+          setCreatorInfo(found ?? null);
+        }
+      } catch (creatorError) {
+        console.error("Error al cargar la información del creador", creatorError);
+        if (isActive) {
+          setCreatorInfo(null);
+        }
+      } finally {
+        if (isActive) {
+          setCreatorLoading(false);
+        }
+      }
+    };
+
+    void loadCreatorInfo();
+
+    return () => {
+      isActive = false;
+    };
+  }, [card?.creator]);
 
   const alreadyInSelected = useMemo(() => {
     if (!id || !selectedCollection) return false;
@@ -285,6 +343,15 @@ const CardDetail = () => {
     }
   };
 
+  const creatorProfileId = creatorInfo?._id ?? creatorInfo?.id ?? null;
+  const handleCreatorClick = () => {
+    if (!creatorProfileId) return;
+    navigate(`/users/${creatorProfileId}`);
+  };
+  const creatorDisplayName =
+    creatorInfo?.username ?? creatorInfo?.email ?? card?.creator ?? "Anónimo";
+  const creatorAvatar = creatorInfo?.image || DEFAULT_PROFILE_IMAGE;
+
   const formattedDate = useMemo(() => {
     if (!card?.date) return "-";
     const parsed = new Date(card.date);
@@ -343,9 +410,38 @@ const CardDetail = () => {
             <p className="mt-1 text-sm text-gray-600">
               {card.type} - Coste {card.cost}
             </p>
-            <p className="mt-1 text-sm text-gray-600">
-              Creada por {card.creator}
-            </p>
+            <div className="mt-3">
+              <span className="text-sm font-semibold text-gray-900">Creador</span>
+              {creatorLoading ? (
+                <p className="mt-2 text-sm text-gray-600">
+                  Cargando información del creador...
+                </p>
+              ) : creatorInfo ? (
+                <button
+                  type="button"
+                  disabled={!creatorProfileId}
+                  onClick={handleCreatorClick}
+                  className={`mt-2 flex w-full max-w-xs items-center gap-3 rounded-lg border border-gray-200 bg-white/60 p-3 text-left shadow-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500/60 hover:border-gray-300 hover:bg-white ${!creatorProfileId ? "cursor-not-allowed opacity-70" : ""}`}
+                >
+                  <img
+                    src={creatorAvatar}
+                    alt={`Perfil de ${creatorDisplayName}`}
+                    className="h-12 w-12 rounded-full object-cover"
+                    loading="lazy"
+                  />
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {creatorDisplayName}
+                    </div>
+                    <div className="text-xs text-gray-500">Ver perfil</div>
+                  </div>
+                </button>
+              ) : (
+                <p className="mt-2 text-sm text-gray-600">
+                  Creada por {card.creator}
+                </p>
+              )}
+            </div>
             <p className="mt-1 text-sm text-gray-600">Fecha: {formattedDate}</p>
 
             {faction && (
@@ -518,5 +614,3 @@ const CardDetail = () => {
 };
 
 export default CardDetail;
-
-
