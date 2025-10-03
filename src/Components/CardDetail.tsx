@@ -82,6 +82,7 @@ const CardDetail = () => {
   interface MyCollectionOption {
     _id: string;
     title: string;
+    cards?: Array<string | { _id: string }>;
   }
   const [myCollections, setMyCollections] = useState<MyCollectionOption[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<string>("");
@@ -152,8 +153,23 @@ const CardDetail = () => {
     void loadMyCollections();
   }, [user]);
 
+  const alreadyInSelected = useMemo(() => {
+    if (!id || !selectedCollection) return false;
+    const coll = myCollections.find((c) => c._id === selectedCollection);
+    if (!coll || !Array.isArray(coll.cards)) return false;
+    const ids = coll.cards.map((c: string | { _id: string }) =>
+      typeof c === "string" ? c : (c as { _id: string })?._id
+    );
+    return ids.includes(id);
+  }, [id, selectedCollection, myCollections]);
+
   const handleAddToCollection = async () => {
     if (!user || !id || !selectedCollection) return;
+    if (alreadyInSelected) {
+      setAddMsg("Esta carta ya está en la colección seleccionada");
+      setAddErr("");
+      return;
+    }
     setAdding(true);
     setAddErr("");
     setAddMsg("");
@@ -337,3 +353,7 @@ const CardDetail = () => {
 };
 
 export default CardDetail;
+
+
+
+
