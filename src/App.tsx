@@ -7,6 +7,8 @@ import CardDetail from "./Components/CardDetail";
 import { AuthProvider } from "./contexts/AuthContext";
 import Factions from "./Components/Factions";
 import Profile from "./Components/Profile";
+import Collections from "./Components/Collections";
+import CollectionDetail from "./Components/CollectionDetail";
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/cards" element={<Cards />} />
           <Route path="/cards/:id" element={<CardDetail />} />
+          <Route path="/collections" element={<Collections />} />
+          <Route path="/collections/:id" element={<CollectionDetail />} />
           <Route path="/factions" element={<Factions />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>

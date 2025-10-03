@@ -28,9 +28,9 @@ function Navbar() {
             </Link>
           </li>
           <li>
-            <a href="#colecciones" className="hover:text-gray-500">
+            <Link to="/collections" className="hover:text-gray-500">
               Colecciones
-            </a>
+            </Link>
           </li>
           <li>
             <Link to="/factions" className="hover:text-gray-500">

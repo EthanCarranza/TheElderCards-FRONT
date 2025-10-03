@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
+import { useAuth } from "../contexts/AuthContext";
 import {
   handleCardBlur,
   handleCardFocus,
@@ -60,6 +61,7 @@ const CardDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const locationState =
     (location.state as CardDetailLocationState | undefined) ?? {};
   const stateCard = locationState.card;
@@ -75,6 +77,14 @@ const CardDetail = () => {
   const [faction, setFaction] = useState<Faction | null>(initialFaction);
   const [loading, setLoading] = useState(!hasPrefetchedCard);
   const [error, setError] = useState("");
+
+  // Mis colecciones (para añadir cartas)
+  interface MyCollectionOption { _id: string; title: string }
+  const [myCollections, setMyCollections] = useState<MyCollectionOption[]>([]);
+  const [selectedCollection, setSelectedCollection] = useState<string>("");
+  const [adding, setAdding] = useState(false);
+  const [addMsg, setAddMsg] = useState("");
+  const [addErr, setAddErr] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,6 +129,44 @@ const CardDetail = () => {
 
     void fetchData();
   }, [id, hasPrefetchedCard]);
+
+  // Cargar colecciones del usuario autenticado
+  useEffect(() => {
+    const loadMyCollections = async () => {
+      if (!user) {
+        setMyCollections([]);
+        return;
+      }
+      try {
+        const resp = await apiFetch<MyCollectionOption[]>("/collections/mine", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setMyCollections(resp.data || []);
+      } catch (e) {
+        setMyCollections([]);
+      }
+    };
+    void loadMyCollections();
+  }, [user]);
+
+  const handleAddToCollection = async () => {
+    if (!user || !id || !selectedCollection) return;
+    setAdding(true);
+    setAddErr("");
+    setAddMsg("");
+    try {
+      await apiFetch(`/collections/${selectedCollection}/addCard`, {
+        method: "PUT",
+        body: { cardId: id },
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setAddMsg("Carta añadida a la colección");
+    } catch (e: unknown) {
+      setAddErr(extractErrorMessage(e, "No se pudo añadir"));
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const handleGoBack = () => {
     if (window.history.length > 1) {
@@ -226,6 +274,47 @@ const CardDetail = () => {
                     <div className="text-xs uppercase text-gray-500">Defensa</div>
                     <div className="text-xl font-semibold">{card.defense}</div>
                   </div>
+                </div>
+              )}
+
+              {user && (
+                <div className="mt-6 border-t pt-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Añadir a una de tus colecciones
+                  </h3>
+                  {myCollections.length === 0 ? (
+                    <div className="text-sm text-gray-700">
+                      No tienes colecciones aún. Crea una desde la pestaña Colecciones.
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <select
+                        className="p-2 rounded border text-sm"
+                        value={selectedCollection}
+                        onChange={(e) => setSelectedCollection(e.target.value)}
+                      >
+                        <option value="">Selecciona una colección</option>
+                        {myCollections.map((c) => (
+                          <option key={c._id} value={c._id}>
+                            {c.title}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="rounded bg-green-600 px-4 py-2 text-white text-sm font-semibold disabled:opacity-60"
+                        disabled={!selectedCollection || adding}
+                        onClick={() => void handleAddToCollection()}
+                      >
+                        {adding ? "Añadiendo..." : "Añadir"}
+                      </button>
+                      {addMsg && (
+                        <span className="text-green-600 text-sm">{addMsg}</span>
+                      )}
+                      {addErr && (
+                        <span className="text-red-600 text-sm">{addErr}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
