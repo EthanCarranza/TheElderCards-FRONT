@@ -51,7 +51,7 @@ const Cards = () => {
   const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [filters, setFilters] = useState<Filters>({});
+  const [filters, setFilters] = useState<Filters>({ sort: "date_desc" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [factions, setFactions] = useState<Faction[]>([]);
@@ -123,7 +123,16 @@ const Cards = () => {
   };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFilters((prev) => ({ ...prev, sort: e.target.value }));
+    const { value } = e.target;
+    setFilters((prev) => {
+      const next = { ...prev };
+      if (value) {
+        next.sort = value;
+      } else {
+        delete next.sort;
+      }
+      return next;
+    });
     setPage(1);
   };
 
@@ -233,11 +242,13 @@ const Cards = () => {
           )}
           <select
             name="sort"
-            value={filters.sort || ""}
+            value={filters.sort ?? ""}
             onChange={handleSortChange}
             className="p-2 pr-4 text-xl rounded"
           >
             <option value="">Ordenar por...</option>
+            <option value="date_desc">Fecha (nuevas primero)</option>
+            <option value="date_asc">Fecha (antiguas primero)</option>
             <option value="title_asc">Título A-Z</option>
             <option value="title_desc">Título Z-A</option>
             <option value="creator_asc">Creador A-Z</option>
