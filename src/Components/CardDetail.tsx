@@ -79,7 +79,10 @@ const CardDetail = () => {
   const [error, setError] = useState("");
 
   // Mis colecciones (para añadir cartas)
-  interface MyCollectionOption { _id: string; title: string }
+  interface MyCollectionOption {
+    _id: string;
+    title: string;
+  }
   const [myCollections, setMyCollections] = useState<MyCollectionOption[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<string>("");
   const [adding, setAdding] = useState(false);
@@ -190,138 +193,145 @@ const CardDetail = () => {
 
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
-        <button
-          onClick={handleGoBack}
-          className="mb-6 rounded bg-gray-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-600"
-        >
-          Volver
-        </button>
+      <button
+        onClick={handleGoBack}
+        className="mb-6 rounded bg-gray-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-600"
+      >
+        Volver
+      </button>
 
-        {loading && !card ? (
-          <div className="text-white">Cargando carta...</div>
-        ) : error ? (
-          <div className="text-red-500">{error}</div>
-        ) : card ? (
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
-            <div className="flex justify-center">
-              <div className="card-3d-wrapper w-full max-w-xl">
-                <div
-                  className="card-3d relative block h-full w-full overflow-hidden rounded-lg border border-black/30 shadow-2xl"
-                  onPointerMove={handleCardPointerMove}
-                  onPointerLeave={handleCardPointerLeave}
-                  onPointerCancel={handleCardPointerLeave}
-                  onFocus={handleCardFocus}
-                  onBlur={handleCardBlur}
-                  tabIndex={0}
-                >
-                  {card.img ? (
-                    <img
-                      src={card.img}
-                      alt={`Carta ${card.title}`}
-                      className="card-3d-element h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="card-3d-element flex h-full min-h-[400px] w-full items-center justify-center border border-dashed border-gray-500 bg-gray-800 text-center text-white">
-                      <div>Esta carta no tiene imagen asociada.</div>
-                    </div>
-                  )}
-                </div>
+      {loading && !card ? (
+        <div className="text-white">Cargando carta...</div>
+      ) : error ? (
+        <div className="text-red-500">{error}</div>
+      ) : card ? (
+        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
+          <div className="flex justify-center">
+            <div className="card-3d-wrapper w-full max-w-xl">
+              <div
+                className="card-3d relative block h-full w-full overflow-hidden rounded-lg border border-black/30 shadow-2xl"
+                onPointerMove={handleCardPointerMove}
+                onPointerLeave={handleCardPointerLeave}
+                onPointerCancel={handleCardPointerLeave}
+                onFocus={handleCardFocus}
+                onBlur={handleCardBlur}
+                tabIndex={0}
+              >
+                {card.img ? (
+                  <img
+                    src={card.img}
+                    alt={`Carta ${card.title}`}
+                    className="card-3d-element h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="card-3d-element flex h-full min-h-[400px] w-full items-center justify-center border border-dashed border-gray-500 bg-gray-800 text-center text-white">
+                    <div>Esta carta no tiene imagen asociada.</div>
+                  </div>
+                )}
               </div>
-            </div>
-            <div className="rounded-lg bg-white/90 p-6 shadow-lg backdrop-blur">
-              <h1 className="text-2xl font-bold text-gray-900">{card.title}</h1>
-              <p className="mt-1 text-sm text-gray-600">
-                {card.type} - Coste {card.cost}
-              </p>
-              <p className="mt-1 text-sm text-gray-600">Creada por {card.creator}</p>
-              <p className="mt-1 text-sm text-gray-600">Fecha: {formattedDate}</p>
-
-              {faction && (
-                <div className="mt-4 rounded border border-gray-200 bg-white p-4">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="inline-block h-4 w-4 rounded-full border border-gray-400"
-                      style={{ backgroundColor: faction.color }}
-                    ></span>
-                    <div>
-                      <div className="font-semibold text-gray-900">
-                        {faction.title}
-                      </div>
-                      <div className="text-xs text-gray-600">{faction.territory}</div>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-700">{faction.description}</p>
-                </div>
-              )}
-
-              <div className="mt-6">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Descripcion
-                </h2>
-                <p className="mt-2 whitespace-pre-line text-sm text-gray-700">
-                  {card.description}
-                </p>
-              </div>
-
-              {card.type === "Creature" && (
-                <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-800">
-                  <div className="rounded bg-gray-100 p-3 text-center">
-                    <div className="text-xs uppercase text-gray-500">Ataque</div>
-                    <div className="text-xl font-semibold">{card.attack}</div>
-                  </div>
-                  <div className="rounded bg-gray-100 p-3 text-center">
-                    <div className="text-xs uppercase text-gray-500">Defensa</div>
-                    <div className="text-xl font-semibold">{card.defense}</div>
-                  </div>
-                </div>
-              )}
-
-              {user && (
-                <div className="mt-6 border-t pt-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Añadir a una de tus colecciones
-                  </h3>
-                  {myCollections.length === 0 ? (
-                    <div className="text-sm text-gray-700">
-                      No tienes colecciones aún. Crea una desde la pestaña Colecciones.
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <select
-                        className="p-2 rounded border text-sm"
-                        value={selectedCollection}
-                        onChange={(e) => setSelectedCollection(e.target.value)}
-                      >
-                        <option value="">Selecciona una colección</option>
-                        {myCollections.map((c) => (
-                          <option key={c._id} value={c._id}>
-                            {c.title}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        className="rounded bg-green-600 px-4 py-2 text-white text-sm font-semibold disabled:opacity-60"
-                        disabled={!selectedCollection || adding}
-                        onClick={() => void handleAddToCollection()}
-                      >
-                        {adding ? "Añadiendo..." : "Añadir"}
-                      </button>
-                      {addMsg && (
-                        <span className="text-green-600 text-sm">{addMsg}</span>
-                      )}
-                      {addErr && (
-                        <span className="text-red-600 text-sm">{addErr}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
-        ) : (
-          <div className="text-white">No se encontro la carta solicitada.</div>
-        )}
+          <div className="rounded-lg bg-white/90 p-6 shadow-lg backdrop-blur">
+            <h1 className="text-2xl font-bold text-gray-900">{card.title}</h1>
+            <p className="mt-1 text-sm text-gray-600">
+              {card.type} - Coste {card.cost}
+            </p>
+            <p className="mt-1 text-sm text-gray-600">
+              Creada por {card.creator}
+            </p>
+            <p className="mt-1 text-sm text-gray-600">Fecha: {formattedDate}</p>
+
+            {faction && (
+              <div className="mt-4 rounded border border-gray-200 bg-white p-4">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="inline-block h-4 w-4 rounded-full border border-gray-400"
+                    style={{ backgroundColor: faction.color }}
+                  ></span>
+                  <div>
+                    <div className="font-semibold text-gray-900">
+                      {faction.title}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {faction.territory}
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-2 text-sm text-gray-700">
+                  {faction.description}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Descripcion
+              </h2>
+              <p className="mt-2 whitespace-pre-line text-sm text-gray-700">
+                {card.description}
+              </p>
+            </div>
+
+            {card.type === "Creature" && (
+              <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-800">
+                <div className="rounded bg-gray-100 p-3 text-center">
+                  <div className="text-xs uppercase text-gray-500">Ataque</div>
+                  <div className="text-xl font-semibold">{card.attack}</div>
+                </div>
+                <div className="rounded bg-gray-100 p-3 text-center">
+                  <div className="text-xs uppercase text-gray-500">Defensa</div>
+                  <div className="text-xl font-semibold">{card.defense}</div>
+                </div>
+              </div>
+            )}
+
+            {user && (
+              <div className="mt-6 border-t pt-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Añadir a una de tus colecciones
+                </h3>
+                {myCollections.length === 0 ? (
+                  <div className="text-sm text-gray-700">
+                    No tienes colecciones aún. Crea una desde la pestaña
+                    Colecciones.
+                  </div>
+                ) : (
+                  <div className="flex items-center text-black gap-3">
+                    <select
+                      className="p-2 rounded border text-sm"
+                      value={selectedCollection}
+                      onChange={(e) => setSelectedCollection(e.target.value)}
+                    >
+                      <option value="">Selecciona una colección</option>
+                      {myCollections.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.title}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="rounded bg-green-600 px-4 py-2 text-white text-sm font-semibold disabled:opacity-60"
+                      disabled={!selectedCollection || adding}
+                      onClick={() => void handleAddToCollection()}
+                    >
+                      {adding ? "Añadiendo..." : "Añadir"}
+                    </button>
+                    {addMsg && (
+                      <span className="text-green-600 text-sm">{addMsg}</span>
+                    )}
+                    {addErr && (
+                      <span className="text-red-600 text-sm">{addErr}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="text-white">No se encontro la carta solicitada.</div>
+      )}
     </PageLayout>
   );
 };
