@@ -146,7 +146,8 @@ const CardDetail = () => {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setMyCollections(resp.data || []);
-      } catch (e) {
+      } catch (fetchError) {
+        console.error("Error al cargar las colecciones del usuario", fetchError);
         setMyCollections([]);
       }
     };
@@ -353,7 +354,5 @@ const CardDetail = () => {
 };
 
 export default CardDetail;
-
-
 
 
