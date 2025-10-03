@@ -87,8 +87,10 @@ const CardDetail = () => {
   const [myCollections, setMyCollections] = useState<MyCollectionOption[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<string>("");
   const [adding, setAdding] = useState(false);
-  const [addMsg, setAddMsg] = useState("");
-  const [addErr, setAddErr] = useState("");
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
+  const [actionMsg, setActionMsg] = useState("");
+  const [actionErr, setActionErr] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -163,28 +165,115 @@ const CardDetail = () => {
     );
     return ids.includes(id);
   }, [id, selectedCollection, myCollections]);
+  const collectionsWithCard = useMemo(
+    () =>
+      myCollections.filter((collection) => {
+        if (!id || !Array.isArray(collection.cards)) return false;
+        return collection.cards.some((item) =>
+          typeof item === "string" ? item === id : item?._id === id
+        );
+      }),
+    [myCollections, id]
+  );
+
 
   const handleAddToCollection = async () => {
     if (!user || !id || !selectedCollection) return;
+    const targetCollection = myCollections.find(
+      (collection) => collection._id === selectedCollection
+    );
+    const collectionTitle = targetCollection?.title ?? "la colección seleccionada";
     if (alreadyInSelected) {
-      setAddMsg("Esta carta ya está en la colección seleccionada");
-      setAddErr("");
+      setActionMsg(`Esta carta ya está en ${collectionTitle}`);
+      setActionErr("");
       return;
     }
     setAdding(true);
-    setAddErr("");
-    setAddMsg("");
+    setActionErr("");
+    setActionMsg("");
     try {
       await apiFetch(`/collections/${selectedCollection}/addCard`, {
         method: "PUT",
         body: { cardId: id },
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      setAddMsg("Carta añadida a la colección");
+      setMyCollections((prev) =>
+        prev.map((collection) => {
+          if (collection._id !== selectedCollection) return collection;
+          const existingCards: Array<string | { _id: string }> = Array.isArray(
+            collection.cards
+          )
+            ? collection.cards
+            : [];
+          if (
+            existingCards.some(
+              (item) => (typeof item === "string" ? item : item?._id) === id
+            )
+          ) {
+            return collection;
+          }
+          return {
+            ...collection,
+            cards: [...existingCards, id],
+          };
+        })
+      );
+      setActionMsg(`Carta añadida a ${collectionTitle}`);
     } catch (e: unknown) {
-      setAddErr(extractErrorMessage(e, "No se pudo añadir"));
+      setActionErr(extractErrorMessage(e, "No se pudo añadir"));
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleRemoveFromCollection = async (collectionId: string) => {
+    if (!user || !id) return;
+    const targetCollection = myCollections.find(
+      (collection) => collection._id === collectionId
+    );
+    const collectionTitle = targetCollection?.title ?? "la colección";
+    let hasCard = false;
+    if (targetCollection && Array.isArray(targetCollection.cards)) {
+      hasCard = targetCollection.cards.some(
+        (item) => (typeof item === "string" ? item : item?._id) === id
+      );
+    }
+    if (!hasCard) {
+      setActionErr(`Esta carta no está en ${collectionTitle}`);
+      setActionMsg("");
+      setPendingRemovalId(null);
+      return;
+    }
+    setRemovingId(collectionId);
+    setActionErr("");
+    setActionMsg("");
+    try {
+      await apiFetch(`/collections/${collectionId}/removeCard`, {
+        method: "PUT",
+        body: { cardId: id },
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setMyCollections((prev) =>
+        prev.map((collection) => {
+          if (collection._id !== collectionId) return collection;
+          if (!Array.isArray(collection.cards)) {
+            return { ...collection, cards: [] };
+          }
+          const updatedCards = collection.cards.filter(
+            (item) => (typeof item === "string" ? item : item?._id) !== id
+          );
+          return {
+            ...collection,
+            cards: updatedCards,
+          };
+        })
+      );
+      setActionMsg(`Carta eliminada de ${collectionTitle}`);
+    } catch (e: unknown) {
+      setActionErr(extractErrorMessage(e, "No se pudo eliminar"));
+    } finally {
+      setRemovingId(null);
+      setPendingRemovalId(null);
     }
   };
 
@@ -305,8 +394,8 @@ const CardDetail = () => {
 
             {user && (
               <div className="mt-6 border-t pt-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Añadir a una de tus colecciones
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                  Gestiona tus colecciones
                 </h3>
                 {myCollections.length === 0 ? (
                   <div className="text-sm text-gray-700">
@@ -314,32 +403,107 @@ const CardDetail = () => {
                     Colecciones.
                   </div>
                 ) : (
-                  <div className="flex items-center text-black gap-3">
-                    <select
-                      className="p-2 rounded border text-sm"
-                      value={selectedCollection}
-                      onChange={(e) => setSelectedCollection(e.target.value)}
-                    >
-                      <option value="">Selecciona una colección</option>
-                      {myCollections.map((c) => (
-                        <option key={c._id} value={c._id}>
-                          {c.title}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      className="rounded bg-green-600 px-4 py-2 text-white text-sm font-semibold disabled:opacity-60"
-                      disabled={!selectedCollection || adding}
-                      onClick={() => void handleAddToCollection()}
-                    >
-                      {adding ? "Añadiendo..." : "Añadir"}
-                    </button>
-                    {addMsg && (
-                      <span className="text-green-600 text-sm">{addMsg}</span>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap items-center gap-3 text-black">
+                      <select
+                        className="p-2 rounded border text-sm"
+                        value={selectedCollection}
+                        onChange={(e) => setSelectedCollection(e.target.value)}
+                      >
+                        <option value="">Selecciona una colección</option>
+                        {myCollections.map((c) => (
+                          <option key={c._id} value={c._id}>
+                            {c.title}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="rounded bg-green-600 px-4 py-2 text-white text-sm font-semibold disabled:opacity-60"
+                        disabled={!selectedCollection || adding || Boolean(removingId)}
+                        onClick={() => void handleAddToCollection()}
+                      >
+                        {adding ? "Añadiendo..." : "Añadir"}
+                      </button>
+                    </div>
+                    {(actionMsg || actionErr) && (
+                      <div className="flex flex-col gap-1 text-sm">
+                        {actionMsg && (
+                          <span className="text-green-600">{actionMsg}</span>
+                        )}
+                        {actionErr && (
+                          <span className="text-red-600">{actionErr}</span>
+                        )}
+                      </div>
                     )}
-                    {addErr && (
-                      <span className="text-red-600 text-sm">{addErr}</span>
-                    )}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-900">
+                        Eliminar de tus colecciones
+                      </h4>
+                      {collectionsWithCard.length === 0 ? (
+                        <p className="text-sm text-gray-700">
+                          Esta carta no está en ninguna de tus colecciones.
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-3">
+                          {collectionsWithCard.map((collection) => {
+                            const isPending = pendingRemovalId === collection._id;
+                            const isRemoving = removingId === collection._id;
+                            return (
+                              <div
+                                key={collection._id}
+                                className="flex h-24 w-24 flex-col items-center justify-center gap-2 rounded border border-gray-200 bg-white text-center shadow-sm"
+                              >
+                                {isRemoving ? (
+                                  <div className="text-xs font-semibold text-gray-600">
+                                    Eliminando...
+                                  </div>
+                                ) : isPending ? (
+                                  <div className="flex flex-col items-center gap-2">
+                                    <span className="text-xs font-semibold text-gray-900">
+                                      ¿Estás seguro?
+                                    </span>
+                                    <div className="flex gap-2">
+                                      <button
+                                        className="rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                                        onClick={() => void handleRemoveFromCollection(collection._id)}
+                                        disabled={isRemoving}
+                                      >
+                                        Sí
+                                      </button>
+                                      <button
+                                        className="rounded bg-gray-300 px-3 py-1 text-xs font-semibold text-gray-800 disabled:opacity-60"
+                                        onClick={() => setPendingRemovalId(null)}
+                                        disabled={isRemoving}
+                                      >
+                                        No
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-center gap-2">
+                                    <span className="text-xs font-medium text-gray-900">
+                                      {collection.title}
+                                    </span>
+                                    <button
+                                      className="rounded bg-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-300"
+                                      onClick={() => {
+                                        setPendingRemovalId(collection._id);
+                                        setActionMsg("");
+                                        setActionErr("");
+                                      }}
+                                      aria-label={`Eliminar carta de ${collection.title}`}
+                                      disabled={Boolean(removingId)}
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
