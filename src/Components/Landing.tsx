@@ -55,7 +55,13 @@ function Landing() {
 
         const data = response.data as {
           token: string;
-          user: { email: string; id: string; role: string; username?: string; image?: string };
+          user: {
+            email: string;
+            id: string;
+            role: string;
+            username?: string;
+            image?: string;
+          };
         };
 
         login({
@@ -101,7 +107,9 @@ function Landing() {
 
   return (
     <PageLayout
-      overlay={<FloatingToast message={toastMessage} onClose={handleCloseToast} />}
+      overlay={
+        <FloatingToast message={toastMessage} onClose={handleCloseToast} />
+      }
       contentClassName="overflow-y-auto"
     >
       <HeroSection title="" image="logo.png" />
@@ -109,6 +117,5 @@ function Landing() {
     </PageLayout>
   );
 }
-
 
 export default Landing;

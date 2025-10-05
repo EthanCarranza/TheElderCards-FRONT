@@ -7,7 +7,7 @@ type ClassValue = string | false | null | undefined;
 const classNames = (...classes: ClassValue[]) =>
   classes.filter(Boolean).join(" ");
 
-const COLUMN_WIDTH_CLASSES = "w-[200px] lg:w-[220px] xl:w-[260px]";
+const COLUMN_WIDTH_CLASSES = "lg:w-[220px] xl:w-[260px] 2xl:w-[320px]";
 
 interface PageLayoutProps extends PropsWithChildren {
   wallpaperImage?: string;
@@ -45,7 +45,7 @@ const PageLayout = ({
       )}
     >
       {overlay}
-      <div className="mx-auto flex min-h-screen w-full max-w-[2800px] px-4">
+      <div className="mx-auto flex min-h-screen w-full max-w-[2800px] flex-col px-4 sm:px-6 lg:flex-row lg:px-8 lg:gap-6">
         <WallpaperColumn
           image={wallpaperImage}
           side="left"
@@ -92,7 +92,7 @@ const WallpaperColumn = ({
   size,
   position,
 }: WallpaperColumnProps) => {
-  const visibilityClass = showOnMobile ? "block" : "hidden lg:block";
+  const visibilityClass = showOnMobile ? "flex" : "hidden lg:flex";
   const horizontalGradient =
     side === "left"
       ? "bg-gradient-to-r from-black via-black/70 to-transparent"

@@ -137,7 +137,7 @@ const Cards = () => {
   };
 
   return (
-    <PageLayout contentClassName="overflow-y-auto py-16 px-24">
+    <PageLayout contentClassName="overflow-y-auto p-6">
       <h2 className="text-5xl text-center font-light pb-10 text-white">
         Cartas
       </h2>
@@ -288,10 +288,13 @@ const Cards = () => {
                 </span>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-16">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-16">
                 {cards.map((card) => {
                   let factionObj: Faction | undefined = undefined;
-                  if (typeof card.faction === "object" && card.faction !== null) {
+                  if (
+                    typeof card.faction === "object" &&
+                    card.faction !== null
+                  ) {
                     factionObj = card.faction as Faction;
                   } else if (typeof card.faction === "string") {
                     factionObj = factions.find((f) => f._id === card.faction);
@@ -302,7 +305,6 @@ const Cards = () => {
                       card={card}
                       to={`/cards/${card._id}`}
                       state={{ card, faction: factionObj }}
-                      className="max-w-[350px]"
                     />
                   );
                 })}

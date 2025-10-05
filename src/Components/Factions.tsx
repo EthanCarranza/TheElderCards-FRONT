@@ -1,4 +1,10 @@
-import { type ChangeEvent, type FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
@@ -12,7 +18,6 @@ interface Faction {
   color: string;
   img?: string;
 }
-
 
 const Factions = () => {
   const { user } = useAuth();
@@ -46,52 +51,65 @@ const Factions = () => {
 
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
-        <h3 className="mb-2 text-xl font-bold text-white">Facciones</h3>
+      <div className="max-w-6xl mx-auto">
+        <h3 className="mb-6 text-3xl lg:text-4xl font-bold text-white text-center">
+          Facciones
+        </h3>
         {showCreate ? null : loading ? (
-          <div className="text-white">Cargando...</div>
+          <div className="text-white text-center">Cargando...</div>
         ) : error ? (
-          <div className="text-red-500">{error}</div>
+          <div className="text-red-500 text-center">{error}</div>
         ) : factions.length === 0 ? (
-          <div className="text-gray-400">No hay facciones disponibles</div>
+          <div className="text-gray-400 text-center">
+            No hay facciones disponibles
+          </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 justify-items-center">
             {factions.map((factionItem) => (
               <div
                 key={factionItem._id}
-                className="relative flex flex-col items-start rounded-lg border-2 border-gray-700 bg-gray-800 p-4 shadow-lg transition-all hover:border-green-500"
+                className="relative flex flex-col items-start rounded-lg border-2 border-gray-700 bg-gray-800 p-6 shadow-lg transition-all hover:border-green-500 w-full max-w-md"
               >
                 {factionItem.img && (
                   <img
                     src={factionItem.img}
                     alt={`Imagen de ${factionItem.title}`}
-                    className="mb-3 h-40 w-full rounded-md object-cover"
+                    className="mb-4 h-48 w-full rounded-lg object-cover shadow-md"
                     loading="lazy"
                   />
                 )}
-                <div className="mb-2 flex w-full items-center gap-2">
+                <div className="mb-4 flex w-full items-center gap-3">
                   <span
-                    className="inline-block h-5 w-5 border border-gray-400"
+                    className="inline-block h-6 w-6 rounded-full border-2 border-gray-400 shadow-sm"
                     style={{ backgroundColor: factionItem.color }}
                     title={factionItem.color}
                   ></span>
-                  <span className="text-lg font-bold text-white">
-                    {factionItem.title}
-                  </span>
-                  <span className="ml-2 text-xs text-gray-400">
-                    ({factionItem.territory})
-                  </span>
+                  <div className="flex-1">
+                    <div className="text-xl font-bold text-white">
+                      {factionItem.title}
+                    </div>
+                    <div className="text-sm text-gray-300">
+                      {factionItem.territory}
+                    </div>
+                  </div>
                 </div>
                 <button
-                  className="self-end text-xs text-green-400 underline"
+                  className="self-center mb-2 rounded-lg bg-green-600/20 px-4 py-2 text-sm font-medium text-green-400 transition-colors hover:bg-green-600/30 hover:text-green-300"
                   onClick={() => handleExpand(factionItem._id)}
                   type="button"
                 >
-                  {expanded === factionItem._id ? "Ocultar descripcion" : "Ver descripcion"}
+                  {expanded === factionItem._id
+                    ? "Ocultar descripción"
+                    : "Ver descripción"}
                 </button>
                 {expanded === factionItem._id && (
-                  <div className="mt-1 w-full rounded bg-gray-900 p-2 text-gray-300">
-                    <div className="mb-1 font-bold">Descripcion:</div>
-                    <div>{factionItem.description}</div>
+                  <div className="mt-3 w-full rounded-lg bg-gray-900/50 p-4 text-gray-200 border border-gray-600">
+                    <div className="mb-2 text-sm font-semibold text-gray-400 uppercase tracking-wide">
+                      Descripción:
+                    </div>
+                    <div className="leading-relaxed">
+                      {factionItem.description}
+                    </div>
                   </div>
                 )}
               </div>
@@ -99,23 +117,27 @@ const Factions = () => {
           </div>
         )}
         {isAdmin && !showCreate && (
-          <button
-            className="mt-4 rounded bg-green-600 px-4 py-2 font-bold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-            onClick={() => setShowCreate(true)}
-            type="button"
-          >
-            Crear faccion
-          </button>
-        )}
-        {isAdmin && showCreate && (
-          <div className="mt-6 space-y-4">
+          <div className="mt-8 text-center">
             <button
-              className="rounded bg-gray-600 px-4 py-2 font-bold text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
-              onClick={() => setShowCreate(false)}
+              className="rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50 shadow-lg"
+              onClick={() => setShowCreate(true)}
               type="button"
             >
-              Volver al listado
+              Crear facción
             </button>
+          </div>
+        )}
+        {isAdmin && showCreate && (
+          <div className="mt-8 space-y-6">
+            <div className="text-center">
+              <button
+                className="rounded-lg bg-gray-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
+                onClick={() => setShowCreate(false)}
+                type="button"
+              >
+                ← Volver al listado
+              </button>
+            </div>
             <CreateFactionForm
               onCreated={async () => {
                 await fetchFactions();
@@ -124,6 +146,7 @@ const Factions = () => {
             />
           </div>
         )}
+      </div>
     </PageLayout>
   );
 };
@@ -196,66 +219,115 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto flex w-full max-w-lg flex-col gap-4 rounded bg-gray-800 p-6"
+      className="mx-auto flex w-full max-w-lg flex-col gap-6 rounded-lg bg-gray-800 p-6 shadow-lg border border-gray-700"
     >
-      <input
-        name="title"
-        value={form.title}
-        onChange={handleChange}
-        placeholder="Nombre de la faccion"
-        className="rounded p-2"
-        required
-        maxLength={40}
-      />
-      <textarea
-        name="description"
-        value={form.description}
-        onChange={handleChange}
-        placeholder="Descripcion"
-        className="h-32 resize-none rounded p-2"
-        required
-      />
-      <input
-        name="territory"
-        value={form.territory}
-        onChange={handleChange}
-        placeholder="Territorio"
-        className="rounded p-2"
-        required
-        maxLength={40}
-      />
-      <label className="flex items-center gap-2 text-white">
-        <span>Color principal:</span>
-        <input
-          name="color"
-          type="color"
-          value={form.color}
-          onChange={handleChange}
-          className="h-10 w-10 cursor-pointer rounded border border-gray-600 bg-transparent p-0"
-          required
-        />
-        <span className="text-xs text-gray-300">{form.color}</span>
-      </label>
-      <input
-        name="img"
-        type="file"
-        accept="image/*"
-        onChange={handleChange}
-        className="rounded bg-gray-700 p-2 text-white"
-      />
-      {img && <span className="text-xs text-green-400">{img.name}</span>}
-      {error && <div className="text-sm text-red-500">{error}</div>}
-      {success && <div className="text-sm text-green-500">{success}</div>}
+      <h4 className="text-xl font-semibold text-white text-center">
+        Nueva Facción
+      </h4>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Nombre de la facción
+          </label>
+          <input
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Ej: Imperio de Cyrodiil"
+            className="w-full rounded-lg p-3 border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            required
+            maxLength={40}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Territorio
+          </label>
+          <input
+            name="territory"
+            value={form.territory}
+            onChange={handleChange}
+            placeholder="Ej: Cyrodiil"
+            className="w-full rounded-lg p-3 border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            required
+            maxLength={40}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Descripción
+          </label>
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Describe la facción, su historia y características..."
+            className="w-full h-32 resize-none rounded-lg p-3 border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Color principal
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              name="color"
+              type="color"
+              value={form.color}
+              onChange={handleChange}
+              className="h-12 w-16 cursor-pointer rounded-lg border border-gray-600 bg-transparent"
+              required
+            />
+            <span className="text-gray-300 font-mono text-sm bg-gray-700 px-3 py-2 rounded">
+              {form.color}
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Imagen (opcional)
+          </label>
+          <input
+            name="img"
+            type="file"
+            accept="image/*"
+            onChange={handleChange}
+            className="w-full rounded-lg bg-gray-700 p-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-600 file:text-white hover:file:bg-green-700"
+          />
+          {img && (
+            <span className="text-sm text-green-400 mt-2 block">
+              📁 {img.name}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <div className="text-sm text-red-400 bg-red-900/20 border border-red-600 rounded p-3">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="text-sm text-green-400 bg-green-900/20 border border-green-600 rounded p-3">
+          {success}
+        </div>
+      )}
+
       <button
         type="submit"
-        className="rounded bg-green-600 px-4 py-2 font-bold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+        className="w-full rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={loading}
       >
-        {loading ? "Creando..." : "Crear faccion"}
+        {loading ? "Creando..." : "Crear facción"}
       </button>
     </form>
   );
 };
 
 export default Factions;
-
