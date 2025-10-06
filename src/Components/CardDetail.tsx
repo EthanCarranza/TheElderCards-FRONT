@@ -103,6 +103,8 @@ const CardDetail = () => {
   const [downloadingCard, setDownloadingCard] = useState(false);
   const [creatorInfo, setCreatorInfo] = useState<CreatorSummary | null>(null);
   const [creatorLoading, setCreatorLoading] = useState(false);
+  const [deletingCard, setDeletingCard] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -373,7 +375,7 @@ const CardDetail = () => {
       const urlInfo = (() => {
         try {
           return new URL(card.img, window.location.href);
-        } catch (error) {
+        } catch {
           return null;
         }
       })();
@@ -413,6 +415,42 @@ const CardDetail = () => {
     }
   };
 
+  const handleDeleteCard = async () => {
+    if (!user || !id || !card) return;
+    setDeletingCard(true);
+    setActionErr("");
+    setActionMsg("");
+
+    try {
+      await apiFetch(`/cards/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      setActionMsg("Carta eliminada correctamente");
+      // Redirigir a la lista de cartas después de eliminar
+      setTimeout(() => {
+        navigate("/cards");
+      }, 1500);
+    } catch (deleteError: unknown) {
+      setActionErr(
+        extractErrorMessage(deleteError, "No se pudo eliminar la carta")
+      );
+    } finally {
+      setDeletingCard(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  // Verificar si el usuario puede eliminar la carta
+  const canDeleteCard = useMemo(() => {
+    if (!user || !card) return false;
+    const isAdmin = user.role === "admin";
+    const userCreator = user.username || user.email || "Anonimo";
+    const isOwner = card.creator.toLowerCase() === userCreator.toLowerCase();
+    return isAdmin || isOwner;
+  }, [user, card]);
+
   const formattedDate = useMemo(() => {
     if (!card?.date) return "-";
     const parsed = new Date(card.date);
@@ -426,8 +464,8 @@ const CardDetail = () => {
   }, [card?.date]);
 
   return (
-    <PageLayout contentClassName="flex-1 overflow-y-auto p-4 lg:p-6">
-      <div className="mx-auto max-w-7xl">
+    <PageLayout contentClassName="p-4 lg:p-6 flex flex-col justify-center min-h-screen">
+      <div className="mx-auto max-w-7xl w-full pb-8">
         <button
           onClick={handleGoBack}
           className="mb-6 rounded bg-gray-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-600"
@@ -440,11 +478,11 @@ const CardDetail = () => {
         ) : error ? (
           <div className="text-red-500">{error}</div>
         ) : card ? (
-          <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr_1.2fr] xl:grid-cols-[1fr_1.5fr]">
-            <div className="flex justify-center lg:justify-start">
-              <div className="card-3d-wrapper w-full max-w-md lg:max-w-lg xl:max-w-xl sticky top-6">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center justify-center lg:justify-start">
+            <div className="w-full lg:w-auto lg:flex-shrink-0 flex justify-center">
+              <div className="card-3d-wrapper">
                 <div
-                  className="card-3d relative block h-full w-full overflow-hidden rounded-lg border border-black/30 shadow-2xl aspect-[3/4]"
+                  className="card-3d relative block rounded-lg border border-black/30 shadow-2xl w-72 h-[432px] sm:w-80 sm:h-[480px] lg:w-96 lg:h-[576px]"
                   onPointerMove={handleCardPointerMove}
                   onPointerLeave={handleCardPointerLeave}
                   onPointerCancel={handleCardPointerLeave}
@@ -460,25 +498,25 @@ const CardDetail = () => {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="card-3d-element flex h-full w-full items-center justify-center border border-dashed border-gray-500 bg-gray-800 text-center text-white">
-                      <div>Esta carta no tiene imagen asociada.</div>
+                    <div className="card-3d-element flex h-full w-full items-center justify-center border border-dashed border-gray-500 bg-gray-800 text-center text-white p-4">
+                      <div className="text-sm sm:text-base">Esta carta no tiene imagen asociada.</div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-            <div className="rounded-lg bg-white/90 p-4 lg:p-6 shadow-lg backdrop-blur min-h-fit space-y-6">
+            <div className="w-full lg:flex-1 lg:max-w-2xl rounded-lg bg-white/90 p-4 lg:p-6 shadow-lg backdrop-blur space-y-4 sm:space-y-6 overflow-hidden">
               {/* Header Section */}
               <div className="border-b border-gray-200 pb-4">
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 break-words hyphens-auto">
                   {card.title}
                 </h1>
-                <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                <div className="mt-2 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
                   <span className="font-medium">{card.type}</span>
-                  <span className="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-800">
+                  <span className="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-800 self-start sm:self-auto">
                     Coste: {card.cost}
                   </span>
-                  <span>Fecha: {formattedDate}</span>
+                  <span className="text-xs sm:text-sm">Fecha: {formattedDate}</span>
                 </div>
               </div>
 
@@ -520,19 +558,57 @@ const CardDetail = () => {
                 )}
               </div>
 
-              {/* Download Section */}
-              {card.img && (
-                <div>
+              {/* Download & Delete Section */}
+              <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
+                {card.img && (
                   <button
                     type="button"
                     onClick={() => void handleDownloadCard()}
                     disabled={downloadingCard}
-                    className="inline-flex items-center gap-2 rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center gap-2 rounded bg-gray-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-70 w-full sm:w-auto"
                   >
                     {downloadingCard ? "Descargando..." : "Descargar carta"}
                   </button>
-                </div>
-              )}
+                )}
+
+                {canDeleteCard && (
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {!showDeleteConfirm ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="inline-flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-70 w-full sm:w-auto"
+                      >
+                        Eliminar carta
+                      </button>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                        <span className="text-sm text-gray-700 font-medium">
+                          ¿Estás seguro?
+                        </span>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          <button
+                            type="button"
+                            onClick={handleDeleteCard}
+                            disabled={deletingCard}
+                            className="inline-flex items-center gap-1 rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70 flex-1 sm:flex-none"
+                          >
+                            {deletingCard ? "Eliminando..." : "Sí, eliminar"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(false)}
+                            disabled={deletingCard}
+                            className="inline-flex items-center gap-1 rounded bg-gray-300 px-3 py-1 text-xs font-semibold text-gray-800 transition-colors hover:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-70 flex-1 sm:flex-none"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Faction Section */}
               {faction && (
@@ -592,8 +668,8 @@ const CardDetail = () => {
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
                   Descripción
                 </h3>
-                <div className="rounded-lg bg-gray-50 border border-gray-200 p-4">
-                  <p className="whitespace-pre-line text-sm text-gray-700 leading-relaxed">
+                <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 max-h-48 overflow-y-auto overflow-x-hidden">
+                  <p className="whitespace-pre-line text-sm text-gray-700 leading-relaxed break-words word-wrap overflow-wrap-anywhere">
                     {card.description}
                   </p>
                 </div>
@@ -621,7 +697,7 @@ const CardDetail = () => {
                         </h4>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <select
-                            className="flex-1 p-3 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            className="flex-1 p-3 rounded-lg border border-gray-300 text-sm text-black focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             value={selectedCollection}
                             onChange={(e) =>
                               setSelectedCollection(e.target.value)
@@ -635,7 +711,7 @@ const CardDetail = () => {
                             ))}
                           </select>
                           <button
-                            className="rounded-lg bg-green-600 px-6 py-3 text-white text-sm font-semibold disabled:opacity-60 hover:bg-green-700 transition-colors"
+                            className="rounded-lg bg-gray-800 px-6 py-3 text-white text-sm font-semibold disabled:opacity-60 hover:bg-gray-700 transition-colors"
                             disabled={
                               !selectedCollection ||
                               adding ||
@@ -672,7 +748,7 @@ const CardDetail = () => {
                             Esta carta no está en ninguna de tus colecciones.
                           </p>
                         ) : (
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
                             {collectionsWithCard.map((collection) => {
                               const isPending =
                                 pendingRemovalId === collection._id;

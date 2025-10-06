@@ -45,7 +45,7 @@ const PageLayout = ({
       )}
     >
       {overlay}
-      <div className="mx-auto flex min-h-screen w-full max-w-[2800px] flex-col px-4 sm:px-6 lg:flex-row lg:px-4 lg:gap-4 xl:px-8 xl:gap-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1920px] flex-col 2xl:flex-row 2xl:gap-6">
         <WallpaperColumn
           image={wallpaperImage}
           side="left"
@@ -55,12 +55,14 @@ const PageLayout = ({
         />
         <main
           className={classNames(
-            "relative z-10 flex min-h-screen w-full flex-1 flex-col bg-zinc-950",
+            "relative z-10 flex w-full flex-1 flex-col bg-zinc-950 min-h-screen",
             mainClassName
           )}
         >
           {showNavbar && <Navbar />}
-          <div className={classNames("flex-1", contentClassName)}>
+          <div
+            className={classNames("flex-1 overflow-x-hidden w-full", contentClassName)}
+          >
             {children}
           </div>
           {showFooter && <Footer />}
@@ -92,7 +94,7 @@ const WallpaperColumn = ({
   size,
   position,
 }: WallpaperColumnProps) => {
-  const visibilityClass = showOnMobile ? "flex" : "hidden lg:flex";
+  const visibilityClass = showOnMobile ? "flex" : "hidden 2xl:flex";
   const horizontalGradient =
     side === "left"
       ? "bg-gradient-to-r from-black via-black/70 to-transparent"

@@ -6,6 +6,7 @@ import { CARD_TYPES } from "../constants/cardTypes";
 import { apiFetch } from "./api";
 import PageLayout from "./PageLayout";
 import CardTile from "./CardTile";
+import { extractErrorMessage } from "../utils/errors";
 
 // 3D handlers now inside CardTile
 
@@ -55,6 +56,8 @@ const Cards = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [factions, setFactions] = useState<Faction[]>([]);
+  const [deletingCards, setDeletingCards] = useState<Set<string>>(new Set());
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   const fetchCards = useCallback(async () => {
     setLoading(true);
@@ -136,6 +139,42 @@ const Cards = () => {
     setPage(1);
   };
 
+  const canDeleteCard = (card: Card): boolean => {
+    if (!user) return false;
+    const isAdmin = user.role === "admin";
+    const userCreator = user.username || user.email || "Anonimo";
+    const isOwner = card.creator.toLowerCase() === userCreator.toLowerCase();
+    return isAdmin || isOwner;
+  };
+
+  const handleDeleteCard = async (cardId: string) => {
+    if (!user) return;
+
+    setDeletingCards((prev) => new Set(prev).add(cardId));
+
+    try {
+      await apiFetch(`/cards/${cardId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      // Remover la carta de la lista local
+      setCards((prev) => prev.filter((card) => card._id !== cardId));
+      setConfirmingDelete(null);
+    } catch (deleteError: unknown) {
+      console.error("Error al eliminar carta:", deleteError);
+      setError(
+        extractErrorMessage(deleteError, "No se pudo eliminar la carta")
+      );
+    } finally {
+      setDeletingCards((prev) => {
+        const next = new Set(prev);
+        next.delete(cardId);
+        return next;
+      });
+    }
+  };
+
   return (
     <PageLayout contentClassName="overflow-y-auto p-6">
       <h2 className="text-5xl text-center font-light pb-10 text-white">
@@ -162,12 +201,12 @@ const Cards = () => {
           />
         </>
       ) : (
-        <div className="mb-4 text-black flex flex-wrap gap-4">
+        <div className="mb-4 text-black grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
           <select
             name="type"
             value={filters.type ? filters.type.toLowerCase() : ""}
             onChange={handleFilterChange}
-            className="p-2 text-xl rounded"
+            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
           >
             <option value="">Tipo</option>
             {CARD_TYPES.map((type) => (
@@ -180,7 +219,7 @@ const Cards = () => {
             name="faction"
             value={filters.faction || ""}
             onChange={handleFilterChange}
-            className="p-2 text-xl rounded"
+            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
             disabled={factions.length === 0}
           >
             <option value="">
@@ -197,14 +236,14 @@ const Cards = () => {
             value={filters.title || ""}
             onChange={handleFilterChange}
             placeholder="Título"
-            className="p-2 text-xl rounded"
+            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
           />
           <input
             name="creator"
             value={filters.creator || ""}
             onChange={handleFilterChange}
-            placeholder="Creador (username)"
-            className="p-2 text-xl rounded"
+            placeholder="Creador"
+            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
           />
           <input
             name="cost"
@@ -214,7 +253,7 @@ const Cards = () => {
             value={filters.cost || ""}
             onChange={handleFilterChange}
             placeholder="Coste"
-            className="w-24 p-2 pl-4 pr-2 text-xl rounded"
+            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
           />
           {filters.type === "Creature" && (
             <>
@@ -226,7 +265,7 @@ const Cards = () => {
                 value={filters.attack || ""}
                 onChange={handleFilterChange}
                 placeholder="Ataque"
-                className="w-28 p-2 pl-4 pr-2 text-xl rounded"
+                className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
               />
               <input
                 name="defense"
@@ -236,7 +275,7 @@ const Cards = () => {
                 value={filters.defense || ""}
                 onChange={handleFilterChange}
                 placeholder="Defensa"
-                className="w-28 p-2 pl-4 pr-2 text-xl rounded"
+                className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
               />
             </>
           )}
@@ -244,7 +283,7 @@ const Cards = () => {
             name="sort"
             value={filters.sort ?? ""}
             onChange={handleSortChange}
-            className="p-2 pr-4 text-xl rounded"
+            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full lg:col-span-2 xl:col-span-1"
           >
             <option value="">Ordenar por...</option>
             <option value="date_desc">Fecha (nuevas primero)</option>
@@ -265,30 +304,32 @@ const Cards = () => {
             <option value="defense_desc">Defensa desc</option>
           </select>
           {user && (
-            <button
-              className="bg-gray-600 hover:bg-gray-700 text-white text-2xl font-light py-3 px-6 rounded-lg"
-              onClick={() => setShowCreate(true)}
-            >
-              Crear carta
-            </button>
+            <div className="sm:col-span-2 md:col-span-3 lg:col-span-2 xl:col-span-1">
+              <button
+                className="bg-gray-600 hover:bg-gray-700 text-white text-sm md:text-lg xl:text-xl font-light py-2 md:py-3 px-4 md:px-6 rounded-lg w-full"
+                onClick={() => setShowCreate(true)}
+              >
+                Crear carta
+              </button>
+            </div>
           )}
         </div>
       )}
       {!showCreate &&
         (loading ? (
-          <div className="text-white">Cargando...</div>
+          <div className="text-white text-center py-8">Cargando...</div>
         ) : error ? (
-          <div className="text-red-500">{error}</div>
+          <div className="text-red-500 text-center py-4 px-4 bg-red-100 rounded-lg">{error}</div>
         ) : (
           <>
             {cards.length === 0 ? (
-              <div className="flex flex-col items-center justify-center w-full py-12">
-                <span className="text-lg text-gray-300 font-semibold">
+              <div className="flex flex-col items-center justify-center w-full py-12 px-4">
+                <span className="text-lg md:text-xl text-gray-300 font-semibold text-center">
                   No se han encontrado cartas
                 </span>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-16">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 pt-8 sm:pt-12 lg:pt-16">
                 {cards.map((card) => {
                   let factionObj: Faction | undefined = undefined;
                   if (
@@ -299,33 +340,76 @@ const Cards = () => {
                   } else if (typeof card.faction === "string") {
                     factionObj = factions.find((f) => f._id === card.faction);
                   }
+
+                  const canDelete = canDeleteCard(card);
+                  const isDeleting = deletingCards.has(card._id);
+                  const showConfirm = confirmingDelete === card._id;
+
                   return (
-                    <CardTile
-                      key={card._id}
-                      card={card}
-                      to={`/cards/${card._id}`}
-                      state={{ card, faction: factionObj }}
-                    />
+                    <div key={card._id} className="relative group">
+                      <CardTile
+                        card={card}
+                        to={`/cards/${card._id}`}
+                        state={{ card, faction: factionObj }}
+                      />
+
+                      {canDelete && (
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {!showConfirm ? (
+                            <button
+                              onClick={() => setConfirmingDelete(card._id)}
+                              disabled={isDeleting}
+                              className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors disabled:opacity-50"
+                              title="Eliminar carta"
+                            >
+                              ×
+                            </button>
+                          ) : (
+                            <div className="bg-white rounded shadow-lg p-2 min-w-[120px]">
+                              <div className="text-xs text-gray-800 font-medium mb-2 text-center">
+                                ¿Eliminar?
+                              </div>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleDeleteCard(card._id)}
+                                  disabled={isDeleting}
+                                  className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 rounded transition-colors disabled:opacity-50"
+                                >
+                                  {isDeleting ? "..." : "Sí"}
+                                </button>
+                                <button
+                                  onClick={() => setConfirmingDelete(null)}
+                                  disabled={isDeleting}
+                                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs font-semibold py-1 rounded transition-colors disabled:opacity-50"
+                                >
+                                  No
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
             )}
-            <div className="flex justify-center items-center gap-2 mt-6">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-2 mt-6 px-4">
               {page > 1 && (
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
+                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
                 >
                   Anterior
                 </button>
               )}
-              <span className="text-white text-2xl">
+              <span className="text-white text-lg md:text-xl xl:text-2xl font-medium text-center">
                 Página {page} de {totalPages}
               </span>
               {page < totalPages && totalPages > 1 && (
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
+                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
                 >
                   Siguiente
                 </button>

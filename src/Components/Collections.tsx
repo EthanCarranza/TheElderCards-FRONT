@@ -59,7 +59,7 @@ const Collections: React.FC = () => {
             }
           );
           setFavorites((favResp.data || []).map((c) => c._id));
-        } catch (e) {
+        } catch {
           // ignorar
         }
       } else {
@@ -112,7 +112,7 @@ const Collections: React.FC = () => {
         });
         setFavorites((prev) => prev.filter((id) => id !== collectionId));
       }
-    } catch (e) {
+    } catch {
       // ignorar
     }
   };
@@ -125,11 +125,11 @@ const Collections: React.FC = () => {
       {canCreate && (
         <form
           onSubmit={handleCreate}
-          className="mb-8 bg-gray-800 p-4 rounded text-white flex flex-col gap-3 max-w-xl"
+          className="mb-6 sm:mb-8 bg-gray-700 p-4 sm:p-6 rounded text-white flex flex-col gap-3 sm:gap-4 max-w-full sm:max-w-xl"
         >
-          <h2 className="text-2xl font-semibold">Crear colección</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold">Crear colección</h2>
           <input
-            className="p-2 rounded text-black"
+            className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
             placeholder="Nombre de la colección"
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -137,23 +137,25 @@ const Collections: React.FC = () => {
             maxLength={60}
           />
           <textarea
-            className="p-2 rounded text-black"
+            className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
             placeholder="Descripción"
             value={form.description}
-            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, description: e.target.value }))
+            }
             rows={3}
           />
           <input
             type="file"
             accept="image/*"
-            className="text-sm"
+            className="text-xs sm:text-sm"
             onChange={(e) => setImage(e.target.files?.[0] || null)}
           />
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <button
               type="submit"
               disabled={creating}
-              className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+              className="rounded bg-gray-500 px-4 py-2 font-semibold text-white hover:bg-gray-400 disabled:opacity-60 text-sm sm:text-base w-full sm:w-auto"
             >
               {creating ? "Creando..." : "Crear colección"}
             </button>
@@ -161,7 +163,7 @@ const Collections: React.FC = () => {
               <span className="text-green-400 text-sm">{createSuccess}</span>
             )}
             {createError && (
-              <span className="text-red-400 text-sm">{createError}</span>
+              <span className="text-red-400 text-sm break-words">{createError}</span>
             )}
           </div>
         </form>
@@ -172,7 +174,7 @@ const Collections: React.FC = () => {
       ) : collections.length === 0 ? (
         <div>No hay colecciones</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {collections.map((col) => {
             const isFav = favorites.includes(col._id);
             const isOwner = user?.userId && col.creator === user.userId;
@@ -188,23 +190,27 @@ const Collections: React.FC = () => {
                     <img
                       src={col.img}
                       alt={col.title}
-                      className="w-full h-40 object-cover rounded"
+                      className="w-full h-32 sm:h-36 lg:h-40 object-cover rounded"
                     />
                   ) : (
-                    <div className="w-full h-40 bg-gray-200 rounded flex items-center justify-center text-gray-600">
+                    <div className="w-full h-32 sm:h-36 lg:h-40 bg-gray-200 rounded flex items-center justify-center text-gray-600 text-sm">
                       Sin imagen
                     </div>
                   )}
                   {user && !isOwner && (
                     <button
-                      title={isFav ? "Quitar de favoritos" : "Marcar como favorito"}
+                      title={
+                        isFav ? "Quitar de favoritos" : "Marcar como favorito"
+                      }
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         void toggleFavorite(col._id, isFav);
                       }}
-                      className={`absolute top-2 right-2 rounded-full p-2 ${
-                        isFav ? "bg-yellow-400 text-black" : "bg-black/60 text-white"
+                      className={`absolute top-2 right-2 rounded-full p-1.5 sm:p-2 text-sm ${
+                        isFav
+                          ? "bg-yellow-400 text-black"
+                          : "bg-black/60 text-white"
                       }`}
                     >
                       ★
@@ -212,11 +218,15 @@ const Collections: React.FC = () => {
                   )}
                 </div>
                 <div className="mt-2">
-                  <div className="font-semibold group-hover:underline">{col.title}</div>
+                  <div className="font-semibold group-hover:underline text-sm sm:text-base lg:text-lg break-words">
+                    {col.title}
+                  </div>
                   {col.description && (
-                    <div className="text-sm text-gray-700 line-clamp-2">{col.description}</div>
+                    <div className="text-xs sm:text-sm lg:text-base text-gray-700 line-clamp-2 break-words">
+                      {col.description}
+                    </div>
                   )}
-                  <div className="mt-2 text-xs text-gray-600">
+                  <div className="mt-2 text-xs sm:text-sm text-gray-600">
                     {col.cards?.length || 0} cartas
                   </div>
                 </div>
@@ -230,4 +240,3 @@ const Collections: React.FC = () => {
 };
 
 export default Collections;
-

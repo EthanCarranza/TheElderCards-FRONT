@@ -27,6 +27,10 @@ const Factions = () => {
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [deletingFactions, setDeletingFactions] = useState<Set<string>>(
+    new Set()
+  );
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   const fetchFactions = useCallback(async () => {
     setLoading(true);
@@ -49,6 +53,37 @@ const Factions = () => {
     setExpanded((prev) => (prev === id ? null : id));
   };
 
+  const handleDeleteFaction = async (factionId: string) => {
+    if (!user || !isAdmin) return;
+
+    setDeletingFactions((prev) => new Set(prev).add(factionId));
+    setError("");
+
+    try {
+      await apiFetch(`/factions/${factionId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      // Remover la facción de la lista local
+      setFactions((prev) =>
+        prev.filter((faction) => faction._id !== factionId)
+      );
+      setConfirmingDelete(null);
+    } catch (deleteError: unknown) {
+      console.error("Error al eliminar facción:", deleteError);
+      setError(
+        extractErrorMessage(deleteError, "No se pudo eliminar la facción")
+      );
+    } finally {
+      setDeletingFactions((prev) => {
+        const next = new Set(prev);
+        next.delete(factionId);
+        return next;
+      });
+    }
+  };
+
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
       <div className="max-w-6xl mx-auto">
@@ -65,61 +100,106 @@ const Factions = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 justify-items-center">
-            {factions.map((factionItem) => (
-              <div
-                key={factionItem._id}
-                className="relative flex flex-col items-start rounded-lg border-2 border-gray-700 bg-gray-800 p-6 shadow-lg transition-all hover:border-green-500 w-full max-w-md"
-              >
-                {factionItem.img && (
-                  <img
-                    src={factionItem.img}
-                    alt={`Imagen de ${factionItem.title}`}
-                    className="mb-4 h-48 w-full rounded-lg object-cover shadow-md"
-                    loading="lazy"
-                  />
-                )}
-                <div className="mb-4 flex w-full items-center gap-3">
-                  <span
-                    className="inline-block h-6 w-6 rounded-full border-2 border-gray-400 shadow-sm"
-                    style={{ backgroundColor: factionItem.color }}
-                    title={factionItem.color}
-                  ></span>
-                  <div className="flex-1">
-                    <div className="text-xl font-bold text-white">
-                      {factionItem.title}
-                    </div>
-                    <div className="text-sm text-gray-300">
-                      {factionItem.territory}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  className="self-center mb-2 rounded-lg bg-green-600/20 px-4 py-2 text-sm font-medium text-green-400 transition-colors hover:bg-green-600/30 hover:text-green-300"
-                  onClick={() => handleExpand(factionItem._id)}
-                  type="button"
+            {factions.map((factionItem) => {
+              const isDeleting = deletingFactions.has(factionItem._id);
+              const showConfirm = confirmingDelete === factionItem._id;
+
+              return (
+                <div
+                  key={factionItem._id}
+                  className="relative flex flex-col items-start rounded-lg border-2 border-gray-700 bg-gray-800 p-6 shadow-lg transition-all hover:border-green-500 w-full max-w-md group"
                 >
-                  {expanded === factionItem._id
-                    ? "Ocultar descripción"
-                    : "Ver descripción"}
-                </button>
-                {expanded === factionItem._id && (
-                  <div className="mt-3 w-full rounded-lg bg-gray-900/50 p-4 text-gray-200 border border-gray-600">
-                    <div className="mb-2 text-sm font-semibold text-gray-400 uppercase tracking-wide">
-                      Descripción:
-                    </div>
-                    <div className="leading-relaxed">
-                      {factionItem.description}
+                  {factionItem.img && (
+                    <img
+                      src={factionItem.img}
+                      alt={`Imagen de ${factionItem.title}`}
+                      className="mb-4 h-48 w-full rounded-lg object-cover shadow-md"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="mb-4 flex w-full items-center gap-3">
+                    <span
+                      className="inline-block h-6 w-6 rounded-full border-2 border-gray-400 shadow-sm"
+                      style={{ backgroundColor: factionItem.color }}
+                      title={factionItem.color}
+                    ></span>
+                    <div className="flex-1">
+                      <div className="text-xl xl:text-2xl font-bold text-white">
+                        {factionItem.title}
+                      </div>
+                      <div className="text-sm xl:text-base text-gray-300">
+                        {factionItem.territory}
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
+                  <button
+                    className="self-center mb-2 rounded-lg bg-green-600/20 px-4 py-2 text-sm xl:text-base font-medium text-green-400 transition-colors hover:bg-green-600/30 hover:text-green-300"
+                    onClick={() => handleExpand(factionItem._id)}
+                    type="button"
+                  >
+                    {expanded === factionItem._id
+                      ? "Ocultar descripción"
+                      : "Ver descripción"}
+                  </button>
+                  {expanded === factionItem._id && (
+                    <div className="mt-3 w-full rounded-lg bg-gray-900/50 p-4 text-gray-200 border border-gray-600">
+                      <div className="mb-2 text-sm xl:text-base font-semibold text-gray-400 uppercase tracking-wide">
+                        Descripción:
+                      </div>
+                      <div className="leading-relaxed text-sm xl:text-base">
+                        {factionItem.description}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Botón de eliminar para administradores */}
+                  {isAdmin && (
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!showConfirm ? (
+                        <button
+                          onClick={() => setConfirmingDelete(factionItem._id)}
+                          disabled={isDeleting}
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors disabled:opacity-50"
+                          title="Eliminar facción"
+                        >
+                          ×
+                        </button>
+                      ) : (
+                        <div className="bg-white rounded shadow-lg p-2 min-w-[120px]">
+                          <div className="text-xs text-gray-800 font-medium mb-2 text-center">
+                            ¿Eliminar facción?
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() =>
+                                handleDeleteFaction(factionItem._id)
+                              }
+                              disabled={isDeleting}
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 rounded transition-colors disabled:opacity-50"
+                            >
+                              {isDeleting ? "..." : "Sí"}
+                            </button>
+                            <button
+                              onClick={() => setConfirmingDelete(null)}
+                              disabled={isDeleting}
+                              className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs font-semibold py-1 rounded transition-colors disabled:opacity-50"
+                            >
+                              No
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
         {isAdmin && !showCreate && (
           <div className="mt-8 text-center">
             <button
-              className="rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50 shadow-lg"
+              className="rounded-lg bg-gray-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-gray-700 disabled:opacity-50 shadow-lg"
               onClick={() => setShowCreate(true)}
               type="button"
             >
