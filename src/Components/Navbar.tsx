@@ -14,7 +14,6 @@ const primaryLinks: PrimaryLink[] = [
   { to: "/cards", label: "Cartas" },
   { to: "/collections", label: "Colecciones" },
   { to: "/factions", label: "Facciones" },
-  { to: "#contacto", label: "Contacto", isAnchor: true },
 ];
 
 function Navbar() {
@@ -42,8 +41,9 @@ function Navbar() {
       )}
 
       <header className="sticky top-0 z-50 bg-black/95 shadow-md backdrop-blur border-b border-white/10">
-        <nav className="mx-auto flex w-full max-w-[2800px] flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-10">
-          <div className="flex items-center justify-between">
+        <nav className="mx-auto flex w-full max-w-[2800px] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-6 xl:px-10">
+          {/* Mobile layout */}
+          <div className="flex items-center justify-between lg:hidden">
             <Link
               to="/"
               className="flex items-center gap-3 text-white transition hover:opacity-80"
@@ -57,7 +57,7 @@ function Navbar() {
             </Link>
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-md border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10 lg:hidden"
+              className="inline-flex items-center justify-center rounded-md border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-expanded={menuOpen}
               aria-controls="primary-navigation"
@@ -92,49 +92,62 @@ function Navbar() {
             </button>
           </div>
 
-          <div
-            id="primary-navigation"
-            className={`${
-              menuOpen ? "flex" : "hidden"
-            } flex-col gap-6 border-t border-white/10 pt-4 text-white lg:flex lg:flex-row lg:items-center lg:justify-between lg:border-none lg:pt-0`}
-          >
-            <ul className="flex flex-col gap-4 text-lg lg:flex-row lg:items-center lg:gap-8 lg:text-base xl:text-lg">
-              {primaryLinks.map((link) => (
-                <li key={link.to}>
-                  {link.isAnchor ? (
-                    <a
-                      href={link.to}
-                      className="block py-2 transition hover:text-gray-300 lg:py-0"
-                      onClick={handleCloseMenu}
-                    >
-                      {link.label}
-                    </a>
-                  ) : (
-                    <Link
-                      to={link.to}
-                      className="block py-2 transition hover:text-gray-300 lg:py-0"
-                      onClick={handleCloseMenu}
-                    >
-                      {link.label}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
+          {/* Desktop layout - Simple flex */}
+          <div className="hidden lg:flex lg:items-center lg:justify-between lg:w-full lg:gap-8">
+            {/* Logo - Left */}
+            <Link
+              to="/"
+              className="flex items-center gap-3 text-white transition hover:opacity-80 flex-shrink-0"
+              onClick={handleCloseMenu}
+            >
+              <img
+                src="/banner.png"
+                alt="The Elder Cards"
+                className="h-14 w-36 xl:h-16 xl:w-40 object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.6)] transition duration-300 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.85)]"
+              />
+            </Link>
 
-            <div className="flex flex-col gap-4 border-t border-white/10 pt-4 text-lg lg:border-none lg:pt-0 lg:flex-row lg:items-center lg:gap-6 lg:text-base xl:text-lg">
+            {/* Main navigation - Center with flex-1 */}
+            <div className="flex-1 flex justify-center">
+              <ul className="flex items-center gap-6 xl:gap-8 text-base xl:text-xl text-white">
+                {primaryLinks.map((link) => (
+                  <li key={link.to}>
+                    {link.isAnchor ? (
+                      <a
+                        href={link.to}
+                        className="transition hover:text-gray-300 whitespace-nowrap"
+                        onClick={handleCloseMenu}
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        to={link.to}
+                        className="transition hover:text-gray-300 whitespace-nowrap"
+                        onClick={handleCloseMenu}
+                      >
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* User actions - Right */}
+            <div className="flex items-center gap-4 xl:gap-6 text-base xl:text-xl text-white flex-shrink-0">
               {!user ? (
                 <>
                   <Link
                     to="/register"
-                    className="block py-2 transition hover:text-gray-300 lg:py-0"
+                    className="transition hover:text-gray-300 whitespace-nowrap"
                     onClick={handleCloseMenu}
                   >
                     Registro
                   </Link>
                   <Link
                     to="/login"
-                    className="inline-block rounded-lg bg-white/10 px-4 py-2 text-center transition hover:bg-white/20 lg:bg-transparent lg:hover:bg-white/10"
+                    className="inline-block rounded-lg bg-white/10 px-3 py-2 text-center transition hover:bg-white/20 whitespace-nowrap"
                     onClick={handleCloseMenu}
                   >
                     Iniciar sesión
@@ -144,7 +157,84 @@ function Navbar() {
                 <>
                   <Link
                     to="/profile"
-                    className="flex items-center gap-3 py-2 transition hover:text-gray-300 lg:py-0"
+                    className="flex items-center gap-2 transition hover:text-gray-300 whitespace-nowrap"
+                    onClick={handleCloseMenu}
+                  >
+                    <img
+                      src={user.image || DEFAULT_PROFILE_IMAGE}
+                      alt="Avatar"
+                      className="h-7 w-7 xl:h-8 xl:w-8 rounded-full object-cover border border-white/30 shadow-sm"
+                    />
+                    <span>Perfil</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      logout();
+                      handleCloseMenu();
+                    }}
+                    className="transition hover:text-red-400 whitespace-nowrap"
+                  >
+                    Cerrar sesión
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile navigation */}
+          <div
+            id="primary-navigation"
+            className={`${
+              menuOpen ? "flex" : "hidden"
+            } flex-col gap-6 border-t border-white/10 pt-4 text-white lg:hidden`}
+          >
+            <ul className="flex flex-col gap-4 text-lg">
+              {primaryLinks.map((link) => (
+                <li key={link.to}>
+                  {link.isAnchor ? (
+                    <a
+                      href={link.to}
+                      className="block py-2 transition hover:text-gray-300"
+                      onClick={handleCloseMenu}
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link
+                      to={link.to}
+                      className="block py-2 transition hover:text-gray-300"
+                      onClick={handleCloseMenu}
+                    >
+                      {link.label}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex flex-col gap-4 border-t border-white/10 pt-4 text-lg">
+              {!user ? (
+                <>
+                  <Link
+                    to="/register"
+                    className="block py-2 transition hover:text-gray-300"
+                    onClick={handleCloseMenu}
+                  >
+                    Registro
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="inline-block rounded-lg bg-white/10 px-4 py-2 text-center transition hover:bg-white/20"
+                    onClick={handleCloseMenu}
+                  >
+                    Iniciar sesión
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-3 py-2 transition hover:text-gray-300"
                     onClick={handleCloseMenu}
                   >
                     <img
@@ -159,7 +249,7 @@ function Navbar() {
                       logout();
                       handleCloseMenu();
                     }}
-                    className="block py-2 text-left transition hover:text-red-400 lg:py-0 lg:text-right"
+                    className="block py-2 text-left transition hover:text-red-400"
                   >
                     Cerrar sesión
                   </button>
