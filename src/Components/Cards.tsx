@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 // import { Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import CreateCard from "./CreateCard";
 import { CARD_TYPES } from "../constants/cardTypes";
@@ -44,15 +45,45 @@ interface Filters {
   attack?: string;
   defense?: string;
   sort?: string;
+  favorites?: string;
+  liked?: string;
 }
 
 const Cards = () => {
+  const [searchParams] = useSearchParams();
   const [cards, setCards] = useState<Card[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [filters, setFilters] = useState<Filters>({ sort: "date_desc" });
+  const [filters, setFilters] = useState<Filters>(() => {
+    // Inicializar filtros con parámetros de URL si existen
+    const urlFilters: Filters = { sort: "date_desc" };
+    
+    const faction = searchParams.get('faction');
+    const type = searchParams.get('type');
+    const title = searchParams.get('title');
+    const creator = searchParams.get('creator');
+    const cost = searchParams.get('cost');
+    const attack = searchParams.get('attack');
+    const defense = searchParams.get('defense');
+    const sort = searchParams.get('sort');
+    const favorites = searchParams.get('favorites');
+    const liked = searchParams.get('liked');
+
+    if (faction) urlFilters.faction = faction;
+    if (type) urlFilters.type = type;
+    if (title) urlFilters.title = title;
+    if (creator) urlFilters.creator = creator;
+    if (cost) urlFilters.cost = cost;
+    if (attack) urlFilters.attack = attack;
+    if (defense) urlFilters.defense = defense;
+    if (sort) urlFilters.sort = sort;
+    if (favorites) urlFilters.favorites = favorites;
+    if (liked) urlFilters.liked = liked;
+
+    return urlFilters;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [factions, setFactions] = useState<Faction[]>([]);
@@ -63,6 +94,12 @@ const Cards = () => {
     setLoading(true);
     setError("");
     let query = `?page=${page}&limit=20`;
+    
+    // Añadir userId si el usuario está logueado para filtros personalizados
+    if (user?.userId && (filters.favorites || filters.liked)) {
+      query += `&user=${encodeURIComponent(user.userId)}`;
+    }
+    
     Object.entries(filters).forEach(([key, value]) => {
       if (value) query += `&${key}=${encodeURIComponent(value)}`;
     });
@@ -94,7 +131,7 @@ const Cards = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, page]);
+  }, [filters, page, user?.userId]);
 
   const fetchFactions = useCallback(async () => {
     try {
@@ -279,6 +316,42 @@ const Cards = () => {
               />
             </>
           )}
+          
+          {/* Filtros de interacciones del usuario */}
+          {user && (
+            <>
+              <button
+                onClick={() => {
+                  const newValue = filters.favorites === "true" ? "" : "true";
+                  setFilters(prev => ({ ...prev, favorites: newValue }));
+                  setPage(1);
+                }}
+                className={`p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
+                  filters.favorites === "true"
+                    ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                    : "bg-white hover:bg-gray-50 text-black border border-gray-300"
+                }`}
+              >
+                ⭐ Favoritas
+              </button>
+              
+              <button
+                onClick={() => {
+                  const newValue = filters.liked === "true" ? "" : "true";
+                  setFilters(prev => ({ ...prev, liked: newValue }));
+                  setPage(1);
+                }}
+                className={`p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
+                  filters.liked === "true"
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-white hover:bg-gray-50 text-black border border-gray-300"
+                }`}
+              >
+                ❤️ Me Gustan
+              </button>
+            </>
+          )}
+          
           <select
             name="sort"
             value={filters.sort ?? ""}
@@ -302,6 +375,7 @@ const Cards = () => {
             <option value="attack_desc">Ataque desc</option>
             <option value="defense_asc">Defensa asc</option>
             <option value="defense_desc">Defensa desc</option>
+            <option value="most_liked">Más valoradas</option>
           </select>
           {user && (
             <div className="sm:col-span-2 md:col-span-3 lg:col-span-2 xl:col-span-1">

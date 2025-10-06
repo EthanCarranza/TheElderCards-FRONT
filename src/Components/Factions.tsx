@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../contexts/AuthContext";
@@ -21,12 +22,12 @@ interface Faction {
 
 const Factions = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const [factions, setFactions] = useState<Faction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [expanded, setExpanded] = useState<string | null>(null);
   const [deletingFactions, setDeletingFactions] = useState<Set<string>>(
     new Set()
   );
@@ -49,9 +50,7 @@ const Factions = () => {
     void fetchFactions();
   }, [fetchFactions]);
 
-  const handleExpand = (id: string) => {
-    setExpanded((prev) => (prev === id ? null : id));
-  };
+
 
   const handleDeleteFaction = async (factionId: string) => {
     if (!user || !isAdmin) return;
@@ -134,23 +133,11 @@ const Factions = () => {
                   </div>
                   <button
                     className="self-center mb-2 rounded-lg bg-green-600/20 px-4 py-2 text-sm xl:text-base font-medium text-green-400 transition-colors hover:bg-green-600/30 hover:text-green-300"
-                    onClick={() => handleExpand(factionItem._id)}
+                    onClick={() => navigate(`/factions/${factionItem._id}`)}
                     type="button"
                   >
-                    {expanded === factionItem._id
-                      ? "Ocultar descripción"
-                      : "Ver descripción"}
+                    Ver Facción
                   </button>
-                  {expanded === factionItem._id && (
-                    <div className="mt-3 w-full rounded-lg bg-gray-900/50 p-4 text-gray-200 border border-gray-600">
-                      <div className="mb-2 text-sm xl:text-base font-semibold text-gray-400 uppercase tracking-wide">
-                        Descripción:
-                      </div>
-                      <div className="leading-relaxed text-sm xl:text-base">
-                        {factionItem.description}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Botón de eliminar para administradores */}
                   {isAdmin && (

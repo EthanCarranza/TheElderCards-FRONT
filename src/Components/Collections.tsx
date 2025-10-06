@@ -5,11 +5,7 @@ import { apiFetch } from "./api";
 import { useAuth } from "../contexts/AuthContext";
 import { extractErrorMessage } from "../utils/errors";
 
-interface CardSummary {
-  _id: string;
-  title: string;
-  img?: string;
-}
+
 
 interface CollectionItem {
   _id: string;
@@ -17,7 +13,7 @@ interface CollectionItem {
   description?: string;
   img?: string;
   creator: string;
-  cards: CardSummary[];
+  cards: Array<{ _id: string; title: string; img?: string }>;
 }
 
 const Collections: React.FC = () => {
@@ -33,6 +29,8 @@ const Collections: React.FC = () => {
   const [form, setForm] = useState({ title: "", description: "" });
   const [image, setImage] = useState<File | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+
 
   const canCreate = useMemo(() => Boolean(user), [user]);
 
@@ -123,9 +121,13 @@ const Collections: React.FC = () => {
     }
   };
 
+
+
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
-      <h1 className="text-3xl font-bold mb-2">Colecciones</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+        <h1 className="text-3xl font-bold mb-2 sm:mb-0">Colecciones</h1>
+      </div>
       {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
 
       {canCreate && (

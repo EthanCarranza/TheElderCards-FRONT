@@ -42,6 +42,22 @@ interface CreatorSummary {
   image?: string;
 }
 
+interface CardStats {
+  likes: number;
+  favorites: number;
+}
+
+interface CardInteraction {
+  liked: boolean;
+  favorited: boolean;
+}
+
+interface InteractionResponse {
+  liked?: boolean;
+  favorited?: boolean;
+  stats: CardStats;
+}
+
 interface CardDetailLocationState {
   card?: Partial<CardDetailData> & { _id: string };
   faction?: Faction;
@@ -105,6 +121,11 @@ const CardDetail = () => {
   const [creatorLoading, setCreatorLoading] = useState(false);
   const [deletingCard, setDeletingCard] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
+  // Estados para favoritos y likes
+  const [cardStats, setCardStats] = useState<CardStats>({ likes: 0, favorites: 0 });
+  const [userInteraction, setUserInteraction] = useState<CardInteraction>({ liked: false, favorited: false });
+  const [loadingInteraction, setLoadingInteraction] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -222,6 +243,82 @@ const CardDetail = () => {
       isActive = false;
     };
   }, [card?.creator]);
+
+  // Cargar estadísticas de la carta
+  useEffect(() => {
+    const loadCardStats = async () => {
+      if (!id) return;
+      
+      try {
+        const response = await apiFetch<CardStats>(`/card-interactions/${id}/stats`);
+        setCardStats(response.data);
+      } catch (error) {
+        console.error("Error al cargar estadísticas:", error);
+      }
+    };
+
+    void loadCardStats();
+  }, [id]);
+
+  // Cargar interacciones del usuario
+  useEffect(() => {
+    const loadUserInteraction = async () => {
+      if (!id || !user) {
+        setUserInteraction({ liked: false, favorited: false });
+        return;
+      }
+      
+      try {
+        const response = await apiFetch<CardInteraction>(`/card-interactions/${id}/interaction`, {
+          headers: { Authorization: `Bearer ${user.token}` }
+        });
+        setUserInteraction(response.data);
+      } catch (error) {
+        console.error("Error al cargar interacciones del usuario:", error);
+      }
+    };
+
+    void loadUserInteraction();
+  }, [id, user]);
+
+  // Funciones para manejar likes y favoritos
+  const handleToggleLike = async () => {
+    if (!user || !id || loadingInteraction) return;
+    
+    setLoadingInteraction(true);
+    try {
+      const response = await apiFetch<InteractionResponse>(`/card-interactions/${id}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      
+      setUserInteraction(prev => ({ ...prev, liked: response.data.liked || false }));
+      setCardStats(response.data.stats);
+    } catch (error) {
+      console.error("Error al actualizar like:", error);
+    } finally {
+      setLoadingInteraction(false);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user || !id || loadingInteraction) return;
+    
+    setLoadingInteraction(true);
+    try {
+      const response = await apiFetch<InteractionResponse>(`/card-interactions/${id}/favorite`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      
+      setUserInteraction(prev => ({ ...prev, favorited: response.data.favorited || false }));
+      setCardStats(response.data.stats);
+    } catch (error) {
+      console.error("Error al actualizar favorito:", error);
+    } finally {
+      setLoadingInteraction(false);
+    }
+  };
 
   const alreadyInSelected = useMemo(() => {
     if (!id || !selectedCollection) return false;
@@ -614,29 +711,95 @@ const CardDetail = () => {
                 )}
               </div>
 
+              {/* Like and Favorite Buttons */}
+              {user && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleToggleLike}
+                    disabled={loadingInteraction}
+                    className={`inline-flex items-center gap-2 rounded px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70 w-full sm:w-auto ${
+                      userInteraction.liked
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    <span>{userInteraction.liked ? "❤️" : "🤍"}</span>
+                    {userInteraction.liked ? "Te gusta" : "Me gusta"} ({cardStats.likes})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleFavorite}
+                    disabled={loadingInteraction}
+                    className={`inline-flex items-center gap-2 rounded px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70 w-full sm:w-auto ${
+                      userInteraction.favorited
+                        ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    <span>{userInteraction.favorited ? "⭐" : "☆"}</span>
+                    {userInteraction.favorited ? "En favoritos" : "Agregar a favoritos"} ({cardStats.favorites})
+                  </button>
+                </div>
+              )}
+
+              {/* Card Statistics */}
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  Estadísticas de la carta
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm text-gray-800">
+                  <div className="text-center">
+                    <div className="text-xs uppercase text-gray-600 font-medium">
+                      Me gusta
+                    </div>
+                    <div className="text-xl font-bold text-red-600">
+                      {cardStats.likes}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs uppercase text-gray-600 font-medium">
+                      Favoritos
+                    </div>
+                    <div className="text-xl font-bold text-yellow-600">
+                      {cardStats.favorites}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Faction Section */}
               {faction && (
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">
                     Facción
                   </h3>
-                  <div className="flex items-center gap-3 mb-3">
-                    <span
-                      className="inline-block h-5 w-5 rounded-full border border-gray-400"
-                      style={{ backgroundColor: faction.color }}
-                    ></span>
-                    <div>
-                      <div className="font-semibold text-gray-900">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/factions/${faction._id}`)}
+                    className="flex items-center gap-3 w-full text-left p-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+                  >
+                    <div className="flex-shrink-0">
+                      <span
+                        className="inline-block h-8 w-8 rounded-full border-2 border-gray-400 shadow-sm"
+                        style={{ backgroundColor: faction.color }}
+                      ></span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                         {faction.title}
                       </div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs sm:text-sm text-gray-600 truncate">
                         {faction.territory}
                       </div>
                     </div>
-                  </div>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {faction.description}
-                  </p>
+                    <div className="flex-shrink-0">
+                      <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </button>
                 </div>
               )}
 
@@ -667,17 +830,7 @@ const CardDetail = () => {
                 </div>
               )}
 
-              {/* Description Section */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Descripción
-                </h3>
-                <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 max-h-48 overflow-y-auto overflow-x-hidden">
-                  <p className="whitespace-pre-line text-sm text-gray-700 leading-relaxed break-words word-wrap overflow-wrap-anywhere">
-                    {card.description}
-                  </p>
-                </div>
-              </div>
+
 
               {/* Collections Management Section */}
               {user && (
