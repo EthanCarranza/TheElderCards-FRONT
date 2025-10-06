@@ -61,7 +61,10 @@ const PageLayout = ({
         >
           {showNavbar && <Navbar />}
           <div
-            className={classNames("flex-1 overflow-x-hidden w-full", contentClassName)}
+            className={classNames(
+              "flex-1 overflow-x-hidden w-full",
+              contentClassName
+            )}
           >
             {children}
           </div>

@@ -26,7 +26,11 @@ const CardTile: React.FC<Props> = ({ card, to, state, className }) => {
   const href = to || `/cards/${card._id}`;
 
   return (
-    <div className={`card-3d-wrapper w-full max-w-[180px] sm:max-w-[200px] lg:max-w-[220px] xl:max-w-[240px] mx-auto ${className ?? ""}`.trim()}>
+    <div
+      className={`card-3d-wrapper w-full max-w-[180px] sm:max-w-[200px] lg:max-w-[220px] xl:max-w-[240px] mx-auto ${
+        className ?? ""
+      }`.trim()}
+    >
       <Link
         to={href}
         state={state}

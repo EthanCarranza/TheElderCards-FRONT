@@ -32,6 +32,7 @@ const Collections: React.FC = () => {
   const [createSuccess, setCreateSuccess] = useState("");
   const [form, setForm] = useState({ title: "", description: "" });
   const [image, setImage] = useState<File | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const canCreate = useMemo(() => Boolean(user), [user]);
 
@@ -89,6 +90,11 @@ const Collections: React.FC = () => {
       setForm({ title: "", description: "" });
       setImage(null);
       setCreateSuccess("Colección creada");
+      // Ocultar formulario después de crear exitosamente
+      setTimeout(() => {
+        setShowCreateForm(false);
+        setCreateSuccess("");
+      }, 2000);
     } catch (e: unknown) {
       setCreateError(extractErrorMessage(e, "Error al crear colección"));
     } finally {
@@ -123,50 +129,84 @@ const Collections: React.FC = () => {
       {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
 
       {canCreate && (
-        <form
-          onSubmit={handleCreate}
-          className="mb-6 sm:mb-8 bg-gray-700 p-4 sm:p-6 rounded text-white flex flex-col gap-3 sm:gap-4 max-w-full sm:max-w-xl"
-        >
-          <h2 className="text-xl sm:text-2xl font-semibold">Crear colección</h2>
-          <input
-            className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
-            placeholder="Nombre de la colección"
-            value={form.title}
-            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            required
-            maxLength={60}
-          />
-          <textarea
-            className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
-            placeholder="Descripción"
-            value={form.description}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, description: e.target.value }))
-            }
-            rows={3}
-          />
-          <input
-            type="file"
-            accept="image/*"
-            className="text-xs sm:text-sm"
-            onChange={(e) => setImage(e.target.files?.[0] || null)}
-          />
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="mb-6 sm:mb-8 flex flex-col items-center">
+          {!showCreateForm ? (
             <button
-              type="submit"
-              disabled={creating}
-              className="rounded bg-gray-500 px-4 py-2 font-semibold text-white hover:bg-gray-400 disabled:opacity-60 text-sm sm:text-base w-full sm:w-auto"
+              onClick={() => setShowCreateForm(true)}
+              className="rounded bg-gray-600 hover:bg-gray-700 px-6 py-3 font-semibold text-white transition-colors text-sm sm:text-base"
             >
-              {creating ? "Creando..." : "Crear colección"}
+              Crear Colección
             </button>
-            {createSuccess && (
-              <span className="text-green-400 text-sm">{createSuccess}</span>
-            )}
-            {createError && (
-              <span className="text-red-400 text-sm break-words">{createError}</span>
-            )}
-          </div>
-        </form>
+          ) : (
+            <form
+              onSubmit={handleCreate}
+              className="bg-gray-700 p-4 sm:p-6 rounded text-white flex flex-col gap-3 sm:gap-4 w-full max-w-md mx-auto"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl sm:text-2xl font-semibold">
+                  Crear colección
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setForm({ title: "", description: "" });
+                    setImage(null);
+                    setCreateError("");
+                    setCreateSuccess("");
+                  }}
+                  className="text-gray-300 hover:text-white text-xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              <input
+                className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
+                placeholder="Nombre de la colección"
+                value={form.title}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, title: e.target.value }))
+                }
+                required
+                maxLength={60}
+              />
+              <textarea
+                className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
+                placeholder="Descripción"
+                value={form.description}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, description: e.target.value }))
+                }
+                rows={3}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                className="text-xs sm:text-sm"
+                onChange={(e) => setImage(e.target.files?.[0] || null)}
+              />
+              <div className="flex flex-col items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="rounded bg-gray-500 px-4 py-2 font-semibold text-white hover:bg-gray-400 disabled:opacity-60 text-sm sm:text-base w-full"
+                >
+                  {creating ? "Creando..." : "Crear colección"}
+                </button>
+                {createSuccess && (
+                  <span className="text-green-400 text-sm text-center">
+                    {createSuccess}
+                  </span>
+                )}
+                {createError && (
+                  <span className="text-red-400 text-sm text-center break-words">
+                    {createError}
+                  </span>
+                )}
+              </div>
+            </form>
+          )}
+        </div>
       )}
 
       {loading ? (

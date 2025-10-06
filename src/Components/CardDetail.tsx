@@ -499,7 +499,9 @@ const CardDetail = () => {
                     />
                   ) : (
                     <div className="card-3d-element flex h-full w-full items-center justify-center border border-dashed border-gray-500 bg-gray-800 text-center text-white p-4">
-                      <div className="text-sm sm:text-base">Esta carta no tiene imagen asociada.</div>
+                      <div className="text-sm sm:text-base">
+                        Esta carta no tiene imagen asociada.
+                      </div>
                     </div>
                   )}
                 </div>
@@ -516,7 +518,9 @@ const CardDetail = () => {
                   <span className="rounded-full bg-amber-100 px-3 py-1 font-medium text-amber-800 self-start sm:self-auto">
                     Coste: {card.cost}
                   </span>
-                  <span className="text-xs sm:text-sm">Fecha: {formattedDate}</span>
+                  <span className="text-xs sm:text-sm">
+                    Fecha: {formattedDate}
+                  </span>
                 </div>
               </div>
 

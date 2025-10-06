@@ -63,9 +63,13 @@ const CollectionDetail: React.FC = () => {
         </button>
 
         {loading ? (
-          <div className="text-white text-center py-8">Cargando colección...</div>
+          <div className="text-white text-center py-8">
+            Cargando colección...
+          </div>
         ) : error ? (
-          <div className="text-red-400 text-center py-4 px-4 bg-red-100 rounded-lg">{error}</div>
+          <div className="text-red-400 text-center py-4 px-4 bg-red-100 rounded-lg">
+            {error}
+          </div>
         ) : collection ? (
           <div className="space-y-6 lg:space-y-8">
             <div className="bg-white/90 text-black rounded-lg p-4 lg:p-6 shadow-lg">
@@ -89,7 +93,7 @@ const CollectionDetail: React.FC = () => {
                 </p>
               )}
             </div>
-            
+
             <div className="w-full">
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-4 lg:mb-6 text-white">
                 Cartas ({collection.cards?.length || 0})
@@ -110,7 +114,9 @@ const CollectionDetail: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="text-white text-center py-8">Colección no encontrada</div>
+          <div className="text-white text-center py-8">
+            Colección no encontrada
+          </div>
         )}
       </div>
     </PageLayout>

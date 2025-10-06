@@ -319,7 +319,9 @@ const Cards = () => {
         (loading ? (
           <div className="text-white text-center py-8">Cargando...</div>
         ) : error ? (
-          <div className="text-red-500 text-center py-4 px-4 bg-red-100 rounded-lg">{error}</div>
+          <div className="text-red-500 text-center py-4 px-4 bg-red-100 rounded-lg">
+            {error}
+          </div>
         ) : (
           <>
             {cards.length === 0 ? (
