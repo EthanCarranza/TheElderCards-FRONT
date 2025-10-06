@@ -11,6 +11,7 @@ import Profile from "./Components/Profile";
 import Collections from "./Components/Collections";
 import CollectionDetail from "./Components/CollectionDetail";
 import UserPublicProfile from "./Components/UserPublicProfile";
+import Friends from "./Components/Friends";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/collections/:id" element={<CollectionDetail />} />
           <Route path="/factions" element={<Factions />} />
           <Route path="/factions/:id" element={<FactionDetail />} />
+          <Route path="/friends" element={<Friends />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/users/:userId" element={<UserPublicProfile />} />
         </Routes>

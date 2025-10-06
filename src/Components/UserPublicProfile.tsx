@@ -5,6 +5,7 @@ import { apiFetch } from "./api";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import { extractErrorMessage } from "../utils/errors";
 import CardTile, { type CardTileData } from "./CardTile";
+import { useAuth } from "../contexts/AuthContext";
 
 interface PublicUser {
   _id?: string;
@@ -26,14 +27,23 @@ interface CardsResponse {
   cards?: Array<{ _id: string; title: string; img?: string }>;
 }
 
+type RelationshipStatus = 'none' | 'friends' | 'sent' | 'received' | 'blocked';
+
 const UserPublicProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState<PublicUser | null>(null);
   const [collections, setCollections] = useState<CollectionSummary[]>([]);
   const [cards, setCards] = useState<CardTileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  
+  // Estados para funcionalidad de amigos
+  const [relationshipStatus, setRelationshipStatus] = useState<RelationshipStatus>('none');
+  const [friendshipId, setFriendshipId] = useState<string | null>(null);
+  const [friendshipLoading, setFriendshipLoading] = useState(false);
+  const [friendshipError, setFriendshipError] = useState("");
 
   useEffect(() => {
     let isActive = true;
@@ -106,6 +116,72 @@ const UserPublicProfile = () => {
           setCollections(collectionsData);
           setCards(cardsData);
         }
+
+        // Verificar estado de amistad si el usuario actual está logueado y no es el mismo perfil
+        if (currentUser && (userData._id || userData.id) && (userData._id !== currentUser.userId && userData.id !== currentUser.userId)) {
+          const targetUserId = userData._id || userData.id;
+          
+          try {
+            // Resetear estados
+            setRelationshipStatus('none');
+            setFriendshipId(null);
+            
+            // 1. Verificar si son amigos
+            const friendsResp = await apiFetch<{ friends?: Array<{ friendshipId: string; friend?: { _id: string } }> }>('/friendships', {
+              headers: { Authorization: `Bearer ${currentUser.token}` }
+            });
+            
+            const friendship = friendsResp.data.friends?.find(f => f.friend?._id === targetUserId);
+            if (friendship && isActive) {
+              console.log('Found friendship:', friendship);
+              setRelationshipStatus('friends');
+              setFriendshipId(friendship.friendshipId);
+              return;
+            }
+            
+            // 2. Verificar solicitudes recibidas
+            const pendingResp = await apiFetch<{ requests?: Array<{ friendshipId: string; requester?: { _id: string } }> }>('/friendships/pending', {
+              headers: { Authorization: `Bearer ${currentUser.token}` }
+            });
+            
+            const receivedRequest = pendingResp.data.requests?.find(r => r.requester?._id === targetUserId);
+            if (receivedRequest && isActive) {
+              console.log('Found received request:', receivedRequest);
+              setRelationshipStatus('received');
+              setFriendshipId(receivedRequest.friendshipId);
+              return;
+            }
+            
+            // 3. Verificar solicitudes enviadas
+            const sentResp = await apiFetch<{ requests?: Array<{ friendshipId: string; recipient?: { _id: string } }> }>('/friendships/sent', {
+              headers: { Authorization: `Bearer ${currentUser.token}` }
+            });
+            
+            console.log('Sent requests response:', sentResp.data);
+            const sentRequest = sentResp.data.requests?.find(r => r.recipient?._id === targetUserId);
+            console.log('Found sent request:', sentRequest, 'for targetUserId:', targetUserId);
+            
+            if (sentRequest && isActive) {
+              console.log('Setting friendshipId for sent request:', sentRequest.friendshipId);
+              setRelationshipStatus('sent');
+              setFriendshipId(sentRequest.friendshipId);
+              return;
+            }
+            
+            // 4. Si no hay relación
+            if (isActive) {
+              console.log('No relationship found, setting to none');
+              setRelationshipStatus('none');
+            }
+            
+          } catch (friendshipError) {
+            console.error("Error al verificar estado de amistad:", friendshipError);
+            if (isActive) {
+              setRelationshipStatus('none');
+            }
+          }
+        }
+
       } catch (loadError) {
         const message = extractErrorMessage(
           loadError,
@@ -130,7 +206,99 @@ const UserPublicProfile = () => {
     return () => {
       isActive = false;
     };
-  }, [userId]);
+  }, [userId, currentUser]);
+
+  // Función para enviar solicitud de amistad
+  const handleSendFriendRequest = async () => {
+    if (!currentUser || !profile) return;
+
+    setFriendshipLoading(true);
+    setFriendshipError("");
+
+    try {
+      const response = await apiFetch<{ friendship: { _id: string } }>("/friendships", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+        body: { recipientId: profile._id || profile.id }
+      });
+
+      console.log('Friend request sent, response:', response.data);
+      
+      setRelationshipStatus('sent');
+      // Establecer el friendshipId con la respuesta del backend
+      if (response.data.friendship?._id) {
+        setFriendshipId(response.data.friendship._id);
+        console.log('Set friendshipId after sending request:', response.data.friendship._id);
+      }
+    } catch (err) {
+      setFriendshipError(extractErrorMessage(err, "Error al enviar solicitud"));
+    } finally {
+      setFriendshipLoading(false);
+    }
+  };
+
+  // Función para responder a solicitud de amistad
+  const handleRespondToRequest = async (action: 'accept' | 'decline') => {
+    if (!currentUser || !friendshipId) return;
+
+    setFriendshipLoading(true);
+    setFriendshipError("");
+
+    try {
+      await apiFetch(`/friendships/${friendshipId}/respond`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+        body: { action }
+      });
+
+      if (action === 'accept') {
+        setRelationshipStatus('friends');
+      } else {
+        setRelationshipStatus('none');
+        setFriendshipId(null);
+      }
+    } catch (err) {
+      setFriendshipError(extractErrorMessage(err, "Error al responder solicitud"));
+    } finally {
+      setFriendshipLoading(false);
+    }
+  };
+
+  // Función para eliminar amistad o cancelar solicitud
+  const handleRemoveFriendship = async () => {
+    console.log('handleRemoveFriendship called:', { currentUser: !!currentUser, friendshipId, relationshipStatus });
+    
+    if (!currentUser) {
+      console.log('No currentUser');
+      return;
+    }
+    
+    if (!friendshipId) {
+      console.log('No friendshipId');
+      return;
+    }
+
+    setFriendshipLoading(true);
+    setFriendshipError("");
+
+    try {
+      console.log('Making DELETE request to:', `/friendships/${friendshipId}`);
+      
+      await apiFetch(`/friendships/${friendshipId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${currentUser.token}` }
+      });
+
+      console.log('DELETE request successful');
+      setRelationshipStatus('none');
+      setFriendshipId(null);
+    } catch (err) {
+      console.error('DELETE request failed:', err);
+      setFriendshipError(extractErrorMessage(err, "Error al eliminar relación"));
+    } finally {
+      setFriendshipLoading(false);
+    }
+  };
 
   const handleGoBack = () => {
     if (window.history.length > 1) {
@@ -174,10 +342,134 @@ const UserPublicProfile = () => {
               className="h-32 w-32 rounded-full object-cover ring-4 ring-white/40"
               loading="lazy"
             />
-            <div className="text-center md:text-left">
+            <div className="flex-1 text-center md:text-left">
               <h1 className="text-3xl font-semibold">{displayName}</h1>
               {profile.username && (
                 <p className="mt-2 text-sm text-white/70">@{profile.username}</p>
+              )}
+              
+              {/* Botones de amistad */}
+              {currentUser && (profile._id !== currentUser.userId && profile.id !== currentUser.userId) && (
+                <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-center">
+                  {relationshipStatus === 'none' && (
+                    <button
+                      onClick={handleSendFriendRequest}
+                      disabled={friendshipLoading}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                    >
+                      {friendshipLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          Enviar solicitud
+                        </>
+                      )}
+                    </button>
+                  )}
+                  
+                  {relationshipStatus === 'friends' && (
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white font-medium">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Amigos
+                      </span>
+                      <button
+                        onClick={handleRemoveFriendship}
+                        disabled={friendshipLoading}
+                        className="inline-flex items-center gap-1 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-3 py-2 text-white text-sm font-medium transition-colors"
+                      >
+                        {friendshipLoading ? (
+                          <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                          <>
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Eliminar
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  
+                  {relationshipStatus === 'sent' && (
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-yellow-600 px-4 py-2 text-white font-medium">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Solicitud enviada
+                      </span>
+                      <button
+                        onClick={() => {
+                          console.log('Cancel button clicked. friendshipId:', friendshipId);
+                          handleRemoveFriendship();
+                        }}
+                        disabled={friendshipLoading}
+                        className="inline-flex items-center gap-1 rounded-lg bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-3 py-2 text-white text-sm font-medium transition-colors"
+                      >
+                        {friendshipLoading ? (
+                          <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                          "Cancelar"
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  
+                  {relationshipStatus === 'received' && (
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-3 py-2 text-white text-sm font-medium">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-4.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        Te envió solicitud
+                      </span>
+                      <button
+                        onClick={() => handleRespondToRequest('accept')}
+                        disabled={friendshipLoading}
+                        className="inline-flex items-center gap-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-3 py-1 text-white text-xs font-medium transition-colors"
+                      >
+                        {friendshipLoading ? (
+                          <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                          "Aceptar"
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleRespondToRequest('decline')}
+                        disabled={friendshipLoading}
+                        className="inline-flex items-center gap-1 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-3 py-1 text-white text-xs font-medium transition-colors"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  )}
+                  
+                  {relationshipStatus === 'blocked' && (
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-red-700 px-4 py-2 text-white font-medium">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                      </svg>
+                      Usuario bloqueado
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              {/* Error de amistad */}
+              {friendshipError && (
+                <div className="mt-3 p-2 bg-red-600/20 border border-red-500 rounded text-red-200 text-sm">
+                  {friendshipError}
+                </div>
               )}
             </div>
           </section>

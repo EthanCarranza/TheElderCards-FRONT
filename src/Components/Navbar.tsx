@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
+import { useFriendshipNotifications } from "../hooks/useFriendshipNotifications";
 
 type PrimaryLink = {
   to: string;
@@ -19,6 +20,7 @@ const primaryLinks: PrimaryLink[] = [
 function Navbar() {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { pendingRequestsCount } = useFriendshipNotifications();
 
   const handleCloseMenu = () => setMenuOpen(false);
 
@@ -131,6 +133,22 @@ function Navbar() {
                     )}
                   </li>
                 ))}
+                {user && (
+                  <li>
+                    <Link
+                      to="/friends"
+                      className="relative transition hover:text-gray-300 whitespace-nowrap"
+                      onClick={handleCloseMenu}
+                    >
+                      Amigos
+                      {pendingRequestsCount > 0 && (
+                        <span className="absolute -top-2 -right-2 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                          {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
 
@@ -210,6 +228,22 @@ function Navbar() {
                   )}
                 </li>
               ))}
+              {user && (
+                <li>
+                  <Link
+                    to="/friends"
+                    className="relative flex items-center py-2 transition hover:text-gray-300"
+                    onClick={handleCloseMenu}
+                  >
+                    Amigos
+                    {pendingRequestsCount > 0 && (
+                      <span className="ml-2 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                        {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              )}
             </ul>
 
             <div className="flex flex-col gap-4 border-t border-white/10 pt-4 text-lg">
