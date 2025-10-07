@@ -40,12 +40,12 @@ const PageLayout = ({
   return (
     <div
       className={classNames(
-        "relative min-h-screen bg-black text-white",
+        "relative min-h-screen bg-black text-white w-full",
         containerClassName
       )}
     >
       {overlay}
-      <div className="mx-auto flex min-h-screen w-full max-w-[1920px] flex-col 2xl:flex-row 2xl:gap-6">
+      <div className="flex min-h-screen w-full flex-col 2xl:flex-row 2xl:max-w-none">
         <WallpaperColumn
           image={wallpaperImage}
           side="left"
@@ -58,6 +58,7 @@ const PageLayout = ({
             "relative z-10 flex w-full flex-1 flex-col bg-zinc-950 min-h-screen",
             mainClassName
           )}
+          style={{ maxWidth: '1920px', margin: '0 auto' }}
         >
           {showNavbar && <Navbar />}
           <div
@@ -107,22 +108,22 @@ const WallpaperColumn = ({
     <div
       aria-hidden
       className={classNames(
-        "relative flex-shrink-0",
+        "relative flex-shrink-0 bg-black",
         COLUMN_WIDTH_CLASSES,
         visibilityClass
       )}
+      style={{
+        backgroundImage: `url('${image}')`,
+        backgroundSize: size,
+        backgroundPosition: position,
+        backgroundRepeat: 'repeat',
+        minHeight: '100vh',
+        height: '100%'
+      }}
     >
-      <div className="pointer-events-none sticky top-0 h-screen w-full overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url('${image}')`,
-            backgroundSize: size,
-            backgroundPosition: position,
-          }}
-        />
-        <div className={classNames("absolute inset-0", horizontalGradient)} />
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent" />
+      <div className="absolute inset-0 w-full h-full pointer-events-none">
+        <div className={classNames("absolute inset-0 w-full h-full", horizontalGradient)} />
+        <div className="absolute inset-x-0 bottom-0 w-full h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent" />
       </div>
     </div>
   );

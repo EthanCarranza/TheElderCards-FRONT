@@ -533,7 +533,7 @@ const Friends = () => {
               <div className="space-y-4">
                 {searchResults.map((searchUser) => (
                   <div key={searchUser._id} className="bg-gray-700 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
                       <div 
                         className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
                         onClick={() => handleUserClick(searchUser._id)}
@@ -556,7 +556,7 @@ const Friends = () => {
                           </div>
                         </div>
                       </div>
-                      <div>
+                      <div className="flex-shrink-0 sm:ml-4">
                         {searchUser.relationshipStatus === 'none' && (
                           <button
                             onClick={() => sendFriendRequest(searchUser._id)}
@@ -568,7 +568,7 @@ const Friends = () => {
                         )}
                         {searchUser.relationshipStatus === 'friends' && (
                           <span className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded">
-                            Ya son amigos
+                            Ya sois amigos
                           </span>
                         )}
                         {searchUser.relationshipStatus === 'sent' && (

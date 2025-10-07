@@ -124,14 +124,81 @@ const Collections: React.FC = () => {
 
 
   return (
-    <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
+    <PageLayout contentClassName="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 xl:p-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <h1 className="text-3xl font-bold mb-2 sm:mb-0">Colecciones</h1>
       </div>
       {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
 
+      {loading ? (
+        <div>Cargando colecciones...</div>
+      ) : collections.length === 0 ? (
+        <div>No hay colecciones</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
+          {collections.map((col) => {
+            const isFav = favorites.includes(col._id);
+            const isOwner = user?.userId && col.creator === user.userId;
+            return (
+              <Link
+                key={col._id}
+                to={`/collections/${col._id}`}
+                className="group block rounded bg-white/90 text-black shadow p-3 relative hover:shadow-lg transition"
+                aria-label={`Abrir colección ${col.title}`}
+              >
+                <div className="relative">
+                  {col.img ? (
+                    <img
+                      src={col.img}
+                      alt={col.title}
+                      className="w-full h-32 sm:h-36 lg:h-40 xl:h-48 object-cover rounded"
+                    />
+                  ) : (
+                    <div className="w-full h-32 sm:h-36 lg:h-40 xl:h-48 bg-gray-200 rounded flex items-center justify-center text-gray-600 text-sm">
+                      Sin imagen
+                    </div>
+                  )}
+                  {user && !isOwner && (
+                    <button
+                      title={
+                        isFav ? "Quitar de favoritos" : "Marcar como favorito"
+                      }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void toggleFavorite(col._id, isFav);
+                      }}
+                      className={`absolute top-2 right-2 rounded-full p-1.5 sm:p-2 text-sm ${
+                        isFav
+                          ? "bg-yellow-400 text-black"
+                          : "bg-black/60 text-white"
+                      }`}
+                    >
+                      ★
+                    </button>
+                  )}
+                </div>
+                <div className="mt-2">
+                  <div className="font-semibold group-hover:underline text-sm sm:text-base lg:text-lg break-words">
+                    {col.title}
+                  </div>
+                  {col.description && (
+                    <div className="text-xs sm:text-sm lg:text-base text-gray-700 line-clamp-2 break-words">
+                      {col.description}
+                    </div>
+                  )}
+                  <div className="mt-2 text-xs sm:text-sm text-gray-600">
+                    {col.cards?.length || 0} cartas
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       {canCreate && (
-        <div className="mb-6 sm:mb-8 flex flex-col items-center">
+        <div className="mt-6 sm:mt-8 flex flex-col items-center">
           {!showCreateForm ? (
             <button
               onClick={() => setShowCreateForm(true)}
@@ -208,73 +275,6 @@ const Collections: React.FC = () => {
               </div>
             </form>
           )}
-        </div>
-      )}
-
-      {loading ? (
-        <div>Cargando colecciones...</div>
-      ) : collections.length === 0 ? (
-        <div>No hay colecciones</div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {collections.map((col) => {
-            const isFav = favorites.includes(col._id);
-            const isOwner = user?.userId && col.creator === user.userId;
-            return (
-              <Link
-                key={col._id}
-                to={`/collections/${col._id}`}
-                className="group block rounded bg-white/90 text-black shadow p-3 relative hover:shadow-lg transition"
-                aria-label={`Abrir colección ${col.title}`}
-              >
-                <div className="relative">
-                  {col.img ? (
-                    <img
-                      src={col.img}
-                      alt={col.title}
-                      className="w-full h-32 sm:h-36 lg:h-40 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-full h-32 sm:h-36 lg:h-40 bg-gray-200 rounded flex items-center justify-center text-gray-600 text-sm">
-                      Sin imagen
-                    </div>
-                  )}
-                  {user && !isOwner && (
-                    <button
-                      title={
-                        isFav ? "Quitar de favoritos" : "Marcar como favorito"
-                      }
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        void toggleFavorite(col._id, isFav);
-                      }}
-                      className={`absolute top-2 right-2 rounded-full p-1.5 sm:p-2 text-sm ${
-                        isFav
-                          ? "bg-yellow-400 text-black"
-                          : "bg-black/60 text-white"
-                      }`}
-                    >
-                      ★
-                    </button>
-                  )}
-                </div>
-                <div className="mt-2">
-                  <div className="font-semibold group-hover:underline text-sm sm:text-base lg:text-lg break-words">
-                    {col.title}
-                  </div>
-                  {col.description && (
-                    <div className="text-xs sm:text-sm lg:text-base text-gray-700 line-clamp-2 break-words">
-                      {col.description}
-                    </div>
-                  )}
-                  <div className="mt-2 text-xs sm:text-sm text-gray-600">
-                    {col.cards?.length || 0} cartas
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
         </div>
       )}
     </PageLayout>

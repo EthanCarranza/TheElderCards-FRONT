@@ -52,7 +52,7 @@ const CollectionDetail: React.FC = () => {
 
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto">
-      <div className="w-full max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-6">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6">
         <button
           onClick={() =>
             window.history.length > 1 ? navigate(-1) : navigate("/collections")
@@ -99,7 +99,7 @@ const CollectionDetail: React.FC = () => {
                 Cartas ({collection.cards?.length || 0})
               </h2>
               {collection.cards?.length ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-5">
                   {collection.cards.map((card) => (
                     <div key={card._id} className="w-full">
                       <CardTile card={card} />

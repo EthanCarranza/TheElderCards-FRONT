@@ -1,7 +1,7 @@
 import { useContext } from 'react';
-import { MessageNotificationsContext } from '../contexts/MessageNotificationsContext';
+import { MessageNotificationsContext, MessageNotificationsContextType } from '../contexts/MessageNotificationsContextDefinition';
 
-export const useMessageNotifications = () => {
+export const useMessageNotifications = (): MessageNotificationsContextType => {
   const context = useContext(MessageNotificationsContext);
   if (context === undefined) {
     throw new Error('useMessageNotifications must be used within a MessageNotificationsProvider');

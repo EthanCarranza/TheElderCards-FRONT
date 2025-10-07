@@ -213,7 +213,7 @@ const Cards = () => {
   };
 
   return (
-    <PageLayout contentClassName="overflow-y-auto p-6">
+    <PageLayout contentClassName="overflow-y-auto p-3 sm:p-6">
       <h2 className="text-5xl text-center font-light pb-10 text-white">
         Cartas
       </h2>
@@ -405,7 +405,7 @@ const Cards = () => {
                 </span>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 pt-8 sm:pt-12 lg:pt-16">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6 pt-4 sm:pt-8 md:pt-12 lg:pt-16 px-2 sm:px-0">
                 {cards.map((card) => {
                   let factionObj: Faction | undefined = undefined;
                   if (

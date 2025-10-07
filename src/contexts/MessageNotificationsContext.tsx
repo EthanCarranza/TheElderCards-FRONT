@@ -1,16 +1,7 @@
-import React, { createContext, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { apiFetch } from '../Components/api';
-
-interface MessageNotificationsContextType {
-  unreadCount: number;
-  updateUnreadCount: () => void;
-  incrementUnreadCount: () => void;
-  decrementUnreadCount: () => void;
-  loading: boolean;
-}
-
-export const MessageNotificationsContext = createContext<MessageNotificationsContextType | undefined>(undefined);
+import { MessageNotificationsContext } from './MessageNotificationsContextDefinition';
 
 interface MessageNotificationsProviderProps {
   children: React.ReactNode;

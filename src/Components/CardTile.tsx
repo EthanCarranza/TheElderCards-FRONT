@@ -27,7 +27,7 @@ const CardTile: React.FC<Props> = ({ card, to, state, className }) => {
 
   return (
     <div
-      className={`card-3d-wrapper w-full max-w-[180px] sm:max-w-[200px] lg:max-w-[220px] xl:max-w-[240px] mx-auto ${
+      className={`card-3d-wrapper w-full max-w-none sm:max-w-[200px] lg:max-w-[220px] xl:max-w-[240px] mx-auto ${
         className ?? ""
       }`.trim()}
     >
