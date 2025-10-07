@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
@@ -34,6 +35,7 @@ type TabType = 'friends' | 'received' | 'sent' | 'search';
 
 const Friends = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('friends');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -242,6 +244,11 @@ const Friends = () => {
     });
   };
 
+  // Función para navegar al perfil del usuario
+  const handleUserClick = (userId: string) => {
+    navigate(`/profile/${userId}`);
+  };
+
   if (!user) {
     return (
       <PageLayout contentClassName="flex items-center justify-center min-h-screen">
@@ -350,7 +357,11 @@ const Friends = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {friends.map((friend) => (
                   <div key={friend.friendshipId} className="bg-gray-700 rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-3">
+                    <div 
+                      className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors"
+                      onClick={() => handleUserClick(friend.user._id)}
+                      title="Ver perfil"
+                    >
                       <img
                         src={getUserAvatar(friend.user)}
                         alt={getUserDisplayName(friend.user)}
@@ -362,6 +373,9 @@ const Friends = () => {
                         </div>
                         <div className="text-sm text-gray-400">
                           Amigos desde {formatDate(friend.friendsSince)}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Clic para ver perfil
                         </div>
                       </div>
                     </div>
@@ -387,18 +401,25 @@ const Friends = () => {
                 {receivedRequests.map((request) => (
                   <div key={request.friendshipId} className="bg-gray-700 rounded-lg p-4">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
+                        onClick={() => handleUserClick(request.requester!._id)}
+                        title="Ver perfil"
+                      >
                         <img
                           src={getUserAvatar(request.requester!)}
                           alt={getUserDisplayName(request.requester!)}
                           className="w-12 h-12 rounded-full object-cover"
                         />
-                        <div>
+                        <div className="flex-1">
                           <div className="font-semibold text-white">
                             {getUserDisplayName(request.requester!)}
                           </div>
                           <div className="text-sm text-gray-400">
                             {formatDate(request.createdAt)}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Clic para ver perfil
                           </div>
                           {request.message && (
                             <div className="text-sm text-gray-300 mt-1">
@@ -439,18 +460,25 @@ const Friends = () => {
                 {sentRequests.map((request) => (
                   <div key={request.friendshipId} className="bg-gray-700 rounded-lg p-4">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
+                        onClick={() => handleUserClick(request.recipient!._id)}
+                        title="Ver perfil"
+                      >
                         <img
                           src={getUserAvatar(request.recipient!)}
                           alt={getUserDisplayName(request.recipient!)}
                           className="w-12 h-12 rounded-full object-cover"
                         />
-                        <div>
+                        <div className="flex-1">
                           <div className="font-semibold text-white">
                             {getUserDisplayName(request.recipient!)}
                           </div>
                           <div className="text-sm text-gray-400">
                             Enviada el {formatDate(request.createdAt)}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Clic para ver perfil
                           </div>
                           {request.message && (
                             <div className="text-sm text-gray-300 mt-1">
@@ -482,18 +510,25 @@ const Friends = () => {
                 {searchResults.map((searchUser) => (
                   <div key={searchUser._id} className="bg-gray-700 rounded-lg p-4">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
+                        onClick={() => handleUserClick(searchUser._id)}
+                        title="Ver perfil"
+                      >
                         <img
                           src={getUserAvatar(searchUser)}
                           alt={getUserDisplayName(searchUser)}
                           className="w-12 h-12 rounded-full object-cover"
                         />
-                        <div>
+                        <div className="flex-1">
                           <div className="font-semibold text-white">
                             {getUserDisplayName(searchUser)}
                           </div>
                           <div className="text-sm text-gray-400">
                             {searchUser.email}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Clic para ver perfil
                           </div>
                         </div>
                       </div>

@@ -29,6 +29,7 @@ function App() {
           <Route path="/factions/:id" element={<FactionDetail />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<UserPublicProfile />} />
           <Route path="/users/:userId" element={<UserPublicProfile />} />
         </Routes>
       </Router>
