@@ -9,8 +9,47 @@
   font-style: normal;
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: "Cyrodiil", serif;
+  /* Evitar zoom en inputs en iOS */
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mejorar UX táctil en móvil */
+@media (max-width: 767px) {
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* Área segura para dispositivos con notch */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  /* Evitar zoom accidental en inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Mejorar scrolling en listas largas */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 * {

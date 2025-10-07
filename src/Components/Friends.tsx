@@ -379,13 +379,21 @@ const Friends = () => {
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => removeFriendship(friend.friendshipId)}
-                      disabled={processing.has(friend.friendshipId)}
-                      className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                    >
-                      {processing.has(friend.friendshipId) ? "Eliminando..." : "Eliminar amistad"}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigate(`/messages/${friend.user._id}`)}
+                        className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+                      >
+                        Enviar mensaje
+                      </button>
+                      <button
+                        onClick={() => removeFriendship(friend.friendshipId)}
+                        disabled={processing.has(friend.friendshipId)}
+                        className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                      >
+                        {processing.has(friend.friendshipId) ? "Eliminando..." : "Eliminar amistad"}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -428,20 +436,28 @@ const Friends = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => respondToRequest(request.friendshipId, 'accept')}
+                            disabled={processing.has(request.friendshipId)}
+                            className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                          >
+                            Aceptar
+                          </button>
+                          <button
+                            onClick={() => respondToRequest(request.friendshipId, 'decline')}
+                            disabled={processing.has(request.friendshipId)}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                          >
+                            Rechazar
+                          </button>
+                        </div>
                         <button
-                          onClick={() => respondToRequest(request.friendshipId, 'accept')}
-                          disabled={processing.has(request.friendshipId)}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                          onClick={() => navigate(`/messages/${request.requester!._id}`)}
+                          className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
                         >
-                          Aceptar
-                        </button>
-                        <button
-                          onClick={() => respondToRequest(request.friendshipId, 'decline')}
-                          disabled={processing.has(request.friendshipId)}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                        >
-                          Rechazar
+                          Enviar mensaje
                         </button>
                       </div>
                     </div>
@@ -487,13 +503,21 @@ const Friends = () => {
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => removeFriendship(request.friendshipId)}
-                        disabled={processing.has(request.friendshipId)}
-                        className="px-4 py-2 bg-gray-600 hover:bg-gray-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                      >
-                        {processing.has(request.friendshipId) ? "Cancelando..." : "Cancelar"}
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => removeFriendship(request.friendshipId)}
+                          disabled={processing.has(request.friendshipId)}
+                          className="px-4 py-2 bg-gray-600 hover:bg-gray-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                        >
+                          {processing.has(request.friendshipId) ? "Cancelando..." : "Cancelar"}
+                        </button>
+                        <button
+                          onClick={() => navigate(`/messages/${request.recipient!._id}`)}
+                          className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                        >
+                          Enviar mensaje
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
