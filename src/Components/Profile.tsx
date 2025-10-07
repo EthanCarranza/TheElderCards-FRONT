@@ -8,14 +8,13 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUser, FaCamera } from "react-icons/fa";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import { apiFetch } from "./api";
 import Message from "./Message";
 import PageLayout from "./PageLayout";
 import FormInput from "./FormInput";
 import { extractErrorMessage } from "../utils/errors";
-
 interface UserProfile {
   _id: string;
   id?: string;
@@ -24,15 +23,12 @@ interface UserProfile {
   image?: string;
   role: string;
 }
-
 interface UpdateImageResponse {
   imageUrl: string;
   user: UserProfile;
 }
-
 const passwordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
 const Profile = () => {
   const { user, updateUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -48,31 +44,24 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const updateUserRef = useRef(updateUser);
   const logoutRef = useRef(logout);
-
   useEffect(() => {
     updateUserRef.current = updateUser;
   }, [updateUser]);
-
   useEffect(() => {
     logoutRef.current = logout;
   }, [logout]);
-
   useEffect(() => {
     if (!user) {
       navigate("/login", { replace: true });
       setLoading(false);
       return;
     }
-
     setLoading(true);
-
     const currentUsername = user.username ?? "";
     const currentEmail = user.email ?? "";
     const currentImage = user.image ?? DEFAULT_PROFILE_IMAGE;
-
     const fetchProfile = async () => {
       try {
         const response = await apiFetch<UserProfile>(`/users/${user.userId}`, {
@@ -80,19 +69,16 @@ const Profile = () => {
             Authorization: `Bearer ${user.token}`,
           },
         });
-
         if (response.status !== 200) {
           setErrorMessage("No fue posible cargar el perfil.");
           return;
         }
-
         const data = response.data;
         const resolvedImage = data.image ?? DEFAULT_PROFILE_IMAGE;
         setProfile(data);
         setUsername(data.username ?? "");
         setEmail(data.email ?? "");
         setImagePreview(resolvedImage);
-
         if (
           data.username !== currentUsername ||
           data.email !== currentEmail ||
@@ -132,15 +118,12 @@ const Profile = () => {
         setLoading(false);
       }
     };
-
     void fetchProfile();
   }, [user, navigate]);
-
   const currentImage = useMemo(
     () => imagePreview || DEFAULT_PROFILE_IMAGE,
     [imagePreview]
   );
-
   useEffect(() => {
     return () => {
       if (imagePreview.startsWith("blob:")) {
@@ -148,7 +131,6 @@ const Profile = () => {
       }
     };
   }, [imagePreview]);
-
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     if (!file) {
@@ -161,33 +143,26 @@ const Profile = () => {
     const previewUrl = URL.createObjectURL(file);
     setImagePreview(previewUrl);
   };
-
   const resetFeedback = () => {
     setErrorMessage("");
     setSuccessMessage("");
   };
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     resetFeedback();
-
     if (!user || !profile) {
       setErrorMessage("Sesión no válida. Vuelve a iniciar sesión.");
       return;
     }
-
     const updates: Record<string, string> = {};
     const trimmedUsername = username.trim();
     const trimmedEmail = email.trim().toLowerCase();
-
     if (trimmedUsername && trimmedUsername !== profile.username) {
       updates.username = trimmedUsername;
     }
-
     if (trimmedEmail && trimmedEmail !== profile.email) {
       updates.email = trimmedEmail;
     }
-
     if (password) {
       if (password !== confirmPassword) {
         setErrorMessage("Las contraseñas no coinciden.");
@@ -201,17 +176,13 @@ const Profile = () => {
       }
       updates.password = password;
     }
-
     if (Object.keys(updates).length === 0 && !selectedFile) {
       setSuccessMessage("No hay cambios para guardar.");
       return;
     }
-
     setSaving(true);
-
     try {
       let updatedUser = profile;
-
       if (Object.keys(updates).length > 0) {
         const response = await apiFetch<UserProfile>(`/users/${user.userId}`, {
           method: "put",
@@ -220,7 +191,6 @@ const Profile = () => {
             Authorization: `Bearer ${user.token}`,
           },
         });
-
         if (response.status !== 200) {
           setErrorMessage("No fue posible actualizar los datos básicos.");
           return;
@@ -230,7 +200,6 @@ const Profile = () => {
         setUsername(updatedUser.username ?? "");
         setEmail(updatedUser.email ?? "");
       }
-
       if (selectedFile) {
         const formData = new FormData();
         formData.append("img", selectedFile);
@@ -244,12 +213,10 @@ const Profile = () => {
             },
           }
         );
-
         if (response.status !== 200) {
           setErrorMessage("No fue posible actualizar la imagen de perfil.");
           return;
         }
-
         const imageUrl = response.data.imageUrl ?? DEFAULT_PROFILE_IMAGE;
         setProfile(response.data.user);
         setImagePreview(imageUrl);
@@ -259,7 +226,6 @@ const Profile = () => {
         }
         updatedUser = response.data.user;
       }
-
       const resolvedImage =
         updatedUser.image ?? imagePreview ?? DEFAULT_PROFILE_IMAGE;
       updateUser({
@@ -278,7 +244,6 @@ const Profile = () => {
       setSaving(false);
     }
   };
-
   if (loading) {
     return (
       <PageLayout contentClassName="flex items-center justify-center">
@@ -286,11 +251,9 @@ const Profile = () => {
       </PageLayout>
     );
   }
-
   if (!user) {
     return null;
   }
-
   return (
     <PageLayout contentClassName="flex flex-1 justify-center py-10">
       <div className="w-full max-w-3xl rounded-lg bg-white p-8 text-black shadow-2xl">
@@ -323,10 +286,8 @@ const Profile = () => {
             </p>
           </div>
         </div>
-
         <Message message={errorMessage} type="error" />
         <Message message={successMessage} type="success" />
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <FormInput
             id="username"
@@ -376,5 +337,4 @@ const Profile = () => {
     </PageLayout>
   );
 };
-
 export default Profile;

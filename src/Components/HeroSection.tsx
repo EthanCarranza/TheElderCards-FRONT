@@ -1,10 +1,8 @@
 import React from "react";
-
 interface HeroSectionProps {
   title: string;
   image: string;
 }
-
 const HeroSection: React.FC<HeroSectionProps> = ({ title, image }) => (
   <>
     {title && (
@@ -23,5 +21,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({ title, image }) => (
     </div>
   </>
 );
-
 export default HeroSection;

@@ -1,13 +1,10 @@
-﻿import React from "react";
-
+import React from "react";
 interface FloatingToastProps {
   message: string;
   onClose: () => void;
 }
-
 const FloatingToast: React.FC<FloatingToastProps> = ({ message, onClose }) => {
   if (!message) return null;
-
   return (
     <div className="fixed bottom-10 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 px-4">
       <div className="flex items-center gap-4 rounded-lg bg-black/80 px-6 py-4 text-white shadow-lg">
@@ -24,5 +21,4 @@ const FloatingToast: React.FC<FloatingToastProps> = ({ message, onClose }) => {
     </div>
   );
 };
-
 export default FloatingToast;

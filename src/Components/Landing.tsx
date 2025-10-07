@@ -2,18 +2,16 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import HeroSection from "./HeroSection";
 import FloatingToast from "./FloatingToast";
 import PageLayout from "./PageLayout";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
-
 function Landing() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [toastMessage, setToastMessage] = useState("");
-
   useEffect(() => {
     const state = location.state as
       | {
@@ -21,16 +19,12 @@ function Landing() {
           credentials?: { email: string; password: string };
         }
       | undefined;
-
     if (!state?.registrationSuccess) return;
-
     setToastMessage("Registro exitoso. Iniciando sesión...");
-
     const credentials = state.credentials;
     const cleanupNavigation = () => {
       navigate(location.pathname, { replace: true, state: {} });
     };
-
     const autoLogin = async () => {
       if (!credentials) {
         setToastMessage(
@@ -39,20 +33,17 @@ function Landing() {
         cleanupNavigation();
         return;
       }
-
       try {
         const response = await apiFetch("/users/login", {
           method: "post",
           body: credentials,
         });
-
         if (response.status !== 200) {
           setToastMessage(
             "Registro exitoso, pero no pudimos iniciar sesión automáticamente."
           );
           return;
         }
-
         const data = response.data as {
           token: string;
           user: {
@@ -63,7 +54,6 @@ function Landing() {
             image?: string;
           };
         };
-
         login({
           email: data.user.email,
           userId: data.user.id,
@@ -72,7 +62,6 @@ function Landing() {
           username: data.user.username ?? "",
           image: data.user.image ?? DEFAULT_PROFILE_IMAGE,
         });
-
         setToastMessage("Registro exitoso. Sesión iniciada automáticamente.");
       } catch (error) {
         setToastMessage(
@@ -85,26 +74,20 @@ function Landing() {
         cleanupNavigation();
       }
     };
-
     void autoLogin();
   }, [location, login, navigate]);
-
   useEffect(() => {
     if (!toastMessage) return;
-
     const timeoutId = window.setTimeout(() => {
       setToastMessage("");
     }, 4000);
-
     return () => {
       window.clearTimeout(timeoutId);
     };
   }, [toastMessage]);
-
   const handleCloseToast = () => {
     setToastMessage("");
   };
-
   return (
     <PageLayout
       overlay={
@@ -117,5 +100,4 @@ function Landing() {
     </PageLayout>
   );
 }
-
 export default Landing;

@@ -2,11 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { extractErrorMessage } from "../utils/errors";
-
-
-
 interface CollectionItem {
   _id: string;
   title: string;
@@ -15,25 +12,19 @@ interface CollectionItem {
   creator: string;
   cards: Array<{ _id: string; title: string; img?: string }>;
 }
-
 const Collections: React.FC = () => {
   const { user } = useAuth();
   const [collections, setCollections] = useState<CollectionItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
   const [form, setForm] = useState({ title: "", description: "" });
   const [image, setImage] = useState<File | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-
-
-
   const canCreate = useMemo(() => Boolean(user), [user]);
-
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -48,7 +39,6 @@ const Collections: React.FC = () => {
       } finally {
         setLoading(false);
       }
-
       if (user) {
         try {
           const favResp = await apiFetch<CollectionItem[]>(
@@ -59,7 +49,7 @@ const Collections: React.FC = () => {
           );
           setFavorites((favResp.data || []).map((c) => c._id));
         } catch {
-          // ignorar
+          setFavorites([]);
         }
       } else {
         setFavorites([]);
@@ -67,7 +57,6 @@ const Collections: React.FC = () => {
     };
     void load();
   }, [user]);
-
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError("");
@@ -88,7 +77,6 @@ const Collections: React.FC = () => {
       setForm({ title: "", description: "" });
       setImage(null);
       setCreateSuccess("Colección creada");
-      // Ocultar formulario después de crear exitosamente
       setTimeout(() => {
         setShowCreateForm(false);
         setCreateSuccess("");
@@ -99,7 +87,6 @@ const Collections: React.FC = () => {
       setCreating(false);
     }
   };
-
   const toggleFavorite = async (collectionId: string, isFav: boolean) => {
     if (!user) return;
     try {
@@ -117,19 +104,15 @@ const Collections: React.FC = () => {
         setFavorites((prev) => prev.filter((id) => id !== collectionId));
       }
     } catch {
-      // ignorar
+      setError("Error al gestionar favoritos");
     }
   };
-
-
-
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 xl:p-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <h1 className="text-3xl font-bold mb-2 sm:mb-0">Colecciones</h1>
       </div>
       {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
-
       {loading ? (
         <div>Cargando colecciones...</div>
       ) : collections.length === 0 ? (
@@ -196,7 +179,6 @@ const Collections: React.FC = () => {
           })}
         </div>
       )}
-
       {canCreate && (
         <div className="mt-6 sm:mt-8 flex flex-col items-center">
           {!showCreateForm ? (
@@ -280,5 +262,4 @@ const Collections: React.FC = () => {
     </PageLayout>
   );
 };
-
 export default Collections;

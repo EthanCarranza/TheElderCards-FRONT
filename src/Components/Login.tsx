@@ -2,12 +2,11 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { FaEnvelope, FaLock } from "react-icons/fa";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import FormInput from "./FormInput";
 import Message from "./Message";
 import PageLayout from "./PageLayout";
-
 interface LoginUser {
   email: string;
   id: string;
@@ -15,18 +14,14 @@ interface LoginUser {
   username?: string;
   image?: string;
 }
-
 interface LoginSuccessResponse {
   token: string;
   user: LoginUser;
 }
-
 interface LoginErrorResponse {
   message?: string;
 }
-
 type LoginResponse = LoginSuccessResponse | LoginErrorResponse;
-
 const isLoginSuccess = (data: LoginResponse): data is LoginSuccessResponse => {
   return (
     typeof data === "object" &&
@@ -36,7 +31,6 @@ const isLoginSuccess = (data: LoginResponse): data is LoginSuccessResponse => {
     typeof (data as LoginSuccessResponse).user?.email === "string"
   );
 };
-
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,18 +38,15 @@ function Login() {
   const [successMessage, setSuccessMessage] = useState("");
   const { login } = useAuth();
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
     if (id === "email") setEmail(value);
     if (id === "password") setPassword(value);
   };
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
-
     if (!email || !password) {
       setErrorMessage("Todos los campos son obligatorios.");
       return;
@@ -64,32 +55,27 @@ function Login() {
       setErrorMessage("El correo electrónico no es válido.");
       return;
     }
-
     try {
       const response = await apiFetch<LoginResponse>("/users/login", {
         method: "post",
         body: { email, password },
       });
-
       if (response.status === 401) {
         const data = response.data as LoginErrorResponse;
         setErrorMessage(data.message ?? "Credenciales incorrectas.");
         return;
       }
-
       if (response.status !== 200) {
         setErrorMessage(
           "Hubo un error al intentar iniciar sesión. Por favor, inténtalo más tarde."
         );
         return;
       }
-
       const data = response.data;
       if (!isLoginSuccess(data)) {
         setErrorMessage("Respuesta inesperada del servidor.");
         return;
       }
-
       setSuccessMessage("¡Inicio de sesión exitoso!");
       login({
         email: data.user.email,
@@ -105,7 +91,6 @@ function Login() {
       setErrorMessage(extractErrorMessage(error, "Error de conexión."));
     }
   };
-
   return (
     <PageLayout contentClassName="flex flex-1 items-center justify-center py-12">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-2xl">
@@ -144,5 +129,4 @@ function Login() {
     </PageLayout>
   );
 }
-
 export default Login;

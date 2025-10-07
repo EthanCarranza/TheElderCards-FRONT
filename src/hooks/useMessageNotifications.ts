@@ -1,6 +1,5 @@
 import { useContext } from 'react';
 import { MessageNotificationsContext, MessageNotificationsContextType } from '../contexts/MessageNotificationsContextDefinition';
-
 export const useMessageNotifications = (): MessageNotificationsContextType => {
   const context = useContext(MessageNotificationsContext);
   if (context === undefined) {

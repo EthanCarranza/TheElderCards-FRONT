@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
-
 interface Faction {
   _id: string;
   title: string;
@@ -12,14 +11,12 @@ interface Faction {
   color: string;
   img?: string;
 }
-
 const FactionDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [faction, setFaction] = useState<Faction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   useEffect(() => {
     const fetchFaction = async () => {
       if (!id) {
@@ -27,7 +24,6 @@ const FactionDetail = () => {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       try {
         const response = await apiFetch<Faction>(`/factions/${id}`);
@@ -40,10 +36,8 @@ const FactionDetail = () => {
         setLoading(false);
       }
     };
-
     void fetchFaction();
   }, [id]);
-
   const handleGoBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -51,7 +45,6 @@ const FactionDetail = () => {
       navigate("/factions");
     }
   };
-
   return (
     <PageLayout contentClassName="p-4 lg:p-6 flex flex-col justify-center min-h-screen">
       <div className="mx-auto max-w-4xl w-full pb-8">
@@ -61,14 +54,13 @@ const FactionDetail = () => {
         >
           Volver
         </button>
-
         {loading ? (
           <div className="text-white text-center">Cargando facción...</div>
         ) : error ? (
           <div className="text-red-500 text-center">{error}</div>
         ) : faction ? (
           <div className="rounded-lg bg-white/90 shadow-lg backdrop-blur overflow-hidden">
-            {/* Header con título */}
+            {}
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-6 lg:p-8">
               <div className="flex items-center gap-4">
                 <span
@@ -85,8 +77,7 @@ const FactionDetail = () => {
                 </div>
               </div>
             </div>
-
-            {/* Imagen principal */}
+            {}
             {faction.img && (
               <div className="relative">
                 <img
@@ -98,8 +89,7 @@ const FactionDetail = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
             )}
-
-            {/* Descripción */}
+            {}
             <div className="p-6 lg:p-8">
               <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-4">
                 Descripción
@@ -109,8 +99,7 @@ const FactionDetail = () => {
                   {faction.description}
                 </p>
               </div>
-
-              {/* Información adicional */}
+              {}
               <div className="mt-8 p-4 lg:p-6 bg-gray-50 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Información de la facción
@@ -140,8 +129,7 @@ const FactionDetail = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Botón para ver cartas de esta facción */}
+              {}
               <div className="mt-8 text-center">
                 <button
                   onClick={() => navigate(`/cards?faction=${faction._id}`)}
@@ -162,5 +150,4 @@ const FactionDetail = () => {
     </PageLayout>
   );
 };
-
 export default FactionDetail;

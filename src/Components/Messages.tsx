@@ -1,19 +1,17 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useMessageNotifications } from "../hooks/useMessageNotifications";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import PageLayout from "./PageLayout";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
-
 interface User {
   _id: string;
   username?: string;
   email?: string;
   image?: string;
 }
-
 interface Message {
   _id: string;
   sender: User;
@@ -22,7 +20,6 @@ interface Message {
   createdAt: string;
   isRead: boolean;
 }
-
 interface Conversation {
   userId: string;
   user: User;
@@ -35,84 +32,62 @@ interface Conversation {
   } | null;
   unreadCount: number;
 }
-
 const Messages = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { userId: chatUserId } = useParams();
   const [searchParams] = useSearchParams();
   const { updateUnreadCount } = useMessageNotifications();
-  
-  // Estados principales
   const [error, setError] = useState("");
-  
-  // Estados de conversaciones
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingConversations, setLoadingConversations] = useState(true);
-  
-  // Estados del chat activo
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  
-  // Estados de envío de mensajes
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
-  
-  // Estado para vista móvil
   const [showConversations, setShowConversations] = useState(true);
-  
-  // Referencia para scroll automático
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
-  // Funciones de utilidad
   const getUserDisplayName = (user: User) => {
     return user.username || user.email || "Usuario";
   };
-
   const getUserAvatar = (user: User) => {
     return user.image || DEFAULT_PROFILE_IMAGE;
   };
-
   const formatMessageTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
     const diffInHours = diffInMs / (1000 * 60 * 60);
-
     if (diffInHours < 24) {
-      return date.toLocaleTimeString('es-ES', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      return date.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } else {
-      return date.toLocaleDateString('es-ES', { 
-        day: 'numeric', 
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit'
+      return date.toLocaleDateString("es-ES", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     }
   };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  // Cargar conversaciones
   const loadConversations = useCallback(async () => {
     if (!user) return;
-
     setLoadingConversations(true);
     try {
-      const response = await apiFetch<{ conversations: Conversation[] }>('/messages/conversations', {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-
+      const response = await apiFetch<{ conversations: Conversation[] }>(
+        "/messages/conversations",
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
       setConversations(response.data.conversations || []);
-      
-      // Actualizar el conteo de notificaciones después de cargar conversaciones
       updateUnreadCount();
     } catch (err) {
       console.error("Error al cargar conversaciones:", err);
@@ -121,79 +96,54 @@ const Messages = () => {
       setLoadingConversations(false);
     }
   }, [user, updateUnreadCount]);
-
-  // Cargar mensajes de una conversación específica
-  const loadMessages = useCallback(async (otherUserId: string) => {
-    if (!user) {
-      console.log('No hay usuario logueado');
-      return;
-    }
-
-    console.log('Cargando mensajes para:', otherUserId);
-    setLoadingMessages(true);
-    setMessages([]);
-    setError(""); // Limpiar errores previos
-    
-    try {
-      console.log('Haciendo petición de mensajes...');
-      const response = await apiFetch<{ messages: Message[] }>(`/messages/conversation/${otherUserId}`, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-
-      console.log('Mensajes recibidos:', response.data.messages?.length || 0);
-      setMessages(response.data.messages || []);
-      
-      // Marcar mensajes como leídos
-      console.log('Marcando mensajes como leídos...');
-      await apiFetch(`/messages/read/${otherUserId}`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-      
-      console.log('Actualizando conversaciones y conteo...');
-      // Actualizar ambas cosas en paralelo para mejor rendimiento
-      await Promise.all([
-        loadConversations(),
-        updateUnreadCount()
-      ]);
-      
-      console.log('Mensajes cargados exitosamente');
-      setTimeout(scrollToBottom, 100);
-    } catch (err) {
-      console.error("Error al cargar mensajes:", err);
-      setError(extractErrorMessage(err, "Error al cargar mensajes"));
-    } finally {
-      setLoadingMessages(false);
-    }
-  }, [user, loadConversations, updateUnreadCount]);
-
-  // Enviar mensaje
+  const loadMessages = useCallback(
+    async (otherUserId: string) => {
+      if (!user) {
+        return;
+      }
+      setLoadingMessages(true);
+      setMessages([]);
+      setError("");
+      try {
+        const response = await apiFetch<{ messages: Message[] }>(
+          `/messages/conversation/${otherUserId}`,
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
+        );
+        setMessages(response.data.messages || []);
+        await apiFetch(`/messages/read/${otherUserId}`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        await Promise.all([loadConversations(), updateUnreadCount()]);
+        setTimeout(scrollToBottom, 100);
+      } catch (err) {
+        console.error("Error al cargar mensajes:", err);
+        setError(extractErrorMessage(err, "Error al cargar mensajes"));
+      } finally {
+        setLoadingMessages(false);
+      }
+    },
+    [user, loadConversations, updateUnreadCount]
+  );
   const sendMessage = async () => {
     if (!user || !activeChat || !newMessage.trim()) return;
-
     setSending(true);
     const messageContent = newMessage.trim();
     setNewMessage("");
-
     try {
-      const response = await apiFetch<{ data: Message }>('/messages', {
-        method: 'POST',
+      const response = await apiFetch<{ data: Message }>("/messages", {
+        method: "POST",
         headers: { Authorization: `Bearer ${user.token}` },
         body: {
           recipientId: activeChat,
-          content: messageContent
-        }
+          content: messageContent,
+        },
       });
-
-      // Añadir el nuevo mensaje a la lista
-      setMessages(prev => [...prev, response.data.data]);
-      
-      // Actualizar conversaciones
+      setMessages((prev) => [...prev, response.data.data]);
       await loadConversations();
-      
-      // Actualizar conteo (aunque el usuario que envía no necesita notificación)
       updateUnreadCount();
-      
       setTimeout(scrollToBottom, 100);
     } catch (err) {
       console.error("Error al enviar mensaje:", err);
@@ -203,60 +153,38 @@ const Messages = () => {
       setSending(false);
     }
   };
-
-  // Manejar selección de conversación
   const handleConversationSelect = async (userId: string) => {
-    console.log('Seleccionando conversación:', userId);
-    
-    // Establecer el chat activo inmediatamente
     setActiveChat(userId);
-    
-    // En móvil, cambiar a vista de chat
+    setActiveChat(userId);
     setShowConversations(false);
-    
-    // Navegar a la URL
     navigate(`/messages/${userId}`, { replace: true });
-    
-    // Cargar mensajes inmediatamente
     await loadMessages(userId);
   };
-
-  // Cargar conversaciones al montar el componente
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
-
-  // Manejar cambios en la URL para abrir conversación específica
   useEffect(() => {
-    const targetUserId = chatUserId || searchParams.get('with');
+    const targetUserId = chatUserId || searchParams.get("with");
     if (targetUserId && targetUserId !== activeChat) {
       setActiveChat(targetUserId);
       loadMessages(targetUserId);
-      // En móvil, cambiar a vista de chat
       if (window.innerWidth < 768) {
         setShowConversations(false);
       }
     }
   }, [chatUserId, searchParams, activeChat, loadMessages]);
-
-  // Scroll automático cuando llegan nuevos mensajes
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  // Manejar cambios de tamaño de pantalla
   useEffect(() => {
     const handleResize = () => {
-      // En desktop, mostrar siempre ambas vistas
       if (window.innerWidth >= 768) {
         setShowConversations(true);
       }
     };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
-
   if (!user) {
     return (
       <PageLayout contentClassName="flex items-center justify-center min-h-screen">
@@ -267,44 +195,65 @@ const Messages = () => {
       </PageLayout>
     );
   }
-
-  const activeChatUser = activeChat ? conversations.find(c => c.userId === activeChat)?.user : null;
-
+  const activeChatUser = activeChat
+    ? conversations.find((c) => c.userId === activeChat)?.user
+    : null;
   return (
     <PageLayout contentClassName="h-full flex flex-col" showFooter={false}>
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar de conversaciones */}
-        <div className={`${
-          showConversations ? 'w-full md:w-1/3 lg:w-1/4' : 'hidden md:flex md:w-1/3 lg:w-1/4'
-        } bg-gray-800 border-r border-gray-700 flex flex-col transition-all duration-300 ease-in-out`}>
+        {}
+        <div
+          className={`${
+            showConversations
+              ? "w-full md:w-1/3 lg:w-1/4"
+              : "hidden md:flex md:w-1/3 lg:w-1/4"
+          } bg-gray-800 border-r border-gray-700 flex flex-col transition-all duration-300 ease-in-out`}
+        >
           <div className="p-3 md:p-4 border-b border-gray-700 flex items-center justify-between">
-            <h1 className="text-lg md:text-xl font-bold text-white">Mensajes</h1>
+            <h1 className="text-lg md:text-xl font-bold text-white">
+              Mensajes
+            </h1>
             {!showConversations && (
               <button
                 onClick={() => setShowConversations(true)}
                 className="md:hidden text-white hover:text-blue-300 transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
               </button>
             )}
           </div>
-          
           <div className="flex-1 overflow-y-auto">
             {loadingConversations ? (
               <div className="p-3 md:p-4 text-center text-gray-400">
                 <div className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                  <span className="text-sm md:text-base">Cargando conversaciones...</span>
+                  <span className="text-sm md:text-base">
+                    Cargando conversaciones...
+                  </span>
                 </div>
               </div>
             ) : conversations.length === 0 ? (
               <div className="p-3 md:p-4 text-center text-gray-400">
-                <h3 className="font-medium mb-2 text-sm md:text-base">No tienes conversaciones</h3>
-                <p className="text-xs md:text-sm mb-3">Ve a tu lista de amigos para enviar un mensaje</p>
+                <h3 className="font-medium mb-2 text-sm md:text-base">
+                  No tienes conversaciones
+                </h3>
+                <p className="text-xs md:text-sm mb-3">
+                  Ve a tu lista de amigos para enviar un mensaje
+                </p>
                 <button
-                  onClick={() => navigate('/friends')}
+                  onClick={() => navigate("/friends")}
                   className="mt-2 px-3 py-2 md:px-4 md:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded text-xs md:text-sm transition-colors touch-manipulation min-h-[44px]"
                 >
                   Ver amigos
@@ -315,11 +264,13 @@ const Messages = () => {
                 {conversations.map((conversation) => (
                   <div
                     key={conversation.userId}
-                    onClick={() => handleConversationSelect(conversation.userId)}
+                    onClick={() =>
+                      handleConversationSelect(conversation.userId)
+                    }
                     className={`p-3 md:p-3 rounded-lg cursor-pointer transition-colors touch-manipulation ${
                       activeChat === conversation.userId
-                        ? 'bg-blue-600 text-white'
-                        : 'hover:bg-gray-700 text-gray-300 active:bg-gray-600'
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-gray-700 text-gray-300 active:bg-gray-600"
                     }`}
                   >
                     <div className="flex items-center gap-2 md:gap-3">
@@ -340,11 +291,15 @@ const Messages = () => {
                           )}
                         </div>
                         <div className="text-xs md:text-sm opacity-75 truncate">
-                          {conversation.lastMessage ? conversation.lastMessage.content : "Sin mensajes aún"}
+                          {conversation.lastMessage
+                            ? conversation.lastMessage.content
+                            : "Sin mensajes aún"}
                         </div>
                         {conversation.lastMessage && (
                           <div className="text-xs opacity-50">
-                            {formatMessageTime(conversation.lastMessage.createdAt)}
+                            {formatMessageTime(
+                              conversation.lastMessage.createdAt
+                            )}
                           </div>
                         )}
                       </div>
@@ -355,21 +310,32 @@ const Messages = () => {
             )}
           </div>
         </div>
-
-        {/* Área de chat */}
-        <div className={`${
-          showConversations ? 'hidden md:flex' : 'flex'
-        } flex-1 flex-col bg-gray-900 transition-all duration-300 ease-in-out`}>
+        {}
+        <div
+          className={`${
+            showConversations ? "hidden md:flex" : "flex"
+          } flex-1 flex-col bg-gray-900 transition-all duration-300 ease-in-out`}
+        >
           {activeChat && activeChatUser ? (
             <>
-              {/* Header del chat */}
+              {}
               <div className="p-3 md:p-4 bg-gray-800 border-b border-gray-700 flex items-center gap-3">
                 <button
                   onClick={() => setShowConversations(true)}
                   className="md:hidden text-white hover:text-blue-300 transition-colors mr-2"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                 </button>
                 <img
@@ -390,9 +356,8 @@ const Messages = () => {
                   <span className="sm:hidden">Perfil</span>
                 </button>
               </div>
-
-              {/* Mensajes */}
-              <div 
+              {}
+              <div
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 min-h-0"
               >
@@ -409,19 +374,29 @@ const Messages = () => {
                   messages.map((message) => (
                     <div
                       key={message._id}
-                      className={`flex ${message.sender._id === user.userId ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div className={`max-w-[75%] md:max-w-xs lg:max-w-md px-3 py-2 md:px-4 md:py-2 rounded-lg ${
+                      className={`flex ${
                         message.sender._id === user.userId
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 text-gray-100'
-                      }`}>
-                        <div className="break-words text-sm md:text-base">{message.content}</div>
-                        <div className={`text-xs mt-1 ${
-                          message.sender._id === user.userId 
-                            ? 'text-blue-200' 
-                            : 'text-gray-400'
-                        }`}>
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[75%] md:max-w-xs lg:max-w-md px-3 py-2 md:px-4 md:py-2 rounded-lg ${
+                          message.sender._id === user.userId
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-700 text-gray-100"
+                        }`}
+                      >
+                        <div className="break-words text-sm md:text-base">
+                          {message.content}
+                        </div>
+                        <div
+                          className={`text-xs mt-1 ${
+                            message.sender._id === user.userId
+                              ? "text-blue-200"
+                              : "text-gray-400"
+                          }`}
+                        >
                           {formatMessageTime(message.createdAt)}
                         </div>
                       </div>
@@ -430,8 +405,7 @@ const Messages = () => {
                 )}
                 <div ref={messagesEndRef} />
               </div>
-
-              {/* Input de mensaje */}
+              {}
               <div className="p-3 md:p-4 bg-gray-800 border-t border-gray-700 pb-safe">
                 <div className="flex gap-2 md:gap-3 items-end">
                   <input
@@ -441,7 +415,7 @@ const Messages = () => {
                     placeholder="Escribe un mensaje..."
                     className="flex-1 px-3 py-2 md:px-4 md:py-2 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         sendMessage();
                       }
@@ -456,8 +430,18 @@ const Messages = () => {
                     {sending ? (
                       <span className="block md:hidden">•••</span>
                     ) : (
-                      <svg className="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      <svg
+                        className="w-5 h-5 md:hidden"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                        />
                       </svg>
                     )}
                     <span className="hidden md:inline">
@@ -470,11 +454,25 @@ const Messages = () => {
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-400 p-4">
               <div className="text-center">
-                <svg className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <svg
+                  className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 opacity-50"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
                 </svg>
-                <h3 className="text-base md:text-lg font-medium mb-2">Selecciona una conversación</h3>
-                <p className="text-sm md:text-base">Elige una conversación para empezar a chatear</p>
+                <h3 className="text-base md:text-lg font-medium mb-2">
+                  Selecciona una conversación
+                </h3>
+                <p className="text-sm md:text-base">
+                  Elige una conversación para empezar a chatear
+                </p>
                 <button
                   onClick={() => setShowConversations(true)}
                   className="mt-4 md:hidden px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -485,8 +483,7 @@ const Messages = () => {
             </div>
           )}
         </div>
-
-        {/* Mostrar errores */}
+        {}
         {error && (
           <div className="fixed bottom-4 right-4 p-4 bg-red-600/20 border border-red-500 rounded-lg text-red-200 max-w-sm">
             {error}
@@ -502,5 +499,4 @@ const Messages = () => {
     </PageLayout>
   );
 };
-
 export default Messages;

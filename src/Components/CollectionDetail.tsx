@@ -4,13 +4,11 @@ import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import CardTile from "./CardTile";
-
 interface CardItem {
   _id: string;
   title: string;
   img?: string;
 }
-
 interface CollectionDetailData {
   _id: string;
   title: string;
@@ -19,7 +17,6 @@ interface CollectionDetailData {
   creator: string;
   cards: CardItem[];
 }
-
 const CollectionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -28,7 +25,6 @@ const CollectionDetail: React.FC = () => {
   const [collection, setCollection] = useState<CollectionDetailData | null>(
     null
   );
-
   useEffect(() => {
     const load = async () => {
       if (!id) {
@@ -49,7 +45,6 @@ const CollectionDetail: React.FC = () => {
     };
     void load();
   }, [id]);
-
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6">
@@ -61,7 +56,6 @@ const CollectionDetail: React.FC = () => {
         >
           Volver
         </button>
-
         {loading ? (
           <div className="text-white text-center py-8">
             Cargando colección...
@@ -93,7 +87,6 @@ const CollectionDetail: React.FC = () => {
                 </p>
               )}
             </div>
-
             <div className="w-full">
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-4 lg:mb-6 text-white">
                 Cartas ({collection.cards?.length || 0})
@@ -122,5 +115,4 @@ const CollectionDetail: React.FC = () => {
     </PageLayout>
   );
 };
-
 export default CollectionDetail;

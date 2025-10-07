@@ -9,7 +9,6 @@ import {
   handleCardPointerLeave,
   handleCardPointerMove,
 } from "../utils/card3d";
-
 interface FactionOption {
   _id: string;
   title: string;
@@ -19,7 +18,6 @@ interface Props {
   onCreated?: () => void;
   factions: FactionOption[];
 }
-
 const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [previewImage, setPreviewImage] = useState<HTMLImageElement | null>(
@@ -42,7 +40,6 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
     field: "",
     visible: false,
   });
-
   const fieldHelp: Record<string, string> = {
     title:
       "El nombre de la carta. Máximo 20 caracteres. Debe ser único y descriptivo.",
@@ -54,17 +51,14 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
     defense: "Defensa de la criatura (1-10). Solo para criaturas.",
     image: "Imagen de la carta. Formatos permitidos: JPG, PNG, GIF.",
   };
-
   useEffect(() => {
     const updateCanvas = async () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-
       const faction = factions.find((f) => f._id === form.faction);
       const frameColor = faction ? faction.color : "#999999";
-
       await drawCard(ctx, {
         title: form.title || "Título",
         type: form.type,
@@ -83,14 +77,11 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
     };
     void updateCanvas();
   }, [form, previewImage, factions]);
-
-  // Función para contar caracteres (mayúsculas cuentan doble)
   const countCharacters = (text: string): number => {
     return text.split("").reduce((count, char) => {
       return count + (/[A-Z]/.test(char) ? 2 : 1);
     }, 0);
   };
-
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -102,15 +93,12 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       type: inputType,
       files,
     } = e.target as HTMLInputElement;
-
-    // Manejo especial para el campo de descripción
     if (name === "description") {
       if (countCharacters(value) <= 322) {
         setForm((prev) => ({ ...prev, description: value }));
       }
       return;
     }
-
     if (inputType === "file" && files) {
       setImage(files[0] || null);
       const reader = new FileReader();
@@ -126,7 +114,6 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       reader.readAsDataURL(files[0]);
       return;
     }
-
     if (name === "type") {
       const normalizedType = value
         ? value.charAt(0).toUpperCase() + value.slice(1)
@@ -141,7 +128,6 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -158,7 +144,6 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
         formData.append("attack", form.attack);
         formData.append("defense", form.defense);
       }
-
       if (image) {
         formData.append("img", image);
       }
@@ -188,7 +173,6 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
       setLoading(false);
     }
   };
-
   return (
     <div className="flex gap-8 justify-center items-start">
       <div
@@ -452,5 +436,4 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
     </div>
   );
 };
-
 export default CreateCard;

@@ -1,16 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-// import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import CreateCard from "./CreateCard";
 import { CARD_TYPES } from "../constants/cardTypes";
 import { apiFetch } from "./api";
 import PageLayout from "./PageLayout";
 import CardTile from "./CardTile";
 import { extractErrorMessage } from "../utils/errors";
-
-// 3D handlers now inside CardTile
-
 interface Faction {
   _id: string;
   title: string;
@@ -18,7 +14,6 @@ interface Faction {
   territory: string;
   color: string;
 }
-
 interface Card {
   _id: string;
   title: string;
@@ -30,12 +25,10 @@ interface Card {
   attack?: number;
   defense?: number;
 }
-
 interface CardsResponse {
   cards?: Card[];
   totalPages?: number;
 }
-
 interface Filters {
   type?: string;
   faction?: string;
@@ -48,7 +41,6 @@ interface Filters {
   favorites?: string;
   liked?: string;
 }
-
 const Cards = () => {
   const [searchParams] = useSearchParams();
   const [cards, setCards] = useState<Card[]>([]);
@@ -57,20 +49,17 @@ const Cards = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState<Filters>(() => {
-    // Inicializar filtros con parámetros de URL si existen
     const urlFilters: Filters = { sort: "date_desc" };
-    
-    const faction = searchParams.get('faction');
-    const type = searchParams.get('type');
-    const title = searchParams.get('title');
-    const creator = searchParams.get('creator');
-    const cost = searchParams.get('cost');
-    const attack = searchParams.get('attack');
-    const defense = searchParams.get('defense');
-    const sort = searchParams.get('sort');
-    const favorites = searchParams.get('favorites');
-    const liked = searchParams.get('liked');
-
+    const faction = searchParams.get("faction");
+    const type = searchParams.get("type");
+    const title = searchParams.get("title");
+    const creator = searchParams.get("creator");
+    const cost = searchParams.get("cost");
+    const attack = searchParams.get("attack");
+    const defense = searchParams.get("defense");
+    const sort = searchParams.get("sort");
+    const favorites = searchParams.get("favorites");
+    const liked = searchParams.get("liked");
     if (faction) urlFilters.faction = faction;
     if (type) urlFilters.type = type;
     if (title) urlFilters.title = title;
@@ -81,7 +70,6 @@ const Cards = () => {
     if (sort) urlFilters.sort = sort;
     if (favorites) urlFilters.favorites = favorites;
     if (liked) urlFilters.liked = liked;
-
     return urlFilters;
   });
   const [loading, setLoading] = useState(false);
@@ -89,17 +77,13 @@ const Cards = () => {
   const [factions, setFactions] = useState<Faction[]>([]);
   const [deletingCards, setDeletingCards] = useState<Set<string>>(new Set());
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
-
   const fetchCards = useCallback(async () => {
     setLoading(true);
     setError("");
     let query = `?page=${page}&limit=20`;
-    
-    // Añadir userId si el usuario está logueado para filtros personalizados
     if (user?.userId && (filters.favorites || filters.liked)) {
       query += `&user=${encodeURIComponent(user.userId)}`;
     }
-    
     Object.entries(filters).forEach(([key, value]) => {
       if (value) query += `&${key}=${encodeURIComponent(value)}`;
     });
@@ -132,7 +116,6 @@ const Cards = () => {
       setLoading(false);
     }
   }, [filters, page, user?.userId]);
-
   const fetchFactions = useCallback(async () => {
     try {
       const response = await apiFetch<Faction[]>("/factions");
@@ -141,15 +124,12 @@ const Cards = () => {
       setFactions([]);
     }
   }, []);
-
   useEffect(() => {
     fetchCards();
   }, [fetchCards]);
-
   useEffect(() => {
     fetchFactions();
   }, [fetchFactions]);
-
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -161,7 +141,6 @@ const Cards = () => {
     setFilters((prev) => ({ ...prev, [name]: nextValue }));
     setPage(1);
   };
-
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { value } = e.target;
     setFilters((prev) => {
@@ -175,7 +154,6 @@ const Cards = () => {
     });
     setPage(1);
   };
-
   const canDeleteCard = (card: Card): boolean => {
     if (!user) return false;
     const isAdmin = user.role === "admin";
@@ -183,19 +161,14 @@ const Cards = () => {
     const isOwner = card.creator.toLowerCase() === userCreator.toLowerCase();
     return isAdmin || isOwner;
   };
-
   const handleDeleteCard = async (cardId: string) => {
     if (!user) return;
-
     setDeletingCards((prev) => new Set(prev).add(cardId));
-
     try {
       await apiFetch(`/cards/${cardId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
-
-      // Remover la carta de la lista local
       setCards((prev) => prev.filter((card) => card._id !== cardId));
       setConfirmingDelete(null);
     } catch (deleteError: unknown) {
@@ -211,7 +184,6 @@ const Cards = () => {
       });
     }
   };
-
   return (
     <PageLayout contentClassName="overflow-y-auto p-3 sm:p-6">
       <h2 className="text-5xl text-center font-light pb-10 text-white">
@@ -316,14 +288,13 @@ const Cards = () => {
               />
             </>
           )}
-          
-          {/* Filtros de interacciones del usuario */}
+          {}
           {user && (
             <>
               <button
                 onClick={() => {
                   const newValue = filters.favorites === "true" ? "" : "true";
-                  setFilters(prev => ({ ...prev, favorites: newValue }));
+                  setFilters((prev) => ({ ...prev, favorites: newValue }));
                   setPage(1);
                 }}
                 className={`p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
@@ -334,11 +305,10 @@ const Cards = () => {
               >
                 ⭐ Favoritas
               </button>
-              
               <button
                 onClick={() => {
                   const newValue = filters.liked === "true" ? "" : "true";
-                  setFilters(prev => ({ ...prev, liked: newValue }));
+                  setFilters((prev) => ({ ...prev, liked: newValue }));
                   setPage(1);
                 }}
                 className={`p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
@@ -351,7 +321,6 @@ const Cards = () => {
               </button>
             </>
           )}
-          
           <select
             name="sort"
             value={filters.sort ?? ""}
@@ -416,11 +385,9 @@ const Cards = () => {
                   } else if (typeof card.faction === "string") {
                     factionObj = factions.find((f) => f._id === card.faction);
                   }
-
                   const canDelete = canDeleteCard(card);
                   const isDeleting = deletingCards.has(card._id);
                   const showConfirm = confirmingDelete === card._id;
-
                   return (
                     <div key={card._id} className="relative group">
                       <CardTile
@@ -428,7 +395,6 @@ const Cards = () => {
                         to={`/cards/${card._id}`}
                         state={{ card, faction: factionObj }}
                       />
-
                       {canDelete && (
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           {!showConfirm ? (
@@ -496,5 +462,4 @@ const Cards = () => {
     </PageLayout>
   );
 };
-
 export default Cards;

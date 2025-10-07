@@ -14,7 +14,6 @@ import CollectionDetail from "./Components/CollectionDetail";
 import UserPublicProfile from "./Components/UserPublicProfile";
 import Friends from "./Components/Friends";
 import Messages from "./Components/Messages";
-
 function App() {
   return (
     <AuthProvider>
@@ -42,5 +41,4 @@ function App() {
     </AuthProvider>
   );
 }
-
 export default App;

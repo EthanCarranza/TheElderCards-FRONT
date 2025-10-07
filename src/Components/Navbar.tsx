@@ -1,41 +1,34 @@
-ï»¿import { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import { useFriendshipNotifications } from "../hooks/useFriendshipNotifications";
 import { useMessageNotifications } from "../hooks/useMessageNotifications";
-
 type PrimaryLink = {
   to: string;
   label: string;
   isAnchor?: boolean;
 };
-
 const primaryLinks: PrimaryLink[] = [
   { to: "/", label: "Inicio" },
   { to: "/cards", label: "Cartas" },
   { to: "/collections", label: "Colecciones" },
   { to: "/factions", label: "Facciones" },
 ];
-
 function Navbar() {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const { pendingRequestsCount } = useFriendshipNotifications();
   const { unreadCount } = useMessageNotifications();
-
   const handleCloseMenu = () => setMenuOpen(false);
-
-  // Close menu when clicking outside
   const handleBackdropClick = () => {
     if (menuOpen) {
       setMenuOpen(false);
     }
   };
-
   return (
     <>
-      {/* Mobile menu backdrop */}
+      {}
       {menuOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -43,10 +36,9 @@ function Navbar() {
           aria-hidden="true"
         />
       )}
-
       <header className="sticky top-0 z-50 bg-black/95 shadow-md backdrop-blur border-b border-white/10">
         <nav className="mx-auto flex w-full max-w-[2800px] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-6 xl:px-10">
-          {/* Mobile layout */}
+          {}
           <div className="flex items-center justify-between lg:hidden">
             <Link
               to="/"
@@ -67,7 +59,7 @@ function Navbar() {
               aria-controls="primary-navigation"
             >
               <span className="sr-only">
-                {menuOpen ? "Cerrar menÃº" : "Abrir menÃº"}
+                {menuOpen ? "Cerrar menú" : "Abrir menú"}
               </span>
               <svg
                 className={`h-6 w-6 transition-transform duration-200 ${
@@ -95,10 +87,9 @@ function Navbar() {
               </svg>
             </button>
           </div>
-
-          {/* Desktop layout - Simple flex */}
+          {}
           <div className="hidden lg:flex lg:items-center lg:justify-between lg:w-full lg:gap-8">
-            {/* Logo - Left */}
+            {}
             <Link
               to="/"
               className="flex items-center gap-3 text-white transition hover:opacity-80 flex-shrink-0"
@@ -110,8 +101,7 @@ function Navbar() {
                 className="h-14 w-36 xl:h-16 xl:w-40 object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.6)] transition duration-300 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.85)]"
               />
             </Link>
-
-            {/* Main navigation - Center with flex-1 */}
+            {}
             <div className="flex-1 flex justify-center">
               <ul className="flex items-center gap-6 xl:gap-8 text-base xl:text-xl text-white">
                 {primaryLinks.map((link) => (
@@ -146,7 +136,9 @@ function Navbar() {
                         Amigos
                         {pendingRequestsCount > 0 && (
                           <span className="absolute -top-2 -right-2 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                            {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
+                            {pendingRequestsCount > 99
+                              ? "99+"
+                              : pendingRequestsCount}
                           </span>
                         )}
                       </Link>
@@ -160,7 +152,7 @@ function Navbar() {
                         Mensajes
                         {unreadCount > 0 && (
                           <span className="absolute -top-2 -right-2 min-w-[20px] h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                            {unreadCount > 99 ? '99+' : unreadCount}
+                            {unreadCount > 99 ? "99+" : unreadCount}
                           </span>
                         )}
                       </Link>
@@ -169,8 +161,7 @@ function Navbar() {
                 )}
               </ul>
             </div>
-
-            {/* User actions - Right */}
+            {}
             <div className="flex items-center gap-4 xl:gap-6 text-base xl:text-xl text-white flex-shrink-0">
               {!user ? (
                 <>
@@ -186,7 +177,7 @@ function Navbar() {
                     className="inline-block rounded-lg bg-white/10 px-3 py-2 text-center transition hover:bg-white/20 whitespace-nowrap"
                     onClick={handleCloseMenu}
                   >
-                    Iniciar sesiÃ³n
+                    Iniciar sesión
                   </Link>
                 </>
               ) : (
@@ -210,14 +201,13 @@ function Navbar() {
                     }}
                     className="transition hover:text-red-400 whitespace-nowrap"
                   >
-                    Cerrar sesiÃ³n
+                    Cerrar sesión
                   </button>
                 </>
               )}
             </div>
           </div>
-
-          {/* Mobile navigation */}
+          {}
           <div
             id="primary-navigation"
             className={`${
@@ -257,7 +247,9 @@ function Navbar() {
                       Amigos
                       {pendingRequestsCount > 0 && (
                         <span className="ml-2 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                          {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
+                          {pendingRequestsCount > 99
+                            ? "99+"
+                            : pendingRequestsCount}
                         </span>
                       )}
                     </Link>
@@ -271,7 +263,7 @@ function Navbar() {
                       Mensajes
                       {unreadCount > 0 && (
                         <span className="ml-2 min-w-[20px] h-5 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                          {unreadCount > 99 ? '99+' : unreadCount}
+                          {unreadCount > 99 ? "99+" : unreadCount}
                         </span>
                       )}
                     </Link>
@@ -279,7 +271,6 @@ function Navbar() {
                 </>
               )}
             </ul>
-
             <div className="flex flex-col gap-4 border-t border-white/10 pt-4 text-lg">
               {!user ? (
                 <>
@@ -295,7 +286,7 @@ function Navbar() {
                     className="inline-block rounded-lg bg-white/10 px-4 py-2 text-center transition hover:bg-white/20"
                     onClick={handleCloseMenu}
                   >
-                    Iniciar sesiÃ³n
+                    Iniciar sesión
                   </Link>
                 </>
               ) : (
@@ -319,7 +310,7 @@ function Navbar() {
                     }}
                     className="block py-2 text-left transition hover:text-red-400"
                   >
-                    Cerrar sesiÃ³n
+                    Cerrar sesión
                   </button>
                 </>
               )}
@@ -330,5 +321,4 @@ function Navbar() {
     </>
   );
 }
-
 export default Navbar;

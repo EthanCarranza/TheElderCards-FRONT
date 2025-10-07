@@ -5,26 +5,21 @@ import {
   handleCardPointerLeave,
   handleCardPointerMove,
 } from "../utils/card3d";
-
 export interface CardTileData {
   _id: string;
   title: string;
   img?: string;
-  // Optional extra fields if available
   type?: string;
   cost?: number;
 }
-
 interface Props {
   card: CardTileData;
   to?: string;
   state?: unknown;
   className?: string;
 }
-
 const CardTile: React.FC<Props> = ({ card, to, state, className }) => {
   const href = to || `/cards/${card._id}`;
-
   return (
     <div
       className={`card-3d-wrapper w-full max-w-none sm:max-w-[200px] lg:max-w-[220px] xl:max-w-[240px] mx-auto ${
@@ -62,5 +57,4 @@ const CardTile: React.FC<Props> = ({ card, to, state, className }) => {
     </div>
   );
 };
-
 export default CardTile;

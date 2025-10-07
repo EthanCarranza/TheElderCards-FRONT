@@ -1,10 +1,8 @@
 import React from "react";
-
 interface MessageProps {
   message: string;
   type: "error" | "success";
 }
-
 const Message: React.FC<MessageProps> = ({ message, type }) => {
   if (!message) return null;
   return (
@@ -19,5 +17,4 @@ const Message: React.FC<MessageProps> = ({ message, type }) => {
     </div>
   );
 };
-
 export default Message;

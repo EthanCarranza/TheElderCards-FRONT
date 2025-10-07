@@ -6,7 +6,6 @@ import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import FormInput from "./FormInput";
 import Message from "./Message";
 import PageLayout from "./PageLayout";
-
 function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -16,18 +15,15 @@ function Register() {
   const usernameRegex = /^.{3,}$/;
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
     if (id === "username") setUsername(value);
     if (id === "email") setEmail(value);
     if (id === "password") setPassword(value);
   };
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorMessage("");
-
     if (!username || !email || !password) {
       setErrorMessage("Todos los campos son obligatorios.");
     } else if (!usernameRegex.test(username)) {
@@ -43,7 +39,6 @@ function Register() {
           method: "post",
           body: { username, email, password },
         });
-
         if (response.status === 409) {
           const message = (response.data as { message?: string })?.message;
           if (message === "Usuario ya existente") {
@@ -57,14 +52,12 @@ function Register() {
           }
           return;
         }
-
         if (response.status !== 201) {
           setErrorMessage(
             "Hubo un error al intentar registrarse. Por favor, inténtalo más tarde."
           );
           return;
         }
-
         setUsername("");
         setEmail("");
         setPassword("");
@@ -74,7 +67,6 @@ function Register() {
       }
     }
   };
-
   return (
     <PageLayout contentClassName="flex flex-1 items-center justify-center py-12">
         <div className="w-full max-w-lg rounded-lg bg-white p-8 text-2xl shadow-2xl">
@@ -121,5 +113,4 @@ function Register() {
     </PageLayout>
   );
 }
-
 export default Register;

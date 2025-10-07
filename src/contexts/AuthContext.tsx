@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { useState, ReactNode } from "react";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
-
+import { AuthContext } from "./AuthContextDefinition";
 interface AuthUser {
   email: string;
   userId: string;
@@ -9,20 +9,9 @@ interface AuthUser {
   username: string;
   image: string;
 }
-
-interface AuthContextType {
-  user: AuthUser | null;
-  login: (data: AuthUser) => void;
-  logout: () => void;
-  updateUser: (data: Partial<Omit<AuthUser, "userId">>) => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 interface AuthProviderProps {
   children: ReactNode;
 }
-
 const persistUser = (data: AuthUser) => {
   localStorage.setItem("token", data.token);
   localStorage.setItem("user", data.userId);
@@ -31,13 +20,11 @@ const persistUser = (data: AuthUser) => {
   localStorage.setItem("username", data.username);
   localStorage.setItem("image", data.image);
 };
-
 const normaliseUser = (data: AuthUser): AuthUser => ({
   ...data,
   username: data.username ?? "",
   image: data.image ?? DEFAULT_PROFILE_IMAGE,
 });
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(() => {
     const token = localStorage.getItem("token");
@@ -46,7 +33,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const role = localStorage.getItem("role");
     const username = localStorage.getItem("username") ?? "";
     const image = localStorage.getItem("image") ?? DEFAULT_PROFILE_IMAGE;
-
     if (token && userId && email && role) {
       return {
         email,
@@ -59,13 +45,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     return null;
   });
-
   const login = (data: AuthUser) => {
     const userData = normaliseUser(data);
     setUser(userData);
     persistUser(userData);
   };
-
   const logout = () => {
     setUser(null);
     localStorage.removeItem("token");
@@ -75,7 +59,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem("username");
     localStorage.removeItem("image");
   };
-
   const updateUser = (data: Partial<Omit<AuthUser, "userId">>) => {
     setUser((current) => {
       if (!current) return current;
@@ -91,18 +74,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return updated;
     });
   };
-
   return (
     <AuthContext.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
-  }
-  return context;
 };

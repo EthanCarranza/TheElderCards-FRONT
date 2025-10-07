@@ -1,9 +1,9 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import {
   handleCardBlur,
@@ -11,7 +11,6 @@ import {
   handleCardPointerLeave,
   handleCardPointerMove,
 } from "../utils/card3d";
-
 interface Faction {
   _id: string;
   title: string;
@@ -19,7 +18,6 @@ interface Faction {
   territory: string;
   color: string;
 }
-
 interface CardDetailData {
   _id: string;
   title: string;
@@ -33,7 +31,6 @@ interface CardDetailData {
   defense?: number;
   date?: string;
 }
-
 interface CreatorSummary {
   _id?: string;
   id?: string;
@@ -41,28 +38,23 @@ interface CreatorSummary {
   email?: string;
   image?: string;
 }
-
 interface CardStats {
   likes: number;
   favorites: number;
 }
-
 interface CardInteraction {
   liked: boolean;
   favorited: boolean;
 }
-
 interface InteractionResponse {
   liked?: boolean;
   favorited?: boolean;
   stats: CardStats;
 }
-
 interface CardDetailLocationState {
   card?: Partial<CardDetailData> & { _id: string };
   faction?: Faction;
 }
-
 const buildCardFromState = (
   stateCard?: Partial<CardDetailData> & { _id: string }
 ): CardDetailData | null => {
@@ -81,7 +73,6 @@ const buildCardFromState = (
     date: stateCard.date,
   };
 };
-
 const CardDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -97,13 +88,10 @@ const CardDetail = () => {
       ? (initialCard.faction as Faction)
       : null);
   const hasPrefetchedCard = Boolean(initialCard);
-
   const [card, setCard] = useState<CardDetailData | null>(initialCard);
   const [faction, setFaction] = useState<Faction | null>(initialFaction);
   const [loading, setLoading] = useState(!hasPrefetchedCard);
   const [error, setError] = useState("");
-
-  // Mis colecciones (para añadir cartas)
   interface MyCollectionOption {
     _id: string;
     title: string;
@@ -121,29 +109,29 @@ const CardDetail = () => {
   const [creatorLoading, setCreatorLoading] = useState(false);
   const [deletingCard, setDeletingCard] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  
-  // Estados para favoritos y likes
-  const [cardStats, setCardStats] = useState<CardStats>({ likes: 0, favorites: 0 });
-  const [userInteraction, setUserInteraction] = useState<CardInteraction>({ liked: false, favorited: false });
+  const [cardStats, setCardStats] = useState<CardStats>({
+    likes: 0,
+    favorites: 0,
+  });
+  const [userInteraction, setUserInteraction] = useState<CardInteraction>({
+    liked: false,
+    favorited: false,
+  });
   const [loadingInteraction, setLoadingInteraction] = useState(false);
-
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
-        setError("Identificador de carta no válido");
+        setError("Identificador de carta no v�lido");
         setLoading(false);
         return;
       }
-
       if (!hasPrefetchedCard) {
         setLoading(true);
       }
-
       try {
         const response = await apiFetch<CardDetailData>(`/cards/${id}`);
         const cardData = response.data;
         setCard(cardData);
-
         if (cardData?.faction && typeof cardData.faction === "object") {
           setFaction(cardData.faction as Faction);
         } else if (cardData?.faction) {
@@ -167,11 +155,8 @@ const CardDetail = () => {
         setLoading(false);
       }
     };
-
     void fetchData();
   }, [id, hasPrefetchedCard]);
-
-  // Cargar colecciones del usuario autenticado
   useEffect(() => {
     const loadMyCollections = async () => {
       if (!user) {
@@ -193,10 +178,8 @@ const CardDetail = () => {
     };
     void loadMyCollections();
   }, [user]);
-
   useEffect(() => {
     let isActive = true;
-
     const loadCreatorInfo = async () => {
       if (!card?.creator) {
         if (isActive) {
@@ -205,7 +188,6 @@ const CardDetail = () => {
         }
         return;
       }
-
       setCreatorLoading(true);
       try {
         const response = await apiFetch<CreatorSummary[]>("/users");
@@ -224,7 +206,7 @@ const CardDetail = () => {
         }
       } catch (creatorError) {
         console.error(
-          "Error al cargar la información del creador",
+          "Error al cargar la informaci�n del creador",
           creatorError
         );
         if (isActive) {
@@ -236,63 +218,60 @@ const CardDetail = () => {
         }
       }
     };
-
     void loadCreatorInfo();
-
     return () => {
       isActive = false;
     };
   }, [card?.creator]);
-
-  // Cargar estadísticas de la carta
   useEffect(() => {
     const loadCardStats = async () => {
       if (!id) return;
-      
       try {
-        const response = await apiFetch<CardStats>(`/card-interactions/${id}/stats`);
+        const response = await apiFetch<CardStats>(
+          `/card-interactions/${id}/stats`
+        );
         setCardStats(response.data);
       } catch (error) {
-        console.error("Error al cargar estadísticas:", error);
+        console.error("Error al cargar estad�sticas:", error);
       }
     };
-
     void loadCardStats();
   }, [id]);
-
-  // Cargar interacciones del usuario
   useEffect(() => {
     const loadUserInteraction = async () => {
       if (!id || !user) {
         setUserInteraction({ liked: false, favorited: false });
         return;
       }
-      
       try {
-        const response = await apiFetch<CardInteraction>(`/card-interactions/${id}/interaction`, {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
+        const response = await apiFetch<CardInteraction>(
+          `/card-interactions/${id}/interaction`,
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
+        );
         setUserInteraction(response.data);
       } catch (error) {
         console.error("Error al cargar interacciones del usuario:", error);
       }
     };
-
     void loadUserInteraction();
   }, [id, user]);
-
-  // Funciones para manejar likes y favoritos
   const handleToggleLike = async () => {
     if (!user || !id || loadingInteraction) return;
-    
     setLoadingInteraction(true);
     try {
-      const response = await apiFetch<InteractionResponse>(`/card-interactions/${id}/like`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-      
-      setUserInteraction(prev => ({ ...prev, liked: response.data.liked || false }));
+      const response = await apiFetch<InteractionResponse>(
+        `/card-interactions/${id}/like`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      setUserInteraction((prev) => ({
+        ...prev,
+        liked: response.data.liked || false,
+      }));
       setCardStats(response.data.stats);
     } catch (error) {
       console.error("Error al actualizar like:", error);
@@ -300,18 +279,21 @@ const CardDetail = () => {
       setLoadingInteraction(false);
     }
   };
-
   const handleToggleFavorite = async () => {
     if (!user || !id || loadingInteraction) return;
-    
     setLoadingInteraction(true);
     try {
-      const response = await apiFetch<InteractionResponse>(`/card-interactions/${id}/favorite`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-      
-      setUserInteraction(prev => ({ ...prev, favorited: response.data.favorited || false }));
+      const response = await apiFetch<InteractionResponse>(
+        `/card-interactions/${id}/favorite`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      setUserInteraction((prev) => ({
+        ...prev,
+        favorited: response.data.favorited || false,
+      }));
       setCardStats(response.data.stats);
     } catch (error) {
       console.error("Error al actualizar favorito:", error);
@@ -319,7 +301,6 @@ const CardDetail = () => {
       setLoadingInteraction(false);
     }
   };
-
   const alreadyInSelected = useMemo(() => {
     if (!id || !selectedCollection) return false;
     const coll = myCollections.find((c) => c._id === selectedCollection);
@@ -339,16 +320,15 @@ const CardDetail = () => {
       }),
     [myCollections, id]
   );
-
   const handleAddToCollection = async () => {
     if (!user || !id || !selectedCollection) return;
     const targetCollection = myCollections.find(
       (collection) => collection._id === selectedCollection
     );
     const collectionTitle =
-      targetCollection?.title ?? "la colección seleccionada";
+      targetCollection?.title ?? "la colecci�n seleccionada";
     if (alreadyInSelected) {
-      setActionMsg(`Esta carta ya está en ${collectionTitle}`);
+      setActionMsg(`Esta carta ya est� en ${collectionTitle}`);
       setActionErr("");
       return;
     }
@@ -382,20 +362,19 @@ const CardDetail = () => {
           };
         })
       );
-      setActionMsg(`Carta añadida a ${collectionTitle}`);
+      setActionMsg(`Carta a�adida a ${collectionTitle}`);
     } catch (e: unknown) {
-      setActionErr(extractErrorMessage(e, "No se pudo añadir"));
+      setActionErr(extractErrorMessage(e, "No se pudo a�adir"));
     } finally {
       setAdding(false);
     }
   };
-
   const handleRemoveFromCollection = async (collectionId: string) => {
     if (!user || !id) return;
     const targetCollection = myCollections.find(
       (collection) => collection._id === collectionId
     );
-    const collectionTitle = targetCollection?.title ?? "la colección";
+    const collectionTitle = targetCollection?.title ?? "la colecci�n";
     let hasCard = false;
     if (targetCollection && Array.isArray(targetCollection.cards)) {
       hasCard = targetCollection.cards.some(
@@ -403,7 +382,7 @@ const CardDetail = () => {
       );
     }
     if (!hasCard) {
-      setActionErr(`Esta carta no está en ${collectionTitle}`);
+      setActionErr(`Esta carta no est� en ${collectionTitle}`);
       setActionMsg("");
       setPendingRemovalId(null);
       return;
@@ -440,7 +419,6 @@ const CardDetail = () => {
       setPendingRemovalId(null);
     }
   };
-
   const handleGoBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -448,16 +426,14 @@ const CardDetail = () => {
       navigate("/cards");
     }
   };
-
   const creatorProfileId = creatorInfo?._id ?? creatorInfo?.id ?? null;
   const handleCreatorClick = () => {
     if (!creatorProfileId) return;
     navigate(`/users/${creatorProfileId}`);
   };
   const creatorDisplayName =
-    creatorInfo?.username ?? creatorInfo?.email ?? card?.creator ?? "Anónimo";
+    creatorInfo?.username ?? creatorInfo?.email ?? card?.creator ?? "An�nimo";
   const creatorAvatar = creatorInfo?.image || DEFAULT_PROFILE_IMAGE;
-
   const handleDownloadCard = async () => {
     if (!card?.img) return;
     setDownloadingCard(true);
@@ -488,7 +464,7 @@ const CardDetail = () => {
       const sanitizedTitle = (card.title ?? "carta")
         .normalize("NFD")
         .replace(/[^\w\s-]/g, "")
-        .replace(/[̀-ͯ]/g, "")
+        .replace(/[`\-?]/g, "")
         .trim();
       const safeBase = sanitizedTitle
         .toLowerCase()
@@ -511,21 +487,17 @@ const CardDetail = () => {
       setDownloadingCard(false);
     }
   };
-
   const handleDeleteCard = async () => {
     if (!user || !id || !card) return;
     setDeletingCard(true);
     setActionErr("");
     setActionMsg("");
-
     try {
       await apiFetch(`/cards/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
-
       setActionMsg("Carta eliminada correctamente");
-      // Redirigir a la lista de cartas después de eliminar
       setTimeout(() => {
         navigate("/cards");
       }, 1500);
@@ -538,8 +510,6 @@ const CardDetail = () => {
       setShowDeleteConfirm(false);
     }
   };
-
-  // Verificar si el usuario puede eliminar la carta
   const canDeleteCard = useMemo(() => {
     if (!user || !card) return false;
     const isAdmin = user.role === "admin";
@@ -547,19 +517,16 @@ const CardDetail = () => {
     const isOwner = card.creator.toLowerCase() === userCreator.toLowerCase();
     return isAdmin || isOwner;
   }, [user, card]);
-
   const formattedDate = useMemo(() => {
     if (!card?.date) return "-";
     const parsed = new Date(card.date);
     if (Number.isNaN(parsed.getTime())) return "-";
-
     return parsed.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
   }, [card?.date]);
-
   return (
     <PageLayout contentClassName="p-4 lg:p-6 flex flex-col justify-center min-h-screen">
       <div className="mx-auto max-w-7xl w-full pb-8">
@@ -569,7 +536,6 @@ const CardDetail = () => {
         >
           Volver
         </button>
-
         {loading && !card ? (
           <div className="text-white">Cargando carta...</div>
         ) : error ? (
@@ -605,7 +571,7 @@ const CardDetail = () => {
               </div>
             </div>
             <div className="w-full lg:flex-1 lg:max-w-2xl rounded-lg bg-white/90 p-4 lg:p-6 shadow-lg backdrop-blur space-y-4 sm:space-y-6 overflow-hidden">
-              {/* Header Section */}
+              {}
               <div className="border-b border-gray-200 pb-4">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 break-words hyphens-auto">
                   {card.title}
@@ -620,15 +586,14 @@ const CardDetail = () => {
                   </span>
                 </div>
               </div>
-
-              {/* Creator Section */}
+              {}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
                   Creador
                 </h3>
                 {creatorLoading ? (
                   <p className="text-sm text-gray-600">
-                    Cargando información del creador...
+                    Cargando informaci�n del creador...
                   </p>
                 ) : creatorInfo ? (
                   <button
@@ -658,8 +623,7 @@ const CardDetail = () => {
                   </p>
                 )}
               </div>
-
-              {/* Download & Delete Section */}
+              {}
               <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
                 {card.img && (
                   <button
@@ -671,7 +635,6 @@ const CardDetail = () => {
                     {downloadingCard ? "Descargando..." : "Descargar carta"}
                   </button>
                 )}
-
                 {canDeleteCard && (
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     {!showDeleteConfirm ? (
@@ -685,7 +648,7 @@ const CardDetail = () => {
                     ) : (
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                         <span className="text-sm text-gray-700 font-medium">
-                          ¿Estás seguro?
+                          �Est�s seguro?
                         </span>
                         <div className="flex gap-2 w-full sm:w-auto">
                           <button
@@ -694,7 +657,7 @@ const CardDetail = () => {
                             disabled={deletingCard}
                             className="inline-flex items-center gap-1 rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70 flex-1 sm:flex-none"
                           >
-                            {deletingCard ? "Eliminando..." : "Sí, eliminar"}
+                            {deletingCard ? "Eliminando..." : "S�, eliminar"}
                           </button>
                           <button
                             type="button"
@@ -710,8 +673,7 @@ const CardDetail = () => {
                   </div>
                 )}
               </div>
-
-              {/* Like and Favorite Buttons */}
+              {}
               {user && (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <button
@@ -724,10 +686,10 @@ const CardDetail = () => {
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
-                    <span>{userInteraction.liked ? "❤️" : "🤍"}</span>
-                    {userInteraction.liked ? "Te gusta" : "Me gusta"} ({cardStats.likes})
+                    <span>{userInteraction.liked ? "??" : "??"}</span>
+                    {userInteraction.liked ? "Te gusta" : "Me gusta"} (
+                    {cardStats.likes})
                   </button>
-
                   <button
                     type="button"
                     onClick={handleToggleFavorite}
@@ -738,16 +700,18 @@ const CardDetail = () => {
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
-                    <span>{userInteraction.favorited ? "⭐" : "☆"}</span>
-                    {userInteraction.favorited ? "En favoritos" : "Agregar a favoritos"} ({cardStats.favorites})
+                    <span>{userInteraction.favorited ? "?" : "?"}</span>
+                    {userInteraction.favorited
+                      ? "En favoritos"
+                      : "Agregar a favoritos"}{" "}
+                    ({cardStats.favorites})
                   </button>
                 </div>
               )}
-
-              {/* Card Statistics */}
+              {}
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Estadísticas de la carta
+                  Estad�sticas de la carta
                 </h3>
                 <div className="grid grid-cols-2 gap-4 text-sm text-gray-800">
                   <div className="text-center">
@@ -768,12 +732,11 @@ const CardDetail = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Faction Section */}
+              {}
               {faction && (
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                    Facción
+                    Facci�n
                   </h3>
                   <button
                     type="button"
@@ -795,19 +758,28 @@ const CardDetail = () => {
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <svg
+                        className="h-4 w-4 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </div>
                   </button>
                 </div>
               )}
-
-              {/* Stats Section for Creatures */}
+              {}
               {card.type === "Creature" && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                    Estadísticas
+                    Estad�sticas
                   </h3>
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-800">
                     <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-center">
@@ -829,10 +801,7 @@ const CardDetail = () => {
                   </div>
                 </div>
               )}
-
-
-
-              {/* Collections Management Section */}
+              {}
               {user && (
                 <div className="border-t border-gray-200 pt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -841,16 +810,16 @@ const CardDetail = () => {
                   {myCollections.length === 0 ? (
                     <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
                       <p className="text-sm text-amber-800">
-                        No tienes colecciones aún. Crea una desde la pestaña
+                        No tienes colecciones a�n. Crea una desde la pesta�a
                         Colecciones.
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {/* Add to Collection */}
+                      {}
                       <div className="rounded-lg bg-green-50 border border-green-200 p-4">
                         <h4 className="text-sm font-semibold text-green-800 mb-3">
-                          Añadir a colección
+                          A�adir a colecci�n
                         </h4>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <select
@@ -860,7 +829,7 @@ const CardDetail = () => {
                               setSelectedCollection(e.target.value)
                             }
                           >
-                            <option value="">Selecciona una colección</option>
+                            <option value="">Selecciona una colecci�n</option>
                             {myCollections.map((c) => (
                               <option key={c._id} value={c._id}>
                                 {c.title}
@@ -876,7 +845,7 @@ const CardDetail = () => {
                             }
                             onClick={() => void handleAddToCollection()}
                           >
-                            {adding ? "Añadiendo..." : "Añadir"}
+                            {adding ? "A�adiendo..." : "A�adir"}
                           </button>
                         </div>
                         {(actionMsg || actionErr) && (
@@ -894,15 +863,14 @@ const CardDetail = () => {
                           </div>
                         )}
                       </div>
-
-                      {/* Remove from Collections */}
+                      {}
                       <div className="rounded-lg bg-red-50 border border-red-200 p-4">
                         <h4 className="text-sm font-semibold text-red-800 mb-3">
                           Eliminar de tus colecciones
                         </h4>
                         {collectionsWithCard.length === 0 ? (
                           <p className="text-sm text-red-700">
-                            Esta carta no está en ninguna de tus colecciones.
+                            Esta carta no est� en ninguna de tus colecciones.
                           </p>
                         ) : (
                           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
@@ -922,7 +890,7 @@ const CardDetail = () => {
                                   ) : isPending ? (
                                     <div className="flex flex-col items-center gap-2">
                                       <span className="text-xs font-semibold text-gray-900 text-center">
-                                        ¿Estás seguro?
+                                        �Est�s seguro?
                                       </span>
                                       <div className="flex gap-2">
                                         <button
@@ -934,7 +902,7 @@ const CardDetail = () => {
                                           }
                                           disabled={isRemoving}
                                         >
-                                          Sí
+                                          S�
                                         </button>
                                         <button
                                           className="rounded bg-gray-300 px-3 py-1 text-xs font-semibold text-gray-800 disabled:opacity-60 hover:bg-gray-400"
@@ -962,7 +930,7 @@ const CardDetail = () => {
                                         aria-label={`Eliminar carta de ${collection.title}`}
                                         disabled={Boolean(removingId)}
                                       >
-                                        ×
+                                        �
                                       </button>
                                     </div>
                                   )}

@@ -1,14 +1,10 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-
 type ClassValue = string | false | null | undefined;
-
 const classNames = (...classes: ClassValue[]) =>
   classes.filter(Boolean).join(" ");
-
 const COLUMN_WIDTH_CLASSES = "lg:w-[160px] xl:w-[200px] 2xl:w-[260px]";
-
 interface PageLayoutProps extends PropsWithChildren {
   wallpaperImage?: string;
   containerClassName?: string;
@@ -21,7 +17,6 @@ interface PageLayoutProps extends PropsWithChildren {
   showNavbar?: boolean;
   showFooter?: boolean;
 }
-
 const PageLayout = ({
   children,
   wallpaperImage = "/bg.webp",
@@ -36,7 +31,6 @@ const PageLayout = ({
   showFooter = true,
 }: PageLayoutProps) => {
   const showWallpaperOnMobile = !hideWallpaperOnMobile;
-
   return (
     <div
       className={classNames(
@@ -82,7 +76,6 @@ const PageLayout = ({
     </div>
   );
 };
-
 interface WallpaperColumnProps {
   image: string;
   side: "left" | "right";
@@ -90,7 +83,6 @@ interface WallpaperColumnProps {
   size: string;
   position: string;
 }
-
 const WallpaperColumn = ({
   image,
   side,
@@ -103,7 +95,6 @@ const WallpaperColumn = ({
     side === "left"
       ? "bg-gradient-to-r from-black via-black/70 to-transparent"
       : "bg-gradient-to-l from-black via-black/70 to-transparent";
-
   return (
     <div
       aria-hidden
@@ -128,5 +119,4 @@ const WallpaperColumn = ({
     </div>
   );
 };
-
 export default PageLayout;

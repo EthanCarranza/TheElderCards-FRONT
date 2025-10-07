@@ -8,9 +8,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import PageLayout from "./PageLayout";
-
 interface Faction {
   _id: string;
   title: string;
@@ -19,7 +18,6 @@ interface Faction {
   color: string;
   img?: string;
 }
-
 const Factions = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -32,7 +30,6 @@ const Factions = () => {
     new Set()
   );
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
-
   const fetchFactions = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -45,26 +42,18 @@ const Factions = () => {
       setLoading(false);
     }
   }, []);
-
   useEffect(() => {
     void fetchFactions();
   }, [fetchFactions]);
-
-
-
   const handleDeleteFaction = async (factionId: string) => {
     if (!user || !isAdmin) return;
-
     setDeletingFactions((prev) => new Set(prev).add(factionId));
     setError("");
-
     try {
       await apiFetch(`/factions/${factionId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
-
-      // Remover la facción de la lista local
       setFactions((prev) =>
         prev.filter((faction) => faction._id !== factionId)
       );
@@ -82,7 +71,6 @@ const Factions = () => {
       });
     }
   };
-
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
       <div className="max-w-6xl mx-auto">
@@ -102,7 +90,6 @@ const Factions = () => {
             {factions.map((factionItem) => {
               const isDeleting = deletingFactions.has(factionItem._id);
               const showConfirm = confirmingDelete === factionItem._id;
-
               return (
                 <div
                   key={factionItem._id}
@@ -138,8 +125,7 @@ const Factions = () => {
                   >
                     Ver Facción
                   </button>
-
-                  {/* Botón de eliminar para administradores */}
+                  {}
                   {isAdmin && (
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       {!showConfirm ? (
@@ -217,11 +203,9 @@ const Factions = () => {
     </PageLayout>
   );
 };
-
 interface CreateFactionFormProps {
   onCreated: () => Promise<void> | void;
 }
-
 const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
   const { user } = useAuth();
   const [form, setForm] = useState({
@@ -234,7 +218,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -245,13 +228,11 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
     }
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
     setSuccess("");
     setLoading(true);
-
     try {
       const formData = new FormData();
       formData.append("title", form.title);
@@ -261,17 +242,14 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
       if (img) {
         formData.append("img", img);
       }
-
       const headers = user?.token
         ? { Authorization: `Bearer ${user.token}` }
         : undefined;
-
       await apiFetch("/factions", {
         method: "POST",
         body: formData,
         headers,
       });
-
       setSuccess("Faccion creada correctamente");
       setForm({ title: "", description: "", territory: "", color: "#000000" });
       setImg(null);
@@ -282,7 +260,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
       setLoading(false);
     }
   };
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -291,7 +268,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
       <h4 className="text-xl font-semibold text-white text-center">
         Nueva Facción
       </h4>
-
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -307,7 +283,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
             maxLength={40}
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Territorio
@@ -322,7 +297,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
             maxLength={40}
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Descripción
@@ -336,7 +310,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
             required
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Color principal
@@ -355,7 +328,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
             </span>
           </div>
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Imagen (opcional)
@@ -374,7 +346,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
           )}
         </div>
       </div>
-
       {error && (
         <div className="text-sm text-red-400 bg-red-900/20 border border-red-600 rounded p-3">
           {error}
@@ -385,7 +356,6 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
           {success}
         </div>
       )}
-
       <button
         type="submit"
         className="w-full rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -396,5 +366,4 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
     </form>
   );
 };
-
 export default Factions;
