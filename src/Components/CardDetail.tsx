@@ -686,7 +686,7 @@ const CardDetail = () => {
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
-                    <span>{userInteraction.liked ? "??" : "??"}</span>
+                    <span>{userInteraction.liked ? "❤️" : "🤍"}</span>
                     {userInteraction.liked ? "Te gusta" : "Me gusta"} (
                     {cardStats.likes})
                   </button>
@@ -700,7 +700,7 @@ const CardDetail = () => {
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
-                    <span>{userInteraction.favorited ? "?" : "?"}</span>
+                    <span>{userInteraction.favorited ? "⭐" : "☆"}</span>
                     {userInteraction.favorited
                       ? "En favoritos"
                       : "Agregar a favoritos"}{" "}
