@@ -90,22 +90,29 @@ const Friends = () => {
       setLoading(false);
     }
   }, [user, activeTab]);
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-  const handleSearch = async () => {
-    if (!user || !searchQuery.trim() || searchQuery.trim().length < 2) {
-      return;
-    }
+  const performSearch = useCallback(async (query: string, showAll = false) => {
+    if (!user) return;
+    
     setSearching(true);
     setError("");
+    
     try {
-      const response = await apiFetch<{ users: SearchUser[] }>(
-        `/friendships/users/search?q=${encodeURIComponent(searchQuery.trim())}`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
+      let url = `/friendships/users/search`;
+      
+      if (showAll) {
+        url += `?q=*&all=true`;
+      } else {
+        if (!query.trim() || query.trim().length < 2) {
+          setSearchResults([]);
+          setSearching(false);
+          return;
         }
-      );
+        url += `?q=${encodeURIComponent(query.trim())}`;
+      }
+      
+      const response = await apiFetch<{ users: SearchUser[] }>(url, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
       setSearchResults(response.data.users || []);
     } catch (err) {
       setError(extractErrorMessage(err, "Error al buscar usuarios"));
@@ -113,7 +120,27 @@ const Friends = () => {
     } finally {
       setSearching(false);
     }
+  }, [user]);
+
+  const handleSearchAll = () => {
+    setSearchQuery(""); // Limpiar el campo de búsqueda
+    performSearch("", true);
   };
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    if (activeTab !== "search") return;
+    
+    if (searchQuery.trim() && searchQuery.trim().length >= 2) {
+      performSearch(searchQuery);
+    } else if (searchQuery.trim().length === 0) {
+      setSearchResults([]);
+    }
+  }, [searchQuery, activeTab, performSearch]);
+
   const sendFriendRequest = async (
     recipientId: string,
     message: string = ""
@@ -274,26 +301,31 @@ const Friends = () => {
         )}
         {}
         {activeTab === "search" && (
-          <div className="mb-8">
-            <div className="flex gap-3 max-w-md mx-auto">
+          <div className="mb-8 space-y-4">
+            <div className="text-center text-gray-300 text-sm mb-4">
+              💡 La búsqueda es instantánea con coincidencias parciales. Por ejemplo, "jack" encontrará "JackDliskin64"
+            </div>
+            <div className="max-w-md mx-auto">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por nombre o email..."
-                className="flex-1 px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Buscar por nombre o email... (mínimo 2 caracteres)"
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               />
+              {searching && (
+                <div className="text-center text-purple-300 text-sm mt-2">
+                  Buscando...
+                </div>
+              )}
+            </div>
+            <div className="flex justify-center">
               <button
-                onClick={handleSearch}
-                disabled={
-                  searching ||
-                  !searchQuery.trim() ||
-                  searchQuery.trim().length < 2
-                }
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+                onClick={handleSearchAll}
+                disabled={searching}
+                className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
               >
-                {searching ? "Buscando..." : "Buscar"}
+                {searching ? "Cargando..." : "Mostrar todos los usuarios"}
               </button>
             </div>
           </div>
