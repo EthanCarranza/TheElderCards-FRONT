@@ -72,47 +72,47 @@ function Register() {
   };
   return (
     <PageLayout contentClassName="flex flex-1 items-center justify-center py-12">
-        <div className="w-full max-w-lg rounded-lg bg-white p-8 text-2xl shadow-2xl">
-          <h2 className="mb-6 text-center text-4xl font-bold text-black">
-            Crea tu cuenta
-          </h2>
-          <Message message={errorMessage} type="error" />
-          <form onSubmit={handleSubmit}>
-            <FormInput
-              id="username"
-              type="text"
-              value={username}
-              onChange={handleChange}
-              placeholder="Nombre de usuario"
-              icon={<FaUser />}
-              autoComplete="username"
-            />
-            <FormInput
-              id="email"
-              type="email"
-              value={email}
-              onChange={handleChange}
-              placeholder="Correo electrónico"
-              icon={<FaEnvelope />}
-              autoComplete="email"
-            />
-            <FormInput
-              id="password"
-              type="password"
-              value={password}
-              onChange={handleChange}
-              placeholder="Contraseña"
-              icon={<FaLock />}
-              autoComplete="new-password"
-            />
-            <button
-              type="submit"
-              className="mt-4 w-full rounded bg-black px-4 py-2 font-bold text-white transition-colors hover:bg-gray-800"
-            >
-              Registrarse
-            </button>
-          </form>
-        </div>
+      <div className="w-full max-w-lg rounded-lg bg-white p-8 text-2xl shadow-2xl">
+        <h2 className="mb-6 text-center text-4xl font-bold text-black">
+          Crea tu cuenta
+        </h2>
+        <Message message={errorMessage} type="error" />
+        <form onSubmit={handleSubmit}>
+          <FormInput
+            id="username"
+            type="text"
+            value={username}
+            onChange={handleChange}
+            placeholder="Nombre de usuario"
+            icon={<FaUser />}
+            autoComplete="username"
+          />
+          <FormInput
+            id="email"
+            type="email"
+            value={email}
+            onChange={handleChange}
+            placeholder="Correo electrónico"
+            icon={<FaEnvelope />}
+            autoComplete="email"
+          />
+          <FormInput
+            id="password"
+            type="password"
+            value={password}
+            onChange={handleChange}
+            placeholder="Contraseña"
+            icon={<FaLock />}
+            autoComplete="new-password"
+          />
+          <button
+            type="submit"
+            className="mt-4 w-full rounded bg-black px-4 py-2 font-bold text-white transition-colors hover:bg-gray-800"
+          >
+            Registrarse
+          </button>
+        </form>
+      </div>
     </PageLayout>
   );
 }

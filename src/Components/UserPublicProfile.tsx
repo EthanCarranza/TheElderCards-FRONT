@@ -38,6 +38,7 @@ const UserPublicProfile = () => {
   const [friendshipId, setFriendshipId] = useState<string | null>(null);
   const [friendshipLoading, setFriendshipLoading] = useState(false);
   const [friendshipError, setFriendshipError] = useState("");
+  const [blockLoading, setBlockLoading] = useState(false);
   useEffect(() => {
     let isActive = true;
     const loadProfile = async () => {
@@ -68,7 +69,7 @@ const UserPublicProfile = () => {
         }
         let collectionsData: CollectionSummary[] = [];
         try {
-          const headers: Record<string, string> = currentUser 
+          const headers: Record<string, string> = currentUser
             ? { Authorization: `Bearer ${currentUser.token}` }
             : {};
           const collectionsResp = await apiFetch<CollectionSummary[]>(
@@ -116,6 +117,30 @@ const UserPublicProfile = () => {
             setRelationshipStatus("none");
             setFriendshipId(null);
             setFriendshipError(""); // Limpiar errores anteriores
+
+            // Verificar PRIMERO si el usuario está bloqueado
+            try {
+              const blockedResp = await apiFetch<{
+                blockedUsers?: Array<{ _id: string }>;
+              }>("/friendships/blocked", {
+                headers: { Authorization: `Bearer ${currentUser.token}` },
+              });
+
+              const isBlocked = blockedResp.data.blockedUsers?.some((u) => {
+                return u._id === targetUserId;
+              });
+
+              if (isBlocked && isActive) {
+                setRelationshipStatus("blocked");
+                return;
+              }
+            } catch (blockedError) {
+              console.error(
+                "Error al verificar usuarios bloqueados:",
+                blockedError
+              );
+            }
+
             const friendsResp = await apiFetch<{
               friends?: Array<{ friendshipId: string; user?: { _id: string } }>;
             }>("/friendships", {
@@ -161,6 +186,7 @@ const UserPublicProfile = () => {
               setFriendshipId(sentRequest.friendshipId);
               return;
             }
+
             if (isActive) {
               setRelationshipStatus("none");
             }
@@ -273,6 +299,56 @@ const UserPublicProfile = () => {
       setFriendshipLoading(false);
     }
   };
+
+  const handleBlockUser = async () => {
+    if (!currentUser || !profile) return;
+    const userId = profile._id || profile.id;
+    if (!userId) return;
+
+    setBlockLoading(true);
+    setFriendshipError("");
+
+    try {
+      await apiFetch(`/friendships/block/${userId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      });
+
+      // Actualizar el estado después del bloqueo
+      setRelationshipStatus("blocked");
+      setFriendshipId(null);
+    } catch (err) {
+      setFriendshipError(extractErrorMessage(err, "Error al bloquear usuario"));
+    } finally {
+      setBlockLoading(false);
+    }
+  };
+
+  const handleUnblockUser = async () => {
+    if (!currentUser || !profile) return;
+    const userId = profile._id || profile.id;
+    if (!userId) return;
+
+    setBlockLoading(true);
+    setFriendshipError("");
+
+    try {
+      await apiFetch(`/friendships/block/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      });
+
+      // Actualizar el estado después del desbloqueo
+      setRelationshipStatus("none");
+      setFriendshipId(null);
+    } catch (err) {
+      setFriendshipError(
+        extractErrorMessage(err, "Error al desbloquear usuario")
+      );
+    } finally {
+      setBlockLoading(false);
+    }
+  };
   const handleGoBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -325,38 +401,73 @@ const UserPublicProfile = () => {
                 profile.id !== currentUser.userId && (
                   <div className="mt-6 space-y-4">
                     {relationshipStatus === "none" && (
-                      <button
-                        onClick={handleSendFriendRequest}
-                        disabled={friendshipLoading}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
-                      >
-                        {friendshipLoading ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            Enviando solicitud...
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                              />
-                            </svg>
-                            Enviar solicitud de amistad
-                          </>
-                        )}
-                      </button>
+                      <div className="space-y-4">
+                        <div className="pb-2">
+                          <button
+                            onClick={handleSendFriendRequest}
+                            disabled={friendshipLoading}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                          >
+                            {friendshipLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Enviando solicitud...
+                              </>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                                  />
+                                </svg>
+                                Enviar solicitud de amistad
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <div className="pt-2">
+                          <button
+                            onClick={handleBlockUser}
+                            disabled={blockLoading || friendshipLoading}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                          >
+                            {blockLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Bloqueando...
+                              </>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                                  />
+                                </svg>
+                                Bloquear usuario
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
                     )}
                     {relationshipStatus === "friends" && (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="inline-flex items-center gap-2 rounded-lg bg-green-600/20 border border-green-500/40 px-3 py-2 text-green-300 text-sm font-medium">
                           <svg
                             className="w-4 h-4"
@@ -398,7 +509,7 @@ const UserPublicProfile = () => {
                           <button
                             onClick={handleRemoveFriendship}
                             disabled={friendshipLoading}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
                           >
                             {friendshipLoading ? (
                               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -422,10 +533,41 @@ const UserPublicProfile = () => {
                             )}
                           </button>
                         </div>
+                        <div className="pt-4">
+                          <button
+                            onClick={handleBlockUser}
+                            disabled={blockLoading || friendshipLoading}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                          >
+                            {blockLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Bloqueando...
+                              </>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                                  />
+                                </svg>
+                                Bloquear usuario
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                     {relationshipStatus === "sent" && (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="inline-flex items-center gap-2 rounded-lg bg-yellow-600/20 border border-yellow-500/40 px-3 py-2 text-yellow-300 text-sm font-medium">
                           <svg
                             className="w-4 h-4"
@@ -442,38 +584,69 @@ const UserPublicProfile = () => {
                           </svg>
                           Solicitud de amistad enviada
                         </div>
-                        <button
-                          onClick={() => {
-                            handleRemoveFriendship();
-                          }}
-                          disabled={friendshipLoading}
-                          className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
-                        >
-                          {friendshipLoading ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          ) : (
-                            <>
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                              Cancelar solicitud
-                            </>
-                          )}
-                        </button>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <button
+                            onClick={() => {
+                              handleRemoveFriendship();
+                            }}
+                            disabled={friendshipLoading}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                          >
+                            {friendshipLoading ? (
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                                Cancelar solicitud
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={handleBlockUser}
+                            disabled={blockLoading || friendshipLoading}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                          >
+                            {blockLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Bloqueando...
+                              </>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                                  />
+                                </svg>
+                                Bloquear usuario
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                     {relationshipStatus === "received" && (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="inline-flex items-center gap-2 rounded-lg bg-blue-600/20 border border-blue-500/40 px-3 py-2 text-blue-300 text-sm font-medium">
                           <svg
                             className="w-4 h-4"
@@ -520,7 +693,7 @@ const UserPublicProfile = () => {
                           <button
                             onClick={() => handleRespondToRequest("decline")}
                             disabled={friendshipLoading}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
                           >
                             <svg
                               className="w-4 h-4"
@@ -538,24 +711,88 @@ const UserPublicProfile = () => {
                             Rechazar solicitud
                           </button>
                         </div>
+                        <div className="pt-4">
+                          <button
+                            onClick={handleBlockUser}
+                            disabled={blockLoading || friendshipLoading}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                          >
+                            {blockLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Bloqueando...
+                              </>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                                  />
+                                </svg>
+                                Bloquear usuario
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                     {relationshipStatus === "blocked" && (
-                      <div className="inline-flex items-center gap-2 rounded-lg bg-red-700/20 border border-red-600/40 px-3 py-2 text-red-300 text-sm font-medium">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
-                          />
-                        </svg>
-                        Usuario bloqueado
+                      <div className="space-y-3">
+                        <div className="inline-flex items-center gap-2 rounded-lg bg-red-700/20 border border-red-600/40 px-3 py-2 text-red-300 text-sm font-medium">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                            />
+                          </svg>
+                          Usuario bloqueado
+                        </div>
+                        <div className="pt-2">
+                          <button
+                            onClick={handleUnblockUser}
+                            disabled={blockLoading}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 text-white font-medium transition-colors"
+                          >
+                            {blockLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Desbloqueando...
+                              </>
+                            ) : (
+                              <>
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
+                                  />
+                                </svg>
+                                Desbloquear usuario
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

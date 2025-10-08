@@ -84,7 +84,7 @@ function Login() {
       });
       setEmail("");
       setPassword("");
-      
+
       setTimeout(() => {
         navigate("/");
       }, 1000);
@@ -94,10 +94,10 @@ function Login() {
   };
   return (
     <PageLayout contentClassName="flex flex-1 items-center justify-center py-12">
-        <div className="w-full max-w-lg rounded-lg bg-white p-8 text-2xl shadow-2xl">
-          <h2 className="mb-6 text-center text-4xl font-bold text-black">
-            Inicia sesión
-          </h2>
+      <div className="w-full max-w-lg rounded-lg bg-white p-8 text-2xl shadow-2xl">
+        <h2 className="mb-6 text-center text-4xl font-bold text-black">
+          Inicia sesión
+        </h2>
         <Message message={errorMessage} type="error" />
         <Message message={successMessage} type="success" />
         <form onSubmit={handleSubmit}>

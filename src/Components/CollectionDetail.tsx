@@ -37,10 +37,13 @@ const CollectionDetail: React.FC = () => {
       setLoading(true);
       setError("");
       try {
-        const headers: Record<string, string> = user 
+        const headers: Record<string, string> = user
           ? { Authorization: `Bearer ${user.token}` }
           : {};
-        const resp = await apiFetch<CollectionDetailData>(`/collections/${id}`, { headers });
+        const resp = await apiFetch<CollectionDetailData>(
+          `/collections/${id}`,
+          { headers }
+        );
         setCollection(resp.data);
       } catch (e: unknown) {
         setError(extractErrorMessage(e, "No se pudo cargar la colección"));

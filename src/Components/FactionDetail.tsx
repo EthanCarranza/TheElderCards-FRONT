@@ -4,7 +4,7 @@ import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../hooks/useAuth";
-import EditFactionForm from './EditFactionForm';
+import EditFactionForm from "./EditFactionForm";
 interface Faction {
   _id: string;
   title: string;
@@ -62,24 +62,28 @@ const FactionDetail = () => {
       }
     } catch (updateError: unknown) {
       console.error("Error al actualizar facción:", updateError);
-      setError(extractErrorMessage(updateError, "No se pudo actualizar la facción"));
+      setError(
+        extractErrorMessage(updateError, "No se pudo actualizar la facción")
+      );
     }
   };
 
   const handleDeleteFaction = async () => {
     if (!user || !isAdmin || !faction) return;
-    
+
     setDeleting(true);
     try {
       await apiFetch(`/factions/${faction._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      
+
       navigate("/factions");
     } catch (deleteError: unknown) {
       console.error("Error al eliminar facción:", deleteError);
-      setError(extractErrorMessage(deleteError, "No se pudo eliminar la facción"));
+      setError(
+        extractErrorMessage(deleteError, "No se pudo eliminar la facción")
+      );
       setDeleting(false);
       setConfirmingDelete(false);
     }
@@ -220,8 +224,18 @@ const FactionDetail = () => {
                   onClick={() => navigate(`/cards?faction=${faction._id}`)}
                   className="inline-flex items-center gap-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-semibold px-6 py-3 transition-colors shadow-lg"
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
                   </svg>
                   Ver cartas de {faction.title}
                 </button>
@@ -229,7 +243,9 @@ const FactionDetail = () => {
             </div>
           </div>
         ) : (
-          <div className="text-white text-center">No se encontró la facción solicitada.</div>
+          <div className="text-white text-center">
+            No se encontró la facción solicitada.
+          </div>
         )}
 
         {/* Modal de edición */}

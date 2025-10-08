@@ -78,11 +78,14 @@ const Factions = () => {
     if (!user || !isAdmin || !editingFaction) return;
 
     try {
-      const response = await apiFetch<Faction>(`/factions/${editingFaction._id}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${user.token}` },
-        body: factionData,
-      });
+      const response = await apiFetch<Faction>(
+        `/factions/${editingFaction._id}`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${user.token}` },
+          body: factionData,
+        }
+      );
 
       if (response.data) {
         setFactions((prev) =>
@@ -421,7 +424,5 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
     </form>
   );
 };
-
-
 
 export default Factions;

@@ -1,6 +1,6 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { extractErrorMessage } from '../utils/errors';
+import { useState, ChangeEvent, FormEvent } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { extractErrorMessage } from "../utils/errors";
 
 interface Faction {
   _id: string;
@@ -17,7 +17,11 @@ interface EditFactionFormProps {
   onCancel: () => void;
 }
 
-const EditFactionForm = ({ faction, onUpdated, onCancel }: EditFactionFormProps) => {
+const EditFactionForm = ({
+  faction,
+  onUpdated,
+  onCancel,
+}: EditFactionFormProps) => {
   const { user } = useAuth();
   const [form, setForm] = useState({
     title: faction.title,
@@ -29,7 +33,9 @@ const EditFactionForm = ({ faction, onUpdated, onCancel }: EditFactionFormProps)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target;
     if (type === "file") {
       const file = (e.target as HTMLInputElement).files?.[0] || null;

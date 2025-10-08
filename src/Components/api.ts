@@ -1,5 +1,8 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
-type ApiFetchOptions = Omit<AxiosRequestConfig, "url" | "method" | "data" | "headers"> & {
+type ApiFetchOptions = Omit<
+  AxiosRequestConfig,
+  "url" | "method" | "data" | "headers"
+> & {
   method?: AxiosRequestConfig["method"];
   headers?: Record<string, string>;
   body?: unknown;
