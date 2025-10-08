@@ -29,15 +29,11 @@ const CARD_DIMENSIONS: CardDimensions = {
   typeBarHeight: 32,
   footerHeight: 68,
 };
-const cyrodiilFont = new FontFace(
-  "Cyrodiil", 
-  "url(/fonts/Cyrodiil.otf)", 
-  { 
-    weight: "normal", 
-    style: "normal",
-    display: "fallback"
-  }
-);
+const cyrodiilFont = new FontFace("Cyrodiil", "url(/fonts/Cyrodiil.otf)", {
+  weight: "normal",
+  style: "normal",
+  display: "fallback",
+});
 
 const FONT_FALLBACK = '"Cyrodiil", "Times New Roman", Georgia, serif';
 
@@ -47,7 +43,7 @@ function getFontString(weight: string, size: number): string {
 
 async function ensureFontLoaded() {
   try {
-    if (cyrodiilFont.status !== 'loaded') {
+    if (cyrodiilFont.status !== "loaded") {
       const font = await cyrodiilFont.load();
       document.fonts.add(font);
     }

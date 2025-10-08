@@ -376,87 +376,89 @@ const Cards = () => {
             ) : (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6 pt-4 sm:pt-8 md:pt-12 lg:pt-16 px-2 sm:px-0">
-                {cards.map((card) => {
-                  let factionObj: Faction | undefined = undefined;
-                  if (
-                    typeof card.faction === "object" &&
-                    card.faction !== null
-                  ) {
-                    factionObj = card.faction as Faction;
-                  } else if (typeof card.faction === "string") {
-                    factionObj = factions.find((f) => f._id === card.faction);
-                  }
-                  const canDelete = canDeleteCard(card);
-                  const isDeleting = deletingCards.has(card._id);
-                  const showConfirm = confirmingDelete === card._id;
-                  return (
-                    <div key={card._id} className="relative group">
-                      <CardTile
-                        card={card}
-                        to={`/cards/${card._id}`}
-                        state={{ card, faction: factionObj }}
-                      />
-                      {canDelete && (
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {!showConfirm ? (
-                            <button
-                              onClick={() => setConfirmingDelete(card._id)}
-                              disabled={isDeleting}
-                              className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors disabled:opacity-50"
-                              title="Eliminar carta"
-                            >
-                              ×
-                            </button>
-                          ) : (
-                            <div className="bg-white rounded shadow-lg p-2 min-w-[120px]">
-                              <div className="text-xs text-gray-800 font-medium mb-2 text-center">
-                                ¿Eliminar?
+                  {cards.map((card) => {
+                    let factionObj: Faction | undefined = undefined;
+                    if (
+                      typeof card.faction === "object" &&
+                      card.faction !== null
+                    ) {
+                      factionObj = card.faction as Faction;
+                    } else if (typeof card.faction === "string") {
+                      factionObj = factions.find((f) => f._id === card.faction);
+                    }
+                    const canDelete = canDeleteCard(card);
+                    const isDeleting = deletingCards.has(card._id);
+                    const showConfirm = confirmingDelete === card._id;
+                    return (
+                      <div key={card._id} className="relative group">
+                        <CardTile
+                          card={card}
+                          to={`/cards/${card._id}`}
+                          state={{ card, faction: factionObj }}
+                        />
+                        {canDelete && (
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!showConfirm ? (
+                              <button
+                                onClick={() => setConfirmingDelete(card._id)}
+                                disabled={isDeleting}
+                                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors disabled:opacity-50"
+                                title="Eliminar carta"
+                              >
+                                ×
+                              </button>
+                            ) : (
+                              <div className="bg-white rounded shadow-lg p-2 min-w-[120px]">
+                                <div className="text-xs text-gray-800 font-medium mb-2 text-center">
+                                  ¿Eliminar?
+                                </div>
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => handleDeleteCard(card._id)}
+                                    disabled={isDeleting}
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 rounded transition-colors disabled:opacity-50"
+                                  >
+                                    {isDeleting ? "..." : "Sí"}
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmingDelete(null)}
+                                    disabled={isDeleting}
+                                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs font-semibold py-1 rounded transition-colors disabled:opacity-50"
+                                  >
+                                    No
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => handleDeleteCard(card._id)}
-                                  disabled={isDeleting}
-                                  className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-1 rounded transition-colors disabled:opacity-50"
-                                >
-                                  {isDeleting ? "..." : "Sí"}
-                                </button>
-                                <button
-                                  onClick={() => setConfirmingDelete(null)}
-                                  disabled={isDeleting}
-                                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 text-xs font-semibold py-1 rounded transition-colors disabled:opacity-50"
-                                >
-                                  No
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-2 mt-6 px-4">
-                {page > 1 && (
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
-                  >
-                    Anterior
-                  </button>
-                )}
-                <span className="text-white text-lg md:text-xl xl:text-2xl font-medium text-center">
-                  Página {page} de {totalPages}
-                </span>
-                {page < totalPages && totalPages > 1 && (
-                  <button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
-                  >
-                    Siguiente
-                  </button>
-                )}
-              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-2 mt-6 px-4">
+                  {page > 1 && (
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
+                    >
+                      Anterior
+                    </button>
+                  )}
+                  <span className="text-white text-lg md:text-xl xl:text-2xl font-medium text-center">
+                    Página {page} de {totalPages}
+                  </span>
+                  {page < totalPages && totalPages > 1 && (
+                    <button
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
+                    >
+                      Siguiente
+                    </button>
+                  )}
+                </div>
               </>
             )}
           </>
