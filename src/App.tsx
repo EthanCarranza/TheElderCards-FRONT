@@ -20,23 +20,23 @@ function App() {
       <MessageNotificationsProvider>
         <Router>
           <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/cards" element={<Cards />} />
-          <Route path="/cards/:id" element={<CardDetail />} />
-          <Route path="/collections" element={<Collections />} />
-          <Route path="/collections/:id" element={<CollectionDetail />} />
-          <Route path="/factions" element={<Factions />} />
-          <Route path="/factions/:id" element={<FactionDetail />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/messages/:userId" element={<Messages />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/:userId" element={<UserPublicProfile />} />
-          <Route path="/users/:userId" element={<UserPublicProfile />} />
-        </Routes>
-      </Router>
+            <Route path="/" element={<Landing />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/cards" element={<Cards />} />
+            <Route path="/cards/:id" element={<CardDetail />} />
+            <Route path="/collections" element={<Collections />} />
+            <Route path="/collections/:id" element={<CollectionDetail />} />
+            <Route path="/factions" element={<Factions />} />
+            <Route path="/factions/:id" element={<FactionDetail />} />
+            <Route path="/friends" element={<Friends />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/:userId" element={<Messages />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<UserPublicProfile />} />
+            <Route path="/users/:userId" element={<UserPublicProfile />} />
+          </Routes>
+        </Router>
       </MessageNotificationsProvider>
     </AuthProvider>
   );

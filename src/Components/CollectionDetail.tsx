@@ -18,6 +18,16 @@ interface CollectionDetailData {
   creator: string;
   cards: CardItem[];
 }
+
+interface CollectionStats {
+  likes: number;
+  favorites: number;
+}
+
+interface CollectionInteraction {
+  liked: boolean;
+  favorited: boolean;
+}
 const CollectionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -27,6 +37,15 @@ const CollectionDetail: React.FC = () => {
   const [collection, setCollection] = useState<CollectionDetailData | null>(
     null
   );
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [collectionStats, setCollectionStats] = useState<CollectionStats>({
+    likes: 0,
+    favorites: 0,
+  });
+  const [collectionInteraction, setCollectionInteraction] = useState<CollectionInteraction>({
+    liked: false,
+    favorited: false,
+  });
   useEffect(() => {
     const load = async () => {
       if (!id) {
@@ -45,6 +64,42 @@ const CollectionDetail: React.FC = () => {
           { headers }
         );
         setCollection(resp.data);
+
+        try {
+          const statsResp = await apiFetch<CollectionStats>(
+            `/collection-interactions/${id}/stats`
+          );
+          setCollectionStats(statsResp.data);
+        } catch {
+          setCollectionStats({ likes: 0, favorites: 0 });
+        }
+
+        if (user) {
+          try {
+            const favResp = await apiFetch<CollectionDetailData[]>(
+              "/collections/favorites/mine",
+              {
+                headers: { Authorization: `Bearer ${user.token}` },
+              }
+            );
+            const favorites = (favResp.data || []).map((c) => c._id);
+            setIsFavorite(favorites.includes(id));
+          } catch {
+            setIsFavorite(false);
+          }
+
+          try {
+            const interactionResp = await apiFetch<CollectionInteraction>(
+              `/collection-interactions/${id}/interaction`,
+              {
+                headers: { Authorization: `Bearer ${user.token}` },
+              }
+            );
+            setCollectionInteraction(interactionResp.data);
+          } catch {
+            setCollectionInteraction({ liked: false, favorited: false });
+          }
+        }
       } catch (e: unknown) {
         setError(extractErrorMessage(e, "No se pudo cargar la colección"));
       } finally {
@@ -53,6 +108,50 @@ const CollectionDetail: React.FC = () => {
     };
     void load();
   }, [id, user]);
+
+  const toggleFavorite = async () => {
+    if (!user || !id) return;
+    
+    try {
+      if (!isFavorite) {
+        await apiFetch(`/collections/${id}/favorite`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setIsFavorite(true);
+      } else {
+        await apiFetch(`/collections/${id}/favorite`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setIsFavorite(false);
+      }
+    } catch {
+      setError("Error al gestionar favoritos");
+    }
+  };
+
+  const toggleLike = async () => {
+    if (!user || !id) return;
+    
+    try {
+      const response = await apiFetch<{liked: boolean; stats: CollectionStats}>(
+        `/collection-interactions/${id}/like`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      
+      setCollectionInteraction(prev => ({
+        ...prev,
+        liked: response.data.liked
+      }));
+      setCollectionStats(response.data.stats);
+    } catch {
+      setError("Error al gestionar me gusta");
+    }
+  };
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6">
@@ -74,7 +173,7 @@ const CollectionDetail: React.FC = () => {
           </div>
         ) : collection ? (
           <div className="space-y-6 lg:space-y-8">
-            <div className="bg-white/90 text-black rounded-lg p-4 lg:p-6 shadow-lg">
+            <div className="bg-white/90 text-black rounded-lg p-4 lg:p-6 shadow-lg relative">
               {collection.img ? (
                 <img
                   src={collection.img}
@@ -86,14 +185,64 @@ const CollectionDetail: React.FC = () => {
                   Sin imagen
                 </div>
               )}
-              <h1 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-bold break-words">
-                {collection.title}
-              </h1>
+              <div className="flex items-center justify-between mt-4">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words flex-1">
+                  {collection.title}
+                </h1>
+                {user && collection.creator !== user.userId && (
+                  <div className="ml-4 flex gap-2">
+                    <button
+                      onClick={toggleLike}
+                      title={collectionInteraction.liked ? "Quitar me gusta" : "Me gusta"}
+                      className={`rounded-full p-2 lg:p-3 text-lg lg:text-xl transition-colors ${
+                        collectionInteraction.liked
+                          ? "bg-red-400 text-white"
+                          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                      }`}
+                    >
+                      ❤️
+                    </button>
+                    <button
+                      onClick={toggleFavorite}
+                      title={isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                      className={`rounded-full p-2 lg:p-3 text-lg lg:text-xl transition-colors ${
+                        isFavorite
+                          ? "bg-yellow-400 text-black"
+                          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                      }`}
+                    >
+                      ⭐
+                    </button>
+                  </div>
+                )}
+              </div>
               {collection.description && (
                 <p className="mt-2 text-sm sm:text-base lg:text-lg text-gray-800 whitespace-pre-line break-words">
                   {collection.description}
                 </p>
               )}
+              
+              {/* Estadísticas */}
+              <div className="mt-4 flex gap-6 text-gray-600">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">❤️</span>
+                  <span className="text-sm sm:text-base font-medium">
+                    {collectionStats.likes} me gusta{collectionStats.likes !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">⭐</span>
+                  <span className="text-sm sm:text-base font-medium">
+                    {collectionStats.favorites} favorito{collectionStats.favorites !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📋</span>
+                  <span className="text-sm sm:text-base font-medium">
+                    {collection.cards?.length || 0} carta{(collection.cards?.length || 0) !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="w-full">
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-4 lg:mb-6 text-white">

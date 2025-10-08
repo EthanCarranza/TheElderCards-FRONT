@@ -43,6 +43,9 @@ const Profile = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const updateUserRef = useRef(updateUser);
   const logoutRef = useRef(logout);
@@ -244,6 +247,54 @@ const Profile = () => {
       setSaving(false);
     }
   };
+
+  const handleDeleteAccount = async () => {
+    if (!user || !profile) return;
+    
+    if (!deletePassword.trim()) {
+      setErrorMessage("Ingresa tu contraseña para confirmar la eliminación");
+      return;
+    }
+
+    setDeleting(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      // Primero verificamos la contraseña haciendo login
+      await apiFetch("/users/login", {
+        method: "POST",
+        body: {
+          email: profile.email,
+          password: deletePassword
+        }
+      });
+
+      // Si el login es exitoso, procedemos a eliminar la cuenta
+      await apiFetch(`/users/${profile._id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+
+      setSuccessMessage("Cuenta eliminada correctamente. Serás redirigido...");
+      
+      // Esperamos un momento y luego cerramos sesión y redirigimos
+      setTimeout(() => {
+        logoutRef.current();
+        navigate("/");
+      }, 2000);
+
+    } catch (error) {
+      setErrorMessage(
+        extractErrorMessage(error, "Error al eliminar la cuenta. Verifica tu contraseña.")
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <PageLayout contentClassName="flex items-center justify-center">
@@ -333,6 +384,66 @@ const Profile = () => {
             {saving ? "Guardando..." : "Guardar cambios"}
           </button>
         </form>
+
+        {/* Sección para eliminar cuenta */}
+        <div className="mt-8 border-t pt-6">
+          <h2 className="text-xl font-bold text-red-600 mb-4">Zona peligrosa</h2>
+          
+          {!showDeleteConfirmation ? (
+            <button
+              onClick={() => setShowDeleteConfirmation(true)}
+              className="w-full rounded bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700"
+            >
+              Eliminar cuenta permanentemente
+            </button>
+          ) : (
+            <div className="space-y-4 border rounded-lg border-red-300 bg-red-50 p-4">
+              <h3 className="font-semibold text-red-800">
+                ⚠️ ¿Estás seguro de que quieres eliminar tu cuenta?
+              </h3>
+              <p className="text-sm text-red-700">
+                Esta acción es <strong>irreversible</strong>. Se eliminarán:
+              </p>
+              <ul className="text-sm text-red-700 list-disc list-inside ml-4">
+                <li>Tu perfil y toda tu información personal</li>
+                <li>Todas tus cartas creadas</li>
+                <li>Todas tus colecciones</li>
+                <li>Todos tus mensajes y conversaciones</li>
+                <li>Todas tus conexiones de amistad</li>
+              </ul>
+              
+              <FormInput
+                id="delete-password"
+                type="password"
+                value={deletePassword}
+                onChange={(event) => setDeletePassword(event.target.value)}
+                placeholder="Ingresa tu contraseña para confirmar"
+                icon={<FaLock />}
+                autoComplete="current-password"
+              />
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirmation(false);
+                    setDeletePassword("");
+                    setErrorMessage("");
+                  }}
+                  className="flex-1 rounded bg-gray-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-gray-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleting || !deletePassword.trim()}
+                  className="flex-1 rounded bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+                >
+                  {deleting ? "Eliminando..." : "Eliminar definitivamente"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </PageLayout>
   );

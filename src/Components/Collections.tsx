@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
@@ -13,10 +13,27 @@ interface CollectionItem {
   isPrivate?: boolean;
   cards: Array<{ _id: string; title: string; img?: string }>;
 }
+
+interface CollectionStats {
+  likes: number;
+  favorites: number;
+}
+
+interface CollectionInteraction {
+  liked: boolean;
+  favorited: boolean;
+}
+type TabType = "all" | "mine" | "favorites";
+
 const Collections: React.FC = () => {
   const { user } = useAuth();
-  const [collections, setCollections] = useState<CollectionItem[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>("all");
+  const [allCollections, setAllCollections] = useState<CollectionItem[]>([]);
+  const [myCollections, setMyCollections] = useState<CollectionItem[]>([]);
+  const [favoriteCollections, setFavoriteCollections] = useState<CollectionItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [collectionStats, setCollectionStats] = useState<Record<string, CollectionStats>>({});
+  const [collectionInteractions, setCollectionInteractions] = useState<Record<string, CollectionInteraction>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
@@ -63,7 +80,9 @@ const Collections: React.FC = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      setCollections((prev) => prev.filter((col) => col._id !== collectionId));
+      setAllCollections((prev) => prev.filter((col) => col._id !== collectionId));
+      setMyCollections((prev) => prev.filter((col) => col._id !== collectionId));
+      setFavoriteCollections((prev) => prev.filter((col) => col._id !== collectionId));
     } catch (error) {
       console.error("Error al eliminar colección:", error);
       alert("Error al eliminar la colección");
@@ -94,11 +113,14 @@ const Collections: React.FC = () => {
       );
 
       if (response.data) {
-        setCollections((prev) =>
+        const updateCollection = (prev: CollectionItem[]) =>
           prev.map((col) =>
             col._id === editingCollection ? response.data! : col
-          )
-        );
+          );
+        
+        setAllCollections(updateCollection);
+        setMyCollections(updateCollection);
+        setFavoriteCollections(updateCollection);
         setEditingCollection(null);
         setEditForm({ title: "", description: "", isPrivate: false });
         setEditImage(null);
@@ -122,43 +144,99 @@ const Collections: React.FC = () => {
 
     return "Creador desconocido";
   };
+
+  const loadCollectionStats = useCallback(async (collectionId: string) => {
+    try {
+      const response = await apiFetch<CollectionStats>(
+        `/collection-interactions/${collectionId}/stats`
+      );
+      setCollectionStats(prev => ({
+        ...prev,
+        [collectionId]: response.data
+      }));
+    } catch {
+    }
+  }, []);
+
+  const loadCollectionInteraction = useCallback(async (collectionId: string) => {
+    if (!user) return;
+    try {
+      const response = await apiFetch<CollectionInteraction>(
+        `/collection-interactions/${collectionId}/interaction`,
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      setCollectionInteractions(prev => ({
+        ...prev,
+        [collectionId]: response.data
+      }));
+    } catch {
+    }
+  }, [user]);
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError("");
+      
       try {
         const headers: Record<string, string> = user
           ? { Authorization: `Bearer ${user.token}` }
           : {};
-        const listResp = await apiFetch<CollectionItem[]>("/collections", {
+        
+        const allResp = await apiFetch<CollectionItem[]>("/collections", {
           headers,
         });
-        setCollections(listResp.data || []);
+        setAllCollections(allResp.data || []);
+
+        const collections = allResp.data || [];
+        collections.forEach(col => {
+          void loadCollectionStats(col._id);
+          if (user) {
+            void loadCollectionInteraction(col._id);
+          }
+        });
+
+        if (user) {
+          try {
+            const myResp = await apiFetch<CollectionItem[]>("/collections/mine", {
+              headers: { Authorization: `Bearer ${user.token}` },
+            });
+            setMyCollections(myResp.data || []);
+          } catch {
+            setMyCollections([]);
+          }
+
+          try {
+            const favResp = await apiFetch<CollectionItem[]>(
+              "/collections/favorites/mine",
+              {
+                headers: { Authorization: `Bearer ${user.token}` },
+              }
+            );
+            setFavoriteCollections(favResp.data || []);
+            setFavorites((favResp.data || []).map((c) => c._id));
+          } catch {
+            setFavoriteCollections([]);
+            setFavorites([]);
+          }
+        } else {
+          setMyCollections([]);
+          setFavoriteCollections([]);
+          setFavorites([]);
+        }
       } catch (e: unknown) {
-        setCollections([]);
+        setAllCollections([]);
+        setMyCollections([]);
+        setFavoriteCollections([]);
         const msg = extractErrorMessage(e, "");
         if (msg && msg !== "No hay colecciones") setError(msg);
       } finally {
         setLoading(false);
       }
-      if (user) {
-        try {
-          const favResp = await apiFetch<CollectionItem[]>(
-            "/collections/favorites/mine",
-            {
-              headers: { Authorization: `Bearer ${user.token}` },
-            }
-          );
-          setFavorites((favResp.data || []).map((c) => c._id));
-        } catch {
-          setFavorites([]);
-        }
-      } else {
-        setFavorites([]);
-      }
     };
     void load();
-  }, [user]);
+  }, [user, loadCollectionStats, loadCollectionInteraction]);
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError("");
@@ -176,7 +254,8 @@ const Collections: React.FC = () => {
         body: fd,
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      setCollections((prev) => [resp.data, ...prev]);
+      setAllCollections((prev) => [resp.data, ...prev]);
+      setMyCollections((prev) => [resp.data, ...prev]);
       setForm({ title: "", description: "", isPrivate: false });
       setImage(null);
       setCreateSuccess("Colección creada");
@@ -205,21 +284,116 @@ const Collections: React.FC = () => {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setFavorites((prev) => prev.filter((id) => id !== collectionId));
+        if (activeTab === "favorites") {
+          setFavoriteCollections((prev) => prev.filter((col) => col._id !== collectionId));
+        }
       }
     } catch {
       setError("Error al gestionar favoritos");
     }
   };
+
+  const toggleLike = async (collectionId: string) => {
+    if (!user) return;
+    try {
+      const response = await apiFetch<{ liked: boolean; stats: CollectionStats }>(
+        `/collection-interactions/${collectionId}/like`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+      
+      setCollectionInteractions(prev => ({
+        ...prev,
+        [collectionId]: {
+          ...prev[collectionId],
+          liked: response.data.liked
+        }
+      }));
+      
+      setCollectionStats(prev => ({
+        ...prev,
+        [collectionId]: response.data.stats
+      }));
+    } catch {
+      setError("Error al dar me gusta");
+    }
+  };
+
+  const getCurrentCollections = (): CollectionItem[] => {
+    switch (activeTab) {
+      case "all":
+        return allCollections;
+      case "mine":
+        return myCollections;
+      case "favorites":
+        return favoriteCollections;
+      default:
+        return allCollections;
+    }
+  };
+
+  const collections = getCurrentCollections();
+
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 xl:p-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <h1 className="text-3xl font-bold mb-2 sm:mb-0">Colecciones</h1>
       </div>
+      
+      <div className="flex gap-1 mb-6 bg-gray-800/50 p-1 rounded-lg">
+        <button
+          onClick={() => setActiveTab("all")}
+          className={`flex-1 px-4 py-3 text-base lg:text-lg font-medium rounded-md transition-colors ${
+            activeTab === "all"
+              ? "bg-white text-black"
+              : "text-white hover:bg-gray-700/50"
+          }`}
+        >
+          Todas las colecciones
+        </button>
+        {user && (
+          <>
+            <button
+              onClick={() => setActiveTab("mine")}
+              className={`flex-1 px-4 py-3 text-base lg:text-lg font-medium rounded-md transition-colors ${
+                activeTab === "mine"
+                  ? "bg-white text-black"
+                  : "text-white hover:bg-gray-700/50"
+              }`}
+            >
+              Mis colecciones
+            </button>
+            <button
+              onClick={() => setActiveTab("favorites")}
+              className={`flex-1 px-4 py-3 text-base lg:text-lg font-medium rounded-md transition-colors ${
+                activeTab === "favorites"
+                  ? "bg-white text-black"
+                  : "text-white hover:bg-gray-700/50"
+              }`}
+            >
+              ⭐ Mis favoritas
+            </button>
+          </>
+        )}
+      </div>
       {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
       {loading ? (
         <div>Cargando colecciones...</div>
       ) : collections.length === 0 ? (
-        <div>No hay colecciones</div>
+        <div className="text-center py-12">
+          <p className="text-lg text-white/80 mb-4">
+            {activeTab === "all" && "No hay colecciones disponibles"}
+            {activeTab === "mine" && "No has creado colecciones aún"}
+            {activeTab === "favorites" && "No tienes colecciones favoritas"}
+          </p>
+          {activeTab === "favorites" && (
+            <p className="text-sm text-white/60">
+              Marca colecciones como favoritas haciendo clic en ⭐ desde "Todas las colecciones"
+            </p>
+          )}
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
           {collections.map((col) => {
@@ -246,22 +420,53 @@ const Collections: React.FC = () => {
                       Sin imagen
                     </div>
                   )}
-                  {user && !isOwner && (
-                    <button
-                      title={
-                        isFav ? "Quitar de favoritos" : "Marcar como favorito"
-                      }
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        void toggleFavorite(col._id, isFav);
-                      }}
-                      className={`absolute top-2 right-2 rounded-full p-1.5 sm:p-2 text-sm ${
-                        isFav
-                          ? "bg-yellow-400 text-black"
-                          : "bg-black/60 text-white"
-                      }`}
-                    ></button>
+                  {user && (
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      {/* Botón de like - Para colecciones ajenas */}
+                      {!isOwner && (
+                        <button
+                          title={
+                            collectionInteractions[col._id]?.liked 
+                              ? "Quitar me gusta" 
+                              : "Me gusta"
+                          }
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void toggleLike(col._id);
+                          }}
+                          className={`rounded-full p-1.5 sm:p-2 text-sm ${
+                            collectionInteractions[col._id]?.liked
+                              ? "bg-red-400 text-white"
+                              : "bg-black/60 text-white"
+                          }`}
+                        >
+                          ❤️
+                        </button>
+                      )}
+                      
+                      {((activeTab === "all" && !isOwner) || activeTab === "favorites") && (
+                        <button
+                          title={
+                            activeTab === "favorites" 
+                              ? "Quitar de favoritos"
+                              : isFav ? "Quitar de favoritos" : "Marcar como favorito"
+                          }
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void toggleFavorite(col._id, activeTab === "favorites" ? true : isFav);
+                          }}
+                          className={`rounded-full p-1.5 sm:p-2 text-sm ${
+                            (activeTab === "favorites" || isFav)
+                              ? "bg-yellow-400 text-black"
+                              : "bg-black/60 text-white"
+                          }`}
+                        >
+                          ⭐
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="mt-2">
@@ -284,6 +489,16 @@ const Collections: React.FC = () => {
                       <div className="flex items-center gap-1 text-amber-600">
                         <span>🔒</span>
                         <span>Privada</span>
+                      </div>
+                    )}
+                    {collectionStats[col._id] && (
+                      <div className="flex gap-3 text-gray-500 text-xs">
+                        <span className="flex items-center gap-1">
+                          ❤️ {collectionStats[col._id].likes}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          ⭐ {collectionStats[col._id].favorites}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -321,7 +536,7 @@ const Collections: React.FC = () => {
           })}
         </div>
       )}
-      {canCreate && (
+      {canCreate && activeTab !== "favorites" && (
         <div className="mt-6 sm:mt-8 flex flex-col items-center">
           {!showCreateForm ? (
             <button
