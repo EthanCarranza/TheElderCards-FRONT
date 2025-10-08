@@ -35,6 +35,7 @@ const Collections: React.FC = () => {
     setEditingCollection(collection._id);
     setEditForm({
       title: collection.title,
+      description: collection.description || "",
       isPrivate: collection.isPrivate || false
     });
     setEditImage(null);
