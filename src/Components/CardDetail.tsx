@@ -121,7 +121,7 @@ const CardDetail = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
-        setError("Identificador de carta no v�lido");
+        setError("Identificador de carta no válido");
         setLoading(false);
         return;
       }
@@ -206,7 +206,7 @@ const CardDetail = () => {
         }
       } catch (creatorError) {
         console.error(
-          "Error al cargar la informaci�n del creador",
+          "Error al cargar la información del creador",
           creatorError
         );
         if (isActive) {
@@ -232,7 +232,7 @@ const CardDetail = () => {
         );
         setCardStats(response.data);
       } catch (error) {
-        console.error("Error al cargar estad�sticas:", error);
+        console.error("Error al cargar estadísticas:", error);
       }
     };
     void loadCardStats();
@@ -326,9 +326,9 @@ const CardDetail = () => {
       (collection) => collection._id === selectedCollection
     );
     const collectionTitle =
-      targetCollection?.title ?? "la colecci�n seleccionada";
+      targetCollection?.title ?? "la colección seleccionada";
     if (alreadyInSelected) {
-      setActionMsg(`Esta carta ya est� en ${collectionTitle}`);
+      setActionMsg(`Esta carta ya está en ${collectionTitle}`);
       setActionErr("");
       return;
     }
@@ -362,9 +362,9 @@ const CardDetail = () => {
           };
         })
       );
-      setActionMsg(`Carta a�adida a ${collectionTitle}`);
+      setActionMsg(`Carta añadida a ${collectionTitle}`);
     } catch (e: unknown) {
-      setActionErr(extractErrorMessage(e, "No se pudo a�adir"));
+      setActionErr(extractErrorMessage(e, "No se pudo añadir"));
     } finally {
       setAdding(false);
     }
@@ -374,7 +374,7 @@ const CardDetail = () => {
     const targetCollection = myCollections.find(
       (collection) => collection._id === collectionId
     );
-    const collectionTitle = targetCollection?.title ?? "la colecci�n";
+    const collectionTitle = targetCollection?.title ?? "la colección";
     let hasCard = false;
     if (targetCollection && Array.isArray(targetCollection.cards)) {
       hasCard = targetCollection.cards.some(
@@ -382,7 +382,7 @@ const CardDetail = () => {
       );
     }
     if (!hasCard) {
-      setActionErr(`Esta carta no est� en ${collectionTitle}`);
+      setActionErr(`Esta carta no está en ${collectionTitle}`);
       setActionMsg("");
       setPendingRemovalId(null);
       return;
@@ -432,7 +432,7 @@ const CardDetail = () => {
     navigate(`/users/${creatorProfileId}`);
   };
   const creatorDisplayName =
-    creatorInfo?.username ?? creatorInfo?.email ?? card?.creator ?? "An�nimo";
+    creatorInfo?.username ?? creatorInfo?.email ?? card?.creator ?? "Anónimo";
   const creatorAvatar = creatorInfo?.image || DEFAULT_PROFILE_IMAGE;
   const handleDownloadCard = async () => {
     if (!card?.img) return;
@@ -593,7 +593,7 @@ const CardDetail = () => {
                 </h3>
                 {creatorLoading ? (
                   <p className="text-sm text-gray-600">
-                    Cargando informaci�n del creador...
+                    Cargando información del creador...
                   </p>
                 ) : creatorInfo ? (
                   <button
@@ -648,7 +648,7 @@ const CardDetail = () => {
                     ) : (
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                         <span className="text-sm text-gray-700 font-medium">
-                          �Est�s seguro?
+                          ¿Estás seguro?
                         </span>
                         <div className="flex gap-2 w-full sm:w-auto">
                           <button
@@ -657,7 +657,7 @@ const CardDetail = () => {
                             disabled={deletingCard}
                             className="inline-flex items-center gap-1 rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70 flex-1 sm:flex-none"
                           >
-                            {deletingCard ? "Eliminando..." : "S�, eliminar"}
+                            {deletingCard ? "Eliminando..." : "Sí, eliminar"}
                           </button>
                           <button
                             type="button"
@@ -711,7 +711,7 @@ const CardDetail = () => {
               {}
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Estad�sticas de la carta
+                  Estadísticas de la carta
                 </h3>
                 <div className="grid grid-cols-2 gap-4 text-sm text-gray-800">
                   <div className="text-center">
@@ -736,7 +736,7 @@ const CardDetail = () => {
               {faction && (
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                    Facci�n
+                    Facción
                   </h3>
                   <button
                     type="button"
@@ -779,7 +779,7 @@ const CardDetail = () => {
               {card.type === "Creature" && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                    Estad�sticas
+                    Estadísticas
                   </h3>
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-800">
                     <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-center">
@@ -810,7 +810,7 @@ const CardDetail = () => {
                   {myCollections.length === 0 ? (
                     <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
                       <p className="text-sm text-amber-800">
-                        No tienes colecciones a�n. Crea una desde la pesta�a
+                        No tienes colecciones aún. Crea una desde la pestaña
                         Colecciones.
                       </p>
                     </div>
@@ -819,7 +819,7 @@ const CardDetail = () => {
                       {}
                       <div className="rounded-lg bg-green-50 border border-green-200 p-4">
                         <h4 className="text-sm font-semibold text-green-800 mb-3">
-                          A�adir a colecci�n
+                          Añadir a colección
                         </h4>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <select
@@ -829,7 +829,7 @@ const CardDetail = () => {
                               setSelectedCollection(e.target.value)
                             }
                           >
-                            <option value="">Selecciona una colecci�n</option>
+                            <option value="">Selecciona una colección</option>
                             {myCollections.map((c) => (
                               <option key={c._id} value={c._id}>
                                 {c.title}
@@ -845,7 +845,7 @@ const CardDetail = () => {
                             }
                             onClick={() => void handleAddToCollection()}
                           >
-                            {adding ? "A�adiendo..." : "A�adir"}
+                            {adding ? "Añadiendo..." : "Añadir"}
                           </button>
                         </div>
                         {(actionMsg || actionErr) && (
@@ -870,7 +870,7 @@ const CardDetail = () => {
                         </h4>
                         {collectionsWithCard.length === 0 ? (
                           <p className="text-sm text-red-700">
-                            Esta carta no est� en ninguna de tus colecciones.
+                            Esta carta no está en ninguna de tus colecciones.
                           </p>
                         ) : (
                           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
@@ -890,7 +890,7 @@ const CardDetail = () => {
                                   ) : isPending ? (
                                     <div className="flex flex-col items-center gap-2">
                                       <span className="text-xs font-semibold text-gray-900 text-center">
-                                        �Est�s seguro?
+                                        ¿Estás seguro?
                                       </span>
                                       <div className="flex gap-2">
                                         <button
@@ -902,7 +902,7 @@ const CardDetail = () => {
                                           }
                                           disabled={isRemoving}
                                         >
-                                          S�
+                                          Sí
                                         </button>
                                         <button
                                           className="rounded bg-gray-300 px-3 py-1 text-xs font-semibold text-gray-800 disabled:opacity-60 hover:bg-gray-400"
@@ -930,7 +930,7 @@ const CardDetail = () => {
                                         aria-label={`Eliminar carta de ${collection.title}`}
                                         disabled={Boolean(removingId)}
                                       >
-                                        �
+                                        🗑️
                                       </button>
                                     </div>
                                   )}

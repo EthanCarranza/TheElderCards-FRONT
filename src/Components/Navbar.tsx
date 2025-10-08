@@ -59,7 +59,7 @@ function Navbar() {
               aria-controls="primary-navigation"
             >
               <span className="sr-only">
-                {menuOpen ? "Cerrar menú" : "Abrir menú"}
+                {menuOpen ? "Cerrar menÃº" : "Abrir menÃº"}
               </span>
               <svg
                 className={`h-6 w-6 transition-transform duration-200 ${
@@ -177,7 +177,7 @@ function Navbar() {
                     className="inline-block rounded-lg bg-white/10 px-3 py-2 text-center transition hover:bg-white/20 whitespace-nowrap"
                     onClick={handleCloseMenu}
                   >
-                    Iniciar sesión
+                    Iniciar sesiÃ³n
                   </Link>
                 </>
               ) : (
@@ -201,7 +201,7 @@ function Navbar() {
                     }}
                     className="transition hover:text-red-400 whitespace-nowrap"
                   >
-                    Cerrar sesión
+                    Cerrar sesiÃ³n
                   </button>
                 </>
               )}
@@ -286,7 +286,7 @@ function Navbar() {
                     className="inline-block rounded-lg bg-white/10 px-4 py-2 text-center transition hover:bg-white/20"
                     onClick={handleCloseMenu}
                   >
-                    Iniciar sesión
+                    Iniciar sesiÃ³n
                   </Link>
                 </>
               ) : (
@@ -310,7 +310,7 @@ function Navbar() {
                     }}
                     className="block py-2 text-left transition hover:text-red-400"
                   >
-                    Cerrar sesión
+                    Cerrar sesiÃ³n
                   </button>
                 </>
               )}
