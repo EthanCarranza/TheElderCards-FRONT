@@ -10,6 +10,7 @@ import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { useAuth } from "../hooks/useAuth";
 import PageLayout from "./PageLayout";
+import EditFactionForm from "./EditFactionForm";
 interface Faction {
   _id: string;
   title: string;
@@ -26,6 +27,7 @@ const Factions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [editingFaction, setEditingFaction] = useState<Faction | null>(null);
   const [deletingFactions, setDeletingFactions] = useState<Set<string>>(
     new Set()
   );
@@ -71,6 +73,33 @@ const Factions = () => {
       });
     }
   };
+
+  const handleUpdateFaction = async (factionData: FormData) => {
+    if (!user || !isAdmin || !editingFaction) return;
+
+    try {
+      const response = await apiFetch<Faction>(`/factions/${editingFaction._id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${user.token}` },
+        body: factionData,
+      });
+
+      if (response.data) {
+        setFactions((prev) =>
+          prev.map((faction) =>
+            faction._id === editingFaction._id ? response.data! : faction
+          )
+        );
+        setEditingFaction(null);
+      }
+    } catch (updateError: unknown) {
+      console.error("Error al actualizar facción:", updateError);
+      setError(
+        extractErrorMessage(updateError, "No se pudo actualizar la facción")
+      );
+    }
+  };
+
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto p-6">
       <div className="max-w-6xl mx-auto">
@@ -127,16 +156,26 @@ const Factions = () => {
                   </button>
                   {}
                   {isAdmin && (
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-2 right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       {!showConfirm ? (
-                        <button
-                          onClick={() => setConfirmingDelete(factionItem._id)}
-                          disabled={isDeleting}
-                          className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors disabled:opacity-50"
-                          title="Eliminar facción"
-                        >
-                          ×
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setEditingFaction(factionItem)}
+                            disabled={isDeleting}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors disabled:opacity-50"
+                            title="Editar facción"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => setConfirmingDelete(factionItem._id)}
+                            disabled={isDeleting}
+                            className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors disabled:opacity-50"
+                            title="Eliminar facción"
+                          >
+                            ×
+                          </button>
+                        </div>
                       ) : (
                         <div className="bg-white rounded shadow-lg p-2 min-w-[120px]">
                           <div className="text-xs text-gray-800 font-medium mb-2 text-center">
@@ -197,6 +236,22 @@ const Factions = () => {
                 setShowCreate(false);
               }}
             />
+          </div>
+        )}
+
+        {/* Modal de edición */}
+        {isAdmin && editingFaction && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4 text-black">
+                Editar Facción
+              </h3>
+              <EditFactionForm
+                faction={editingFaction}
+                onUpdated={handleUpdateFaction}
+                onCancel={() => setEditingFaction(null)}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -366,4 +421,7 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
     </form>
   );
 };
+
+
+
 export default Factions;

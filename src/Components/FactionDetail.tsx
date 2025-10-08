@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
+import { useAuth } from "../hooks/useAuth";
+import EditFactionForm from './EditFactionForm';
 interface Faction {
   _id: string;
   title: string;
@@ -14,9 +16,14 @@ interface Faction {
 const FactionDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [faction, setFaction] = useState<Faction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingFaction, setEditingFaction] = useState<Faction | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   useEffect(() => {
     const fetchFaction = async () => {
       if (!id) {
@@ -38,6 +45,46 @@ const FactionDetail = () => {
     };
     void fetchFaction();
   }, [id]);
+
+  const handleUpdateFaction = async (factionData: FormData) => {
+    if (!user || !isAdmin || !faction) return;
+
+    try {
+      const response = await apiFetch<Faction>(`/factions/${faction._id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${user.token}` },
+        body: factionData,
+      });
+
+      if (response.data) {
+        setFaction(response.data);
+        setEditingFaction(null);
+      }
+    } catch (updateError: unknown) {
+      console.error("Error al actualizar facción:", updateError);
+      setError(extractErrorMessage(updateError, "No se pudo actualizar la facción"));
+    }
+  };
+
+  const handleDeleteFaction = async () => {
+    if (!user || !isAdmin || !faction) return;
+    
+    setDeleting(true);
+    try {
+      await apiFetch(`/factions/${faction._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      
+      navigate("/factions");
+    } catch (deleteError: unknown) {
+      console.error("Error al eliminar facción:", deleteError);
+      setError(extractErrorMessage(deleteError, "No se pudo eliminar la facción"));
+      setDeleting(false);
+      setConfirmingDelete(false);
+    }
+  };
+
   const handleGoBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -61,13 +108,13 @@ const FactionDetail = () => {
         ) : faction ? (
           <div className="rounded-lg bg-white/90 shadow-lg backdrop-blur overflow-hidden">
             {}
-            <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-6 lg:p-8">
+            <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-6 lg:p-8 relative">
               <div className="flex items-center gap-4">
                 <span
                   className="inline-block h-12 w-12 lg:h-16 lg:w-16 rounded-full border-4 border-white shadow-lg"
                   style={{ backgroundColor: faction.color }}
                 ></span>
-                <div>
+                <div className="flex-1">
                   <h1 className="text-2xl lg:text-4xl font-bold text-white break-words">
                     {faction.title}
                   </h1>
@@ -75,6 +122,44 @@ const FactionDetail = () => {
                     {faction.territory}
                   </p>
                 </div>
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setEditingFaction(faction)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded shadow-lg transition-colors"
+                      title="Editar facción"
+                    >
+                      ✏️ Editar
+                    </button>
+                    {!confirmingDelete ? (
+                      <button
+                        onClick={() => setConfirmingDelete(true)}
+                        disabled={deleting}
+                        className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded shadow-lg transition-colors disabled:opacity-50"
+                        title="Eliminar facción"
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    ) : (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={handleDeleteFaction}
+                          disabled={deleting}
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded transition-colors disabled:opacity-50"
+                        >
+                          {deleting ? "..." : "Confirmar"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmingDelete(false)}
+                          disabled={deleting}
+                          className="bg-gray-500 hover:bg-gray-600 text-white text-xs font-semibold px-2 py-1 rounded transition-colors disabled:opacity-50"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             {}
@@ -145,6 +230,22 @@ const FactionDetail = () => {
           </div>
         ) : (
           <div className="text-white text-center">No se encontró la facción solicitada.</div>
+        )}
+
+        {/* Modal de edición */}
+        {isAdmin && editingFaction && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4 text-black">
+                Editar Facción
+              </h3>
+              <EditFactionForm
+                faction={editingFaction}
+                onUpdated={handleUpdateFaction}
+                onCancel={() => setEditingFaction(null)}
+              />
+            </div>
+          </div>
         )}
       </div>
     </PageLayout>
