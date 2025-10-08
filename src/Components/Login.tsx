@@ -1,4 +1,5 @@
 import { type ChangeEvent, type FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import { FaEnvelope, FaLock } from "react-icons/fa";
@@ -37,6 +38,7 @@ function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const { login } = useAuth();
+  const navigate = useNavigate();
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
@@ -87,16 +89,20 @@ function Login() {
       });
       setEmail("");
       setPassword("");
+      
+      setTimeout(() => {
+        navigate("/cards");
+      }, 1000);
     } catch (error: unknown) {
       setErrorMessage(extractErrorMessage(error, "Error de conexión."));
     }
   };
   return (
     <PageLayout contentClassName="flex flex-1 items-center justify-center py-12">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-2xl">
-        <h2 className="mb-6 text-center text-3xl font-bold text-black">
-          Inicia sesión
-        </h2>
+        <div className="w-full max-w-lg rounded-lg bg-white p-8 text-2xl shadow-2xl">
+          <h2 className="mb-6 text-center text-4xl font-bold text-black">
+            Inicia sesión
+          </h2>
         <Message message={errorMessage} type="error" />
         <Message message={successMessage} type="success" />
         <form onSubmit={handleSubmit}>
