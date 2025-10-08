@@ -4,9 +4,22 @@
 
 @font-face {
   font-family: "Cyrodiil";
-  src: url("./fonts/Cyrodiil.otf") format("truetype");
+  src: local("Cyrodiil"),
+       url("/fonts/Cyrodiil.otf") format("opentype"),
+       url("/fonts/Cyrodiil.otf") format("truetype");
   font-weight: normal;
   font-style: normal;
+  font-display: fallback;
+}
+
+@font-face {
+  font-family: "Cyrodiil";
+  src: local("Cyrodiil Bold"),
+       url("/fonts/Cyrodiil-Bold.otf") format("opentype"),
+       url("/fonts/Cyrodiil-Bold.otf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: fallback;
 }
 
 html, body {
@@ -18,7 +31,7 @@ html, body {
 }
 
 body {
-  font-family: "Cyrodiil", serif;
+  font-family: "Cyrodiil", "Times New Roman", Georgia, serif;
   /* Evitar zoom en inputs en iOS */
   -webkit-text-size-adjust: 100%;
 }

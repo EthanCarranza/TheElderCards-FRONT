@@ -29,13 +29,30 @@ const CARD_DIMENSIONS: CardDimensions = {
   typeBarHeight: 32,
   footerHeight: 68,
 };
-const cyrodiilFont = new FontFace("Cyrodiil", "url(/fonts/Cyrodiil.otf)");
+const cyrodiilFont = new FontFace(
+  "Cyrodiil", 
+  "url(/fonts/Cyrodiil.otf)", 
+  { 
+    weight: "normal", 
+    style: "normal",
+    display: "fallback"
+  }
+);
+
+const FONT_FALLBACK = '"Cyrodiil", "Times New Roman", Georgia, serif';
+
+function getFontString(weight: string, size: number): string {
+  return `${weight} ${size}px ${FONT_FALLBACK}`;
+}
+
 async function ensureFontLoaded() {
   try {
-    const font = await cyrodiilFont.load();
-    document.fonts.add(font);
-  } catch (error) {
-    console.error("Error cargando la fuente Cyrodiil:", error);
+    if (cyrodiilFont.status !== 'loaded') {
+      const font = await cyrodiilFont.load();
+      document.fonts.add(font);
+    }
+  } catch {
+    // Silently fail and use fallback fonts
   }
 }
 export async function drawCard(
@@ -137,7 +154,7 @@ export async function drawCard(
   ctx.globalAlpha = 0.85;
   ctx.fill();
   ctx.globalAlpha = 1;
-  ctx.font = "bold 28px Cyrodiil";
+  ctx.font = getFontString("bold", 28);
   ctx.fillStyle = "#fff";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -147,7 +164,7 @@ export async function drawCard(
   ctx.fillStyle = "#c6c6c6";
   ctx.fillRect(border, imageHeight, canvasWidth - 2 * border, titleBarHeight);
   ctx.fillStyle = "#222";
-  ctx.font = "bold 24px Cyrodiil";
+  ctx.font = getFontString("bold", 24);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(title, canvasWidth / 2, imageHeight + titleBarHeight / 2);
@@ -166,7 +183,7 @@ export async function drawCard(
     Spell: "Hechizo",
   };
   ctx.fillStyle = "#333";
-  ctx.font = "600 18px Cyrodiil";
+  ctx.font = getFontString("600", 18);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const translatedType = (typeTranslations[type] || type).toUpperCase();
@@ -189,7 +206,7 @@ export async function drawCard(
     ctx.fillStyle = "#f0f0f0";
     ctx.fillRect(border, descY, canvasWidth - 2 * border, descHeight);
     ctx.fillStyle = "#333";
-    ctx.font = "17px Cyrodiil";
+    ctx.font = getFontString("normal", 17);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const lineHeight = 22;
@@ -259,8 +276,8 @@ export async function drawCard(
   const footerBaseline = footerY + footerHeight - footerPaddingBottom;
   const footerLabel = "Created by:";
   const footerName = creator && creator !== "undefined" ? creator : "Anónimo";
-  const footerLabelFontStr = "400 " + footerLabelFont + "px Cyrodiil";
-  const footerNameFontStr = "600 " + footerNameFont + "px Cyrodiil";
+  const footerLabelFontStr = getFontString("400", footerLabelFont);
+  const footerNameFontStr = getFontString("600", footerNameFont);
   ctx.fillStyle = "#222";
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
@@ -290,7 +307,7 @@ export async function drawCard(
     ctx.fillRect(rectX, rectY, rectW, rectH);
     ctx.globalAlpha = 1;
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 20px Cyrodiil";
+    ctx.font = getFontString("bold", 20);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(
