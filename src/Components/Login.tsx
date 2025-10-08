@@ -2,7 +2,7 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
-import { FaEnvelope, FaLock } from "react-icons/fa";
+import { FaUser, FaLock } from "react-icons/fa";
 import { useAuth } from "../hooks/useAuth";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import FormInput from "./FormInput";
@@ -103,12 +103,12 @@ function Login() {
         <form onSubmit={handleSubmit}>
           <FormInput
             id="email"
-            type="email"
+            type="text"
             value={email}
             onChange={handleChange}
-            placeholder="Correo electrónico"
-            icon={<FaEnvelope />}
-            autoComplete="email"
+            placeholder="Correo electrónico o nombre de usuario"
+            icon={<FaUser />}
+            autoComplete="username"
           />
           <FormInput
             id="password"
