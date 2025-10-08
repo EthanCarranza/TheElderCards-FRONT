@@ -39,7 +39,6 @@ function Login() {
   const [successMessage, setSuccessMessage] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
     if (id === "email") setEmail(value);
@@ -51,10 +50,6 @@ function Login() {
     setSuccessMessage("");
     if (!email || !password) {
       setErrorMessage("Todos los campos son obligatorios.");
-      return;
-    }
-    if (!emailRegex.test(email)) {
-      setErrorMessage("El correo electrónico no es válido.");
       return;
     }
     try {
@@ -91,7 +86,7 @@ function Login() {
       setPassword("");
       
       setTimeout(() => {
-        navigate("/cards");
+        navigate("/");
       }, 1000);
     } catch (error: unknown) {
       setErrorMessage(extractErrorMessage(error, "Error de conexión."));

@@ -13,6 +13,7 @@ function Register() {
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
   const usernameRegex = /^.{3,}$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -28,6 +29,8 @@ function Register() {
       setErrorMessage("Todos los campos son obligatorios.");
     } else if (!usernameRegex.test(username)) {
       setErrorMessage("El nombre de usuario debe tener al menos 3 caracteres.");
+    } else if (!emailRegex.test(email)) {
+      setErrorMessage("El correo electrónico no es válido.");
     } else if (!passwordRegex.test(password)) {
       setErrorMessage(
         "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo especial."
