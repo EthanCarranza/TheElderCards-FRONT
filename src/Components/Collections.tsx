@@ -267,27 +267,31 @@ const Collections: React.FC = () => {
                     )}
                   </div>
                   {user && isOwner && (
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleEdit(col);
-                        }}
-                        className="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleDelete(col._id);
-                        }}
-                        className="flex-1 text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors"
-                      >
-                        Eliminar
-                      </button>
+                    <div className="absolute top-2 right-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEdit(col);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
+                          title="Editar colección"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDelete(col._id);
+                          }}
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
+                          title="Eliminar colección"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
