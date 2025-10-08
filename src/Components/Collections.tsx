@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
@@ -9,7 +9,8 @@ interface CollectionItem {
   title: string;
   description?: string;
   img?: string;
-  creator: string;
+  creator: string | { _id: string; username?: string; email?: string };
+  isPrivate?: boolean;
   cards: Array<{ _id: string; title: string; img?: string }>;
 }
 const Collections: React.FC = () => {
@@ -21,21 +22,99 @@ const Collections: React.FC = () => {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
-  const [form, setForm] = useState({ title: "", description: "" });
+  const [form, setForm] = useState({ title: "", description: "", isPrivate: false });
   const [image, setImage] = useState<File | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const canCreate = useMemo(() => Boolean(user), [user]);
+  const [editingCollection, setEditingCollection] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", isPrivate: false });
+  const [editImage, setEditImage] = useState<File | null>(null);
+    const canCreate = !!user;
+
+
+  const handleEdit = (collection: CollectionItem) => {
+    setEditingCollection(collection._id);
+    setEditForm({
+      title: collection.title,
+      isPrivate: collection.isPrivate || false
+    });
+    setEditImage(null);
+  };
+
+  const handleDelete = async (collectionId: string) => {
+    if (!user || !confirm("¿Estás seguro de que quieres eliminar esta colección?")) return;
+    
+    try {
+      await apiFetch(`/collections/${collectionId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      
+      setCollections(prev => prev.filter(col => col._id !== collectionId));
+    } catch (error) {
+      console.error("Error al eliminar colección:", error);
+      alert("Error al eliminar la colección");
+    }
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !editingCollection) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("title", editForm.title.trim());
+      formData.append("description", editForm.description.trim());
+      formData.append("isPrivate", editForm.isPrivate.toString());
+      
+      if (editImage) {
+        formData.append("img", editImage);
+      }
+
+      const response = await apiFetch<CollectionItem>(`/collections/${editingCollection}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${user.token}` },
+        body: formData,
+      });
+
+      if (response.data) {
+        setCollections(prev => 
+          prev.map(col => col._id === editingCollection ? response.data! : col)
+        );
+        setEditingCollection(null);
+        setEditForm({ title: "", description: "", isPrivate: false });
+        setEditImage(null);
+      }
+    } catch (error) {
+      console.error("Error al actualizar colección:", error);
+      alert("Error al actualizar la colección");
+    }
+  };
+  
+  const getCreatorName = (creator: string | { _id: string; username?: string; email?: string }) => {
+    if (typeof creator === "string") {
+      return "Creador desconocido";
+    }
+    
+    if (creator && typeof creator === "object") {
+      return creator.username || creator.email || "Creador desconocido";
+    }
+    
+    return "Creador desconocido";
+  };
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError("");
       try {
-        const listResp = await apiFetch<CollectionItem[]>("/collections");
+        const headers: Record<string, string> = user 
+          ? { Authorization: `Bearer ${user.token}` }
+          : {};
+        const listResp = await apiFetch<CollectionItem[]>("/collections", { headers });
         setCollections(listResp.data || []);
       } catch (e: unknown) {
         setCollections([]);
         const msg = extractErrorMessage(e, "");
-        if (msg) setError(msg);
+        if (msg && msg !== "No hay colecciones") setError(msg);
       } finally {
         setLoading(false);
       }
@@ -67,6 +146,7 @@ const Collections: React.FC = () => {
       const fd = new FormData();
       fd.append("title", form.title);
       fd.append("description", form.description);
+      fd.append("isPrivate", form.isPrivate.toString());
       if (image) fd.append("img", image);
       const resp = await apiFetch<CollectionItem>("/collections", {
         method: "POST",
@@ -74,7 +154,7 @@ const Collections: React.FC = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       setCollections((prev) => [resp.data, ...prev]);
-      setForm({ title: "", description: "" });
+      setForm({ title: "", description: "", isPrivate: false });
       setImage(null);
       setCreateSuccess("Colección creada");
       setTimeout(() => {
@@ -121,7 +201,8 @@ const Collections: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 xl:gap-6">
           {collections.map((col) => {
             const isFav = favorites.includes(col._id);
-            const isOwner = user?.userId && col.creator === user.userId;
+            const creatorId = typeof col.creator === 'string' ? col.creator : col.creator._id;
+            const isOwner = user?.userId && creatorId === user.userId;
             return (
               <Link
                 key={col._id}
@@ -170,9 +251,44 @@ const Collections: React.FC = () => {
                       {col.description}
                     </div>
                   )}
-                  <div className="mt-2 text-xs sm:text-sm text-gray-600">
-                    {col.cards?.length || 0} cartas
+                  <div className="mt-2 text-xs sm:text-sm text-gray-600 space-y-1">
+                    <div>{col.cards?.length || 0} cartas</div>
+                    {!col.isPrivate && (
+                      <div className="text-gray-500">
+                        Por: {getCreatorName(col.creator)}
+                      </div>
+                    )}
+                    {col.isPrivate && (
+                      <div className="flex items-center gap-1 text-amber-600">
+                        <span>🔒</span>
+                        <span>Privada</span>
+                      </div>
+                    )}
                   </div>
+                  {user && isOwner && (
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEdit(col);
+                        }}
+                        className="flex-1 text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded transition-colors"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDelete(col._id);
+                        }}
+                        className="flex-1 text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </Link>
             );
@@ -201,7 +317,7 @@ const Collections: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setShowCreateForm(false);
-                    setForm({ title: "", description: "" });
+                    setForm({ title: "", description: "", isPrivate: false });
                     setImage(null);
                     setCreateError("");
                     setCreateSuccess("");
@@ -230,6 +346,20 @@ const Collections: React.FC = () => {
                 }
                 rows={3}
               />
+              <div className="flex items-center gap-2">
+                <input
+                  id="isPrivate"
+                  type="checkbox"
+                  checked={form.isPrivate}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, isPrivate: e.target.checked }))
+                  }
+                  className="rounded"
+                />
+                <label htmlFor="isPrivate" className="text-sm sm:text-base text-white">
+                  Colección privada (solo tú puedes verla)
+                </label>
+              </div>
               <input
                 type="file"
                 accept="image/*"
@@ -257,6 +387,89 @@ const Collections: React.FC = () => {
               </div>
             </form>
           )}
+        </div>
+      )}
+
+      {/* Modal de edición */}
+      {editingCollection && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4 text-black">Editar Colección</h3>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">
+                  Título
+                </label>
+                <input
+                  id="edit-title"
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm(f => ({ ...f, title: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-black"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">
+                  Descripción
+                </label>
+                <textarea
+                  id="edit-description"
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-black"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  id="edit-isPrivate"
+                  type="checkbox"
+                  checked={editForm.isPrivate}
+                  onChange={(e) => setEditForm(f => ({ ...f, isPrivate: e.target.checked }))}
+                  className="rounded"
+                />
+                <label htmlFor="edit-isPrivate" className="text-sm text-gray-700">
+                  Colección privada
+                </label>
+              </div>
+
+              <div>
+                <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700">
+                  Nueva imagen (opcional)
+                </label>
+                <input
+                  id="edit-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setEditImage(e.target.files?.[0] || null)}
+                  className="mt-1 block w-full text-sm"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingCollection(null);
+                    setEditForm({ title: "", description: "", isPrivate: false });
+                    setEditImage(null);
+                  }}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors"
+                >
+                  Guardar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </PageLayout>

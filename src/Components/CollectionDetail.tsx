@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
+import { useAuth } from "../hooks/useAuth";
 import CardTile from "./CardTile";
 interface CardItem {
   _id: string;
@@ -20,6 +21,7 @@ interface CollectionDetailData {
 const CollectionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [collection, setCollection] = useState<CollectionDetailData | null>(
@@ -35,7 +37,10 @@ const CollectionDetail: React.FC = () => {
       setLoading(true);
       setError("");
       try {
-        const resp = await apiFetch<CollectionDetailData>(`/collections/${id}`);
+        const headers: Record<string, string> = user 
+          ? { Authorization: `Bearer ${user.token}` }
+          : {};
+        const resp = await apiFetch<CollectionDetailData>(`/collections/${id}`, { headers });
         setCollection(resp.data);
       } catch (e: unknown) {
         setError(extractErrorMessage(e, "No se pudo cargar la colección"));
@@ -44,7 +49,7 @@ const CollectionDetail: React.FC = () => {
       }
     };
     void load();
-  }, [id]);
+  }, [id, user]);
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6">

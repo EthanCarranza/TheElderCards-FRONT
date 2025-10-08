@@ -68,8 +68,12 @@ const UserPublicProfile = () => {
         }
         let collectionsData: CollectionSummary[] = [];
         try {
+          const headers: Record<string, string> = currentUser 
+            ? { Authorization: `Bearer ${currentUser.token}` }
+            : {};
           const collectionsResp = await apiFetch<CollectionSummary[]>(
-            `/collections/by/user/${userData._id ?? userData.id ?? userId}`
+            `/collections/by/user/${userData._id ?? userData.id ?? userId}`,
+            { headers }
           );
           collectionsData = collectionsResp.data ?? [];
         } catch (collectionsError) {

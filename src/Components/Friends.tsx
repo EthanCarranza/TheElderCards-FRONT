@@ -13,13 +13,13 @@ interface User {
 }
 interface Friend {
   friendshipId: string;
-  user: User;
+  user: User | null;
   friendsSince: string;
 }
 interface FriendRequest {
   friendshipId: string;
-  requester?: User;
-  recipient?: User;
+  requester?: User | null;
+  recipient?: User | null;
   message?: string;
   createdAt: string;
 }
@@ -189,10 +189,12 @@ const Friends = () => {
       });
     }
   };
-  const getUserDisplayName = (user: User) => {
+  const getUserDisplayName = (user: User | null | undefined) => {
+    if (!user) return "Usuario eliminado";
     return user.username || user.email || "Usuario";
   };
-  const getUserAvatar = (user: User) => {
+  const getUserAvatar = (user: User | null | undefined) => {
+    if (!user) return DEFAULT_PROFILE_IMAGE;
     return user.image || DEFAULT_PROFILE_IMAGE;
   };
   const formatDate = (dateString: string) => {
@@ -319,8 +321,8 @@ const Friends = () => {
                   >
                     <div
                       className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors"
-                      onClick={() => handleUserClick(friend.user._id)}
-                      title="Ver perfil"
+                      onClick={() => friend.user && handleUserClick(friend.user._id)}
+                      title={friend.user ? "Ver perfil" : "Usuario eliminado"}
                     >
                       <img
                         src={getUserAvatar(friend.user)}
@@ -335,16 +337,17 @@ const Friends = () => {
                           Amigos desde {formatDate(friend.friendsSince)}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          Clic para ver perfil
+                          {friend.user ? "Clic para ver perfil" : "Este usuario ya no existe"}
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => navigate(`/messages/${friend.user._id}`)}
-                        className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors"
+                        onClick={() => friend.user && navigate(`/messages/${friend.user._id}`)}
+                        disabled={!friend.user}
+                        className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
                       >
-                        Enviar mensaje
+                        {friend.user ? "Enviar mensaje" : "Usuario eliminado"}
                       </button>
                       <button
                         onClick={() => removeFriendship(friend.friendshipId)}
@@ -378,23 +381,23 @@ const Friends = () => {
                     <div className="flex items-center justify-between">
                       <div
                         className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
-                        onClick={() => handleUserClick(request.requester!._id)}
-                        title="Ver perfil"
+                        onClick={() => request.requester && handleUserClick(request.requester._id)}
+                        title={request.requester ? "Ver perfil" : "Usuario eliminado"}
                       >
                         <img
-                          src={getUserAvatar(request.requester!)}
-                          alt={getUserDisplayName(request.requester!)}
+                          src={getUserAvatar(request.requester)}
+                          alt={getUserDisplayName(request.requester)}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div className="flex-1">
                           <div className="font-semibold text-white">
-                            {getUserDisplayName(request.requester!)}
+                            {getUserDisplayName(request.requester)}
                           </div>
                           <div className="text-sm text-gray-400">
                             {formatDate(request.createdAt)}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            Clic para ver perfil
+                            {request.requester ? "Clic para ver perfil" : "Este usuario ya no existe"}
                           </div>
                           {request.message && (
                             <div className="text-sm text-gray-300 mt-1">
@@ -409,10 +412,10 @@ const Friends = () => {
                             onClick={() =>
                               respondToRequest(request.friendshipId, "accept")
                             }
-                            disabled={processing.has(request.friendshipId)}
+                            disabled={processing.has(request.friendshipId) || !request.requester}
                             className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
                           >
-                            Aceptar
+                            {!request.requester ? "Usuario eliminado" : "Aceptar"}
                           </button>
                           <button
                             onClick={() =>
@@ -424,14 +427,16 @@ const Friends = () => {
                             Rechazar
                           </button>
                         </div>
-                        <button
-                          onClick={() =>
-                            navigate(`/messages/${request.requester!._id}`)
-                          }
-                          className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
-                        >
-                          Enviar mensaje
-                        </button>
+                        {request.requester && (
+                          <button
+                            onClick={() =>
+                              navigate(`/messages/${request.requester!._id}`)
+                            }
+                            className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                          >
+                            Enviar mensaje
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -456,23 +461,23 @@ const Friends = () => {
                     <div className="flex items-center justify-between">
                       <div
                         className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
-                        onClick={() => handleUserClick(request.recipient!._id)}
-                        title="Ver perfil"
+                        onClick={() => request.recipient && handleUserClick(request.recipient._id)}
+                        title={request.recipient ? "Ver perfil" : "Usuario eliminado"}
                       >
                         <img
-                          src={getUserAvatar(request.recipient!)}
-                          alt={getUserDisplayName(request.recipient!)}
+                          src={getUserAvatar(request.recipient)}
+                          alt={getUserDisplayName(request.recipient)}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div className="flex-1">
                           <div className="font-semibold text-white">
-                            {getUserDisplayName(request.recipient!)}
+                            {getUserDisplayName(request.recipient)}
                           </div>
                           <div className="text-sm text-gray-400">
                             Enviada el {formatDate(request.createdAt)}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            Clic para ver perfil
+                            {request.recipient ? "Clic para ver perfil" : "Este usuario ya no existe"}
                           </div>
                           {request.message && (
                             <div className="text-sm text-gray-300 mt-1">
@@ -491,14 +496,16 @@ const Friends = () => {
                             ? "Cancelando..."
                             : "Cancelar"}
                         </button>
-                        <button
-                          onClick={() =>
-                            navigate(`/messages/${request.recipient!._id}`)
-                          }
-                          className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
-                        >
-                          Enviar mensaje
-                        </button>
+                        {request.recipient && (
+                          <button
+                            onClick={() =>
+                              navigate(`/messages/${request.recipient!._id}`)
+                            }
+                            className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                          >
+                            Enviar mensaje
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
