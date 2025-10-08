@@ -692,12 +692,16 @@ const Friends = () => {
                     >
                       <img
                         src={blockedUser.image || DEFAULT_PROFILE_IMAGE}
-                        alt={blockedUser.username || blockedUser.email || "Usuario"}
+                        alt={
+                          blockedUser.username || blockedUser.email || "Usuario"
+                        }
                         className="w-12 h-12 rounded-full object-cover"
                       />
                       <div className="flex-1">
                         <div className="font-semibold text-white">
-                          {blockedUser.username || blockedUser.email || "Usuario"}
+                          {blockedUser.username ||
+                            blockedUser.email ||
+                            "Usuario"}
                         </div>
                         <div className="text-sm text-red-400">
                           Usuario bloqueado
