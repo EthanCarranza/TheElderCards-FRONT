@@ -157,7 +157,7 @@ const Collections: React.FC = () => {
                           : "bg-black/60 text-white"
                       }`}
                     >
-                      ★
+
                     </button>
                   )}
                 </div>
