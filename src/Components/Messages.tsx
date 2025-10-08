@@ -199,8 +199,8 @@ const Messages = () => {
     ? conversations.find((c) => c.userId === activeChat)?.user
     : null;
   return (
-    <PageLayout contentClassName="h-full flex flex-col" showFooter={false}>
-      <div className="flex-1 flex overflow-hidden">
+    <div className="h-screen w-full bg-black flex">
+      <div className="h-full w-full flex overflow-hidden">
         {}
         <div
           className={`${
@@ -210,9 +210,29 @@ const Messages = () => {
           } bg-gray-800 border-r border-gray-700 flex flex-col transition-all duration-300 ease-in-out`}
         >
           <div className="p-3 md:p-4 border-b border-gray-700 flex items-center justify-between">
-            <h1 className="text-lg md:text-xl font-bold text-white">
-              Mensajes
-            </h1>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(-1)}
+                className="text-white hover:text-blue-300 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+              <h1 className="text-lg md:text-xl font-bold text-white">
+                Mensajes
+              </h1>
+            </div>
             {!showConversations && (
               <button
                 onClick={() => setShowConversations(true)}
@@ -314,15 +334,21 @@ const Messages = () => {
         <div
           className={`${
             showConversations ? "hidden md:flex" : "flex"
-          } flex-1 flex-col bg-gray-900 transition-all duration-300 ease-in-out`}
+          } flex-1 flex-col bg-gray-900 transition-all duration-300 ease-in-out h-full`}
         >
           {activeChat && activeChatUser ? (
             <>
               {}
-              <div className="p-3 md:p-4 bg-gray-800 border-b border-gray-700 flex items-center gap-3">
+              <div className="p-3 md:p-4 bg-gray-800 border-b border-gray-700 flex items-center gap-3 flex-shrink-0">
                 <button
-                  onClick={() => setShowConversations(true)}
-                  className="md:hidden text-white hover:text-blue-300 transition-colors mr-2"
+                  onClick={() => {
+                    if (window.innerWidth < 768) {
+                      setShowConversations(true);
+                    } else {
+                      navigate(-1);
+                    }
+                  }}
+                  className="text-white hover:text-blue-300 transition-colors mr-2"
                 >
                   <svg
                     className="w-6 h-6"
@@ -359,7 +385,7 @@ const Messages = () => {
               {}
               <div
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 min-h-0"
+                className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 overscroll-contain"
               >
                 {loadingMessages ? (
                   <div className="text-center text-gray-400 py-4">
@@ -406,7 +432,7 @@ const Messages = () => {
                 <div ref={messagesEndRef} />
               </div>
               {}
-              <div className="p-3 md:p-4 bg-gray-800 border-t border-gray-700 pb-safe">
+              <div className="p-3 md:p-4 bg-gray-800 border-t border-gray-700 pb-safe flex-shrink-0">
                 <div className="flex gap-2 md:gap-3 items-end">
                   <input
                     type="text"
@@ -496,7 +522,7 @@ const Messages = () => {
           </div>
         )}
       </div>
-    </PageLayout>
+    </div>
   );
 };
 export default Messages;
