@@ -582,7 +582,7 @@ const CardDetail = () => {
                     Coste: {card.cost}
                   </span>
                   <span className="text-xs sm:text-sm">
-                    Fecha: {formattedDate}
+                    Fecha de creación: {formattedDate}
                   </span>
                 </div>
               </div>
