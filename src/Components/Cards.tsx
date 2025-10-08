@@ -374,7 +374,8 @@ const Cards = () => {
                 </span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6 pt-4 sm:pt-8 md:pt-12 lg:pt-16 px-2 sm:px-0">
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6 pt-4 sm:pt-8 md:pt-12 lg:pt-16 px-2 sm:px-0">
                 {cards.map((card) => {
                   let factionObj: Faction | undefined = undefined;
                   if (
@@ -435,28 +436,29 @@ const Cards = () => {
                   );
                 })}
               </div>
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-2 mt-6 px-4">
+                {page > 1 && (
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
+                  >
+                    Anterior
+                  </button>
+                )}
+                <span className="text-white text-lg md:text-xl xl:text-2xl font-medium text-center">
+                  Página {page} de {totalPages}
+                </span>
+                {page < totalPages && totalPages > 1 && (
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
+                  >
+                    Siguiente
+                  </button>
+                )}
+              </div>
+              </>
             )}
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-2 mt-6 px-4">
-              {page > 1 && (
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
-                >
-                  Anterior
-                </button>
-              )}
-              <span className="text-white text-lg md:text-xl xl:text-2xl font-medium text-center">
-                Página {page} de {totalPages}
-              </span>
-              {page < totalPages && totalPages > 1 && (
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
-                >
-                  Siguiente
-                </button>
-              )}
-            </div>
           </>
         ))}
     </PageLayout>
