@@ -148,7 +148,7 @@ const Collections: React.FC = () => {
   const loadCollectionStats = useCallback(async (collectionId: string) => {
     try {
       const response = await apiFetch<CollectionStats>(
-        `/collection-interactions/${collectionId}/stats`
+        `/collections/${collectionId}/stats`
       );
       setCollectionStats(prev => ({
         ...prev,
@@ -162,7 +162,7 @@ const Collections: React.FC = () => {
     if (!user) return;
     try {
       const response = await apiFetch<CollectionInteraction>(
-        `/collection-interactions/${collectionId}/interaction`,
+        `/collections/${collectionId}/interaction`,
         {
           headers: { Authorization: `Bearer ${user.token}` },
         }
@@ -269,25 +269,38 @@ const Collections: React.FC = () => {
       setCreating(false);
     }
   };
-  const toggleFavorite = async (collectionId: string, isFav: boolean) => {
+  const toggleFavorite = async (collectionId: string) => {
     if (!user) return;
     try {
-      if (!isFav) {
-        await apiFetch(`/collections/${collectionId}/favorite`, {
+      const response = await apiFetch<{ favorited: boolean; stats: CollectionStats }>(
+        `/collections/${collectionId}/favorite`,
+        {
           method: "POST",
           headers: { Authorization: `Bearer ${user.token}` },
-        });
+        }
+      );
+      
+      if (response.data.favorited) {
         setFavorites((prev) => [...prev, collectionId]);
       } else {
-        await apiFetch(`/collections/${collectionId}/favorite`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
         setFavorites((prev) => prev.filter((id) => id !== collectionId));
         if (activeTab === "favorites") {
           setFavoriteCollections((prev) => prev.filter((col) => col._id !== collectionId));
         }
       }
+      
+      setCollectionStats(prev => ({
+        ...prev,
+        [collectionId]: response.data.stats
+      }));
+      
+      setCollectionInteractions(prev => ({
+        ...prev,
+        [collectionId]: {
+          ...prev[collectionId],
+          favorited: response.data.favorited
+        }
+      }));
     } catch {
       setError("Error al gestionar favoritos");
     }
@@ -297,7 +310,7 @@ const Collections: React.FC = () => {
     if (!user) return;
     try {
       const response = await apiFetch<{ liked: boolean; stats: CollectionStats }>(
-        `/collection-interactions/${collectionId}/like`,
+        `/collections/${collectionId}/like`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${user.token}` },
@@ -455,7 +468,7 @@ const Collections: React.FC = () => {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            void toggleFavorite(col._id, activeTab === "favorites" ? true : isFav);
+                            void toggleFavorite(col._id);
                           }}
                           className={`rounded-full p-1.5 sm:p-2 text-sm ${
                             (activeTab === "favorites" || isFav)
