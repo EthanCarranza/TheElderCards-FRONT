@@ -6,6 +6,8 @@ interface UseFriendshipNotificationsReturn {
   loading: boolean;
   error: string;
   refreshCount: () => Promise<void>;
+  decrementCount: () => void;
+  incrementCount: () => void;
 }
 export const useFriendshipNotifications =
   (): UseFriendshipNotificationsReturn => {
@@ -35,13 +37,26 @@ export const useFriendshipNotifications =
         setLoading(false);
       }
     }, [user]);
+    const decrementCount = useCallback(() => {
+      setPendingRequestsCount((prev) => Math.max(0, prev - 1));
+    }, []);
+
+    const incrementCount = useCallback(() => {
+      setPendingRequestsCount((prev) => prev + 1);
+    }, []);
+
     useEffect(() => {
       fetchPendingCount();
+      // Actualizar cada 10 segundos para sincronizar con nuevas notificaciones
+      const interval = setInterval(fetchPendingCount, 10000);
+      return () => clearInterval(interval);
     }, [fetchPendingCount]);
     return {
       pendingRequestsCount,
       loading,
       error,
       refreshCount: fetchPendingCount,
+      decrementCount,
+      incrementCount,
     };
   };

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { updateFriendshipNotifications } from "../utils/friendshipNotifications";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import PageLayout from "./PageLayout";
@@ -30,6 +31,7 @@ type TabType = "friends" | "received" | "sent" | "search" | "blocked";
 const Friends = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState<TabType>("friends");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -68,7 +70,6 @@ const Friends = () => {
           setLoading(false);
           return;
       }
-      
       const response = await apiFetch<{
         friends?: Friend[];
         requests?: FriendRequest[];
@@ -77,7 +78,6 @@ const Friends = () => {
       }>(endpoint, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      
       switch (activeTab) {
         case "friends":
           setFriends(response.data.friends || []);
@@ -96,46 +96,41 @@ const Friends = () => {
           setBlockedCount(response.data.count || 0);
           break;
       }
-      
-      try {
-        const [friendsRes, receivedRes, sentRes, blockedRes] = await Promise.allSettled([
-          apiFetch<{friends?: Friend[], count?: number}>("/friendships", {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-          apiFetch<{requests?: FriendRequest[], count?: number}>("/friendships/pending", {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-          apiFetch<{requests?: FriendRequest[], count?: number}>("/friendships/sent", {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-          apiFetch<{blockedUsers?: User[], count?: number}>("/friendships/blocked", {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-        ]);
-
-        if (friendsRes.status === 'fulfilled') {
-          setFriendsCount(friendsRes.value.data.count || 0);
-        }
-        if (receivedRes.status === 'fulfilled') {
-          setReceivedCount(receivedRes.value.data.count || 0);
-        }
-        if (sentRes.status === 'fulfilled') {
-          setSentCount(sentRes.value.data.count || 0);
-        }
-        if (blockedRes.status === 'fulfilled') {
-          setBlockedCount(blockedRes.value.data.count || 0);
-        }
-      } catch (countersError) {
-        // Si falla la actualización de contadores, no es crítico
-        console.warn("Error actualizando contadores:", countersError);
-      }
-      
     } catch (err) {
       setError(extractErrorMessage(err, "Error al cargar datos"));
     } finally {
       setLoading(false);
     }
   }, [user, activeTab]);
+
+  const updateAllCounts = useCallback(async () => {
+    if (!user) return;
+    try {
+      // Cargar contadores de todas las secciones en paralelo
+      const [friendsRes, receivedRes, sentRes, blockedRes] = await Promise.all([
+        apiFetch<{ count: number }>("/friendships", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }),
+        apiFetch<{ count: number }>("/friendships/pending", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }),
+        apiFetch<{ count: number }>("/friendships/sent", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }),
+        apiFetch<{ count: number }>("/friendships/blocked", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }),
+      ]);
+
+      setFriendsCount(friendsRes.data.count || 0);
+      setReceivedCount(receivedRes.data.count || 0);
+      setSentCount(sentRes.data.count || 0);
+      setBlockedCount(blockedRes.data.count || 0);
+    } catch (err) {
+      console.error("Error updating counts:", err);
+    }
+  }, [user]);
+
   const performSearch = useCallback(
     async (query: string, showAll = false) => {
       if (!user) return;
@@ -180,6 +175,11 @@ const Friends = () => {
     loadData();
   }, [loadData]);
 
+  // Cargar contadores al montar el componente y mantenerlos actualizados
+  useEffect(() => {
+    updateAllCounts();
+  }, [updateAllCounts]);
+
   useEffect(() => {
     if (activeTab !== "search") return;
 
@@ -203,18 +203,13 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
         body: { recipientId, message },
       });
-      
       setSearchResults((prev) =>
         prev.map((u) =>
           u._id === recipientId ? { ...u, relationshipStatus: "sent" } : u
         )
       );
-      
-      setSentCount((prev) => prev + 1);
-      
-      if (activeTab === "sent") {
-        await loadData();
-      }
+      // Actualizar contadores automáticamente
+      await updateAllCounts();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al enviar solicitud"));
     } finally {
@@ -238,17 +233,14 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
         body: { action },
       });
-      
-      setReceivedCount((prev) => Math.max(0, prev - 1));
-      
-      if (action === "accept") {
-        setFriendsCount((prev) => prev + 1);
-        if (activeTab !== "friends") {
-          setActiveTab("friends");
-        }
-      }
-      
       await loadData();
+      // Actualizar contadores automáticamente
+      await updateAllCounts();
+      // Decrementar notificaciones de amistad en la navbar
+      updateFriendshipNotifications.decrement();
+      if (action === "accept" && activeTab !== "friends") {
+        setActiveTab("friends");
+      }
     } catch (err) {
       setError(extractErrorMessage(err, "Error al responder solicitud"));
     } finally {
@@ -268,14 +260,9 @@ const Friends = () => {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      
-      if (activeTab === "sent") {
-        setSentCount((prev) => Math.max(0, prev - 1));
-      } else if (activeTab === "friends") {
-        setFriendsCount((prev) => Math.max(0, prev - 1));
-      }
-      
       await loadData();
+      // Actualizar contadores automáticamente
+      await updateAllCounts();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al eliminar relación"));
     } finally {
@@ -297,8 +284,6 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      setBlockedCount((prev) => prev + 1);
-      
       // Actualizar el estado local según la pestaña activa
       if (activeTab === "search") {
         setSearchResults((prev) =>
@@ -309,6 +294,8 @@ const Friends = () => {
       } else {
         await loadData(); // Recargar datos para otras pestañas
       }
+      // Actualizar contadores automáticamente
+      await updateAllCounts();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al bloquear usuario"));
     } finally {
@@ -330,8 +317,6 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      setBlockedCount((prev) => Math.max(0, prev - 1));
-      
       // Actualizar el estado local según la pestaña activa
       if (activeTab === "search") {
         setSearchResults((prev) =>
@@ -342,6 +327,8 @@ const Friends = () => {
       } else {
         await loadData(); // Recargar datos para otras pestañas
       }
+      // Actualizar contadores automáticamente
+      await updateAllCounts();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al desbloquear usuario"));
     } finally {
@@ -578,7 +565,7 @@ const Friends = () => {
                     key={request.friendshipId}
                     className="bg-gray-700 rounded-lg p-4"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                       <div
                         className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
                         onClick={() =>
@@ -613,42 +600,28 @@ const Friends = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              respondToRequest(request.friendshipId, "accept")
-                            }
-                            disabled={
-                              processing.has(request.friendshipId) ||
-                              !request.requester
-                            }
-                            className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                          >
-                            {!request.requester
-                              ? "Usuario eliminado"
-                              : "Aceptar"}
-                          </button>
-                          <button
-                            onClick={() =>
-                              respondToRequest(request.friendshipId, "decline")
-                            }
-                            disabled={processing.has(request.friendshipId)}
-                            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                          >
-                            Rechazar
-                          </button>
-                        </div>
-                        {request.requester && (
-                          <button
-                            onClick={() =>
-                              navigate(`/messages/${request.requester!._id}`)
-                            }
-                            className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
-                          >
-                            Enviar mensaje
-                          </button>
-                        )}
+                      <div className="flex flex-col sm:flex-row gap-2 sm:flex-shrink-0">
+                        <button
+                          onClick={() =>
+                            respondToRequest(request.friendshipId, "accept")
+                          }
+                          disabled={
+                            processing.has(request.friendshipId) ||
+                            !request.requester
+                          }
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                        >
+                          {!request.requester ? "Usuario eliminado" : "Aceptar"}
+                        </button>
+                        <button
+                          onClick={() =>
+                            respondToRequest(request.friendshipId, "decline")
+                          }
+                          disabled={processing.has(request.friendshipId)}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                        >
+                          Rechazar
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -670,7 +643,7 @@ const Friends = () => {
                     key={request.friendshipId}
                     className="bg-gray-700 rounded-lg p-4"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                       <div
                         className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
                         onClick={() =>
@@ -705,7 +678,7 @@ const Friends = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex sm:flex-shrink-0">
                         <button
                           onClick={() => removeFriendship(request.friendshipId)}
                           disabled={processing.has(request.friendshipId)}
@@ -715,16 +688,6 @@ const Friends = () => {
                             ? "Cancelando..."
                             : "Cancelar"}
                         </button>
-                        {request.recipient && (
-                          <button
-                            onClick={() =>
-                              navigate(`/messages/${request.recipient!._id}`)
-                            }
-                            className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
-                          >
-                            Enviar mensaje
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>

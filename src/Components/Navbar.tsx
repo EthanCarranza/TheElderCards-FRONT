@@ -4,6 +4,8 @@ import { useAuth } from "../hooks/useAuth";
 import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 import { useFriendshipNotifications } from "../hooks/useFriendshipNotifications";
 import { useMessageNotifications } from "../hooks/useMessageNotifications";
+import { setGlobalFriendshipNotifications } from "../utils/friendshipNotifications";
+import { useEffect } from "react";
 type PrimaryLink = {
   to: string;
   label: string;
@@ -18,8 +20,14 @@ const primaryLinks: PrimaryLink[] = [
 function Navbar() {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { pendingRequestsCount } = useFriendshipNotifications();
+  const friendshipNotifications = useFriendshipNotifications();
   const { unreadCount } = useMessageNotifications();
+
+  // Registrar la instancia global para que otros componentes puedan actualizarla
+  useEffect(() => {
+    setGlobalFriendshipNotifications(friendshipNotifications);
+  }, [friendshipNotifications]);
+
   const handleCloseMenu = () => setMenuOpen(false);
   const handleBackdropClick = () => {
     if (menuOpen) {
@@ -134,11 +142,11 @@ function Navbar() {
                         onClick={handleCloseMenu}
                       >
                         Amigos
-                        {pendingRequestsCount > 0 && (
+                        {friendshipNotifications.pendingRequestsCount > 0 && (
                           <span className="absolute -top-2 -right-2 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                            {pendingRequestsCount > 99
+                            {friendshipNotifications.pendingRequestsCount > 99
                               ? "99+"
-                              : pendingRequestsCount}
+                              : friendshipNotifications.pendingRequestsCount}
                           </span>
                         )}
                       </Link>
@@ -245,11 +253,11 @@ function Navbar() {
                       onClick={handleCloseMenu}
                     >
                       Amigos
-                      {pendingRequestsCount > 0 && (
+                      {friendshipNotifications.pendingRequestsCount > 0 && (
                         <span className="ml-2 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                          {pendingRequestsCount > 99
+                          {friendshipNotifications.pendingRequestsCount > 99
                             ? "99+"
-                            : pendingRequestsCount}
+                            : friendshipNotifications.pendingRequestsCount}
                         </span>
                       )}
                     </Link>
