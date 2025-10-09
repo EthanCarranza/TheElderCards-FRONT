@@ -199,7 +199,7 @@ const Messages = () => {
     ? conversations.find((c) => c.userId === activeChat)?.user
     : null;
   return (
-    <div className="h-screen w-full bg-black flex">
+    <div className="h-screen w-full bg-black flex flex-col">
       <div className="h-full w-full flex overflow-hidden">
         {}
         <div
@@ -436,6 +436,17 @@ const Messages = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Escribe un mensaje..."
                     className="flex-1 px-3 py-2 md:px-4 md:py-2 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                    inputMode="text"
+                    autoFocus
+                    onFocus={() => {
+                      if (window.innerWidth < 768) {
+                        setTimeout(() => {
+                          messagesEndRef.current?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                        }, 200);
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
