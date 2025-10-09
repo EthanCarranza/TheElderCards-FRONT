@@ -174,10 +174,12 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
     }
   };
   return (
-    <div className="flex gap-8 justify-center items-start">
+    <div className="flex flex-col lg:flex-row gap-8 justify-center items-start max-w-7xl mx-auto px-4">
       <div
-        className="card-3d-wrapper"
-        style={{ width: `${CARD_DIMENSIONS_EXPORT.canvasWidth + 32}px` }}
+        className="card-3d-wrapper mx-auto lg:mx-0 flex-shrink-0"
+        style={{
+          width: `${Math.min(CARD_DIMENSIONS_EXPORT.canvasWidth + 32, 320)}px`,
+        }}
       >
         <div
           className="card-3d relative block h-full w-full overflow-hidden rounded-lg border border-black/30 shadow-2xl bg-gray-800 p-4"
@@ -192,13 +194,14 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
             ref={canvasRef}
             width={CARD_DIMENSIONS_EXPORT.canvasWidth}
             height={CARD_DIMENSIONS_EXPORT.canvasHeight}
-            className="card-3d-element"
+            className="card-3d-element w-full h-auto"
+            style={{ maxWidth: "100%", height: "auto" }}
           />
         </div>
       </div>
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-800 text-xl rounded p-8 w-full max-w-lg flex flex-col gap-4"
+        className="bg-gray-800 text-xl rounded p-4 lg:p-8 w-full max-w-lg flex flex-col gap-4"
       >
         <h3 className="text-3xl font-bold text-white mb-2">
           Crear nueva carta
@@ -221,7 +224,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
             &#x2753;
           </span>
           {tooltip.visible && tooltip.field === "title" && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+            <div className="absolute right-0 lg:left-full top-full lg:top-1/2 lg:-translate-y-1/2 mt-1 lg:mt-0 lg:ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64 max-w-[calc(100vw-2rem)]">
               {fieldHelp.title}
             </div>
           )}
@@ -248,7 +251,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
             &#x2753;
           </span>
           {tooltip.visible && tooltip.field === "type" && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+            <div className="absolute right-0 lg:left-full top-full lg:top-1/2 lg:-translate-y-1/2 mt-1 lg:mt-0 lg:ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64 max-w-[calc(100vw-2rem)]">
               {fieldHelp.type}
             </div>
           )}
@@ -279,7 +282,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
               &#x2753;
             </span>
             {tooltip.visible && tooltip.field === "description" && (
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+              <div className="absolute right-0 lg:left-full top-full lg:top-1/2 lg:-translate-y-1/2 mt-1 lg:mt-0 lg:ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64 max-w-[calc(100vw-2rem)]">
                 {fieldHelp.description}
               </div>
             )}
@@ -313,7 +316,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
             &#x2753;
           </span>
           {tooltip.visible && tooltip.field === "faction" && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+            <div className="absolute right-0 lg:left-full top-full lg:top-1/2 lg:-translate-y-1/2 mt-1 lg:mt-0 lg:ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64 max-w-[calc(100vw-2rem)]">
               {fieldHelp.faction}
             </div>
           )}
@@ -338,7 +341,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
             &#x2753;
           </span>
           {tooltip.visible && tooltip.field === "cost" && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+            <div className="absolute right-0 lg:left-full top-full lg:top-1/2 lg:-translate-y-1/2 mt-1 lg:mt-0 lg:ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64 max-w-[calc(100vw-2rem)]">
               {fieldHelp.cost}
             </div>
           )}
@@ -367,7 +370,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
                 &#x2753;
               </span>
               {tooltip.visible && tooltip.field === "attack" && (
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+                <div className="absolute right-0 lg:left-full top-full lg:top-1/2 lg:-translate-y-1/2 mt-1 lg:mt-0 lg:ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64 max-w-[calc(100vw-2rem)]">
                   {fieldHelp.attack}
                 </div>
               )}
@@ -394,7 +397,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
                 &#x2753;
               </span>
               {tooltip.visible && tooltip.field === "defense" && (
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+                <div className="absolute right-0 lg:left-full top-full lg:top-1/2 lg:-translate-y-1/2 mt-1 lg:mt-0 lg:ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64 max-w-[calc(100vw-2rem)]">
                   {fieldHelp.defense}
                 </div>
               )}
@@ -407,18 +410,18 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
             type="file"
             accept="image/*"
             onChange={handleChange}
-            className="p-2 rounded flex-1 bg-gray-700 text-white"
+            className="p-2 rounded flex-1 bg-gray-700 text-white text-sm lg:text-base w-0 min-w-0"
             required
           />
           <span
-            className="ml-2 text-blue-400 text-lg select-none cursor-pointer"
+            className="ml-2 text-blue-400 text-lg select-none cursor-pointer flex-shrink-0"
             onMouseEnter={() => setTooltip({ field: "image", visible: true })}
             onMouseLeave={() => setTooltip({ field: "", visible: false })}
           >
             &#x2753;
           </span>
           {tooltip.visible && tooltip.field === "image" && (
-            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64">
+            <div className="absolute right-0 lg:left-full top-full lg:top-1/2 lg:-translate-y-1/2 mt-1 lg:mt-0 lg:ml-2 bg-gray-900 text-white text-xs rounded p-2 shadow-lg z-10 w-64 max-w-[calc(100vw-2rem)]">
               {fieldHelp.image}
             </div>
           )}
