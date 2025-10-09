@@ -28,13 +28,8 @@ export const apiFetch = async <T = unknown>(
   try {
     const response = await axios<T>(config);
     return response;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error de axios:", error);
-    
-    if (axios.isAxiosError(error) && error.response) {
-      return error.response;
-    }
-    
     throw error;
   }
 };
