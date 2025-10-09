@@ -68,6 +68,7 @@ const Friends = () => {
           setLoading(false);
           return;
       }
+      
       const response = await apiFetch<{
         friends?: Friend[];
         requests?: FriendRequest[];
@@ -76,6 +77,7 @@ const Friends = () => {
       }>(endpoint, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
+      
       switch (activeTab) {
         case "friends":
           setFriends(response.data.friends || []);
@@ -94,6 +96,40 @@ const Friends = () => {
           setBlockedCount(response.data.count || 0);
           break;
       }
+      
+      try {
+        const [friendsRes, receivedRes, sentRes, blockedRes] = await Promise.allSettled([
+          apiFetch<{friends?: Friend[], count?: number}>("/friendships", {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+          apiFetch<{requests?: FriendRequest[], count?: number}>("/friendships/pending", {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+          apiFetch<{requests?: FriendRequest[], count?: number}>("/friendships/sent", {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+          apiFetch<{blockedUsers?: User[], count?: number}>("/friendships/blocked", {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+        ]);
+
+        if (friendsRes.status === 'fulfilled') {
+          setFriendsCount(friendsRes.value.data.count || 0);
+        }
+        if (receivedRes.status === 'fulfilled') {
+          setReceivedCount(receivedRes.value.data.count || 0);
+        }
+        if (sentRes.status === 'fulfilled') {
+          setSentCount(sentRes.value.data.count || 0);
+        }
+        if (blockedRes.status === 'fulfilled') {
+          setBlockedCount(blockedRes.value.data.count || 0);
+        }
+      } catch (countersError) {
+        // Si falla la actualización de contadores, no es crítico
+        console.warn("Error actualizando contadores:", countersError);
+      }
+      
     } catch (err) {
       setError(extractErrorMessage(err, "Error al cargar datos"));
     } finally {
@@ -167,11 +203,18 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
         body: { recipientId, message },
       });
+      
       setSearchResults((prev) =>
         prev.map((u) =>
           u._id === recipientId ? { ...u, relationshipStatus: "sent" } : u
         )
       );
+      
+      setSentCount((prev) => prev + 1);
+      
+      if (activeTab === "sent") {
+        await loadData();
+      }
     } catch (err) {
       setError(extractErrorMessage(err, "Error al enviar solicitud"));
     } finally {
@@ -195,10 +238,17 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
         body: { action },
       });
-      await loadData();
-      if (action === "accept" && activeTab !== "friends") {
-        setActiveTab("friends");
+      
+      setReceivedCount((prev) => Math.max(0, prev - 1));
+      
+      if (action === "accept") {
+        setFriendsCount((prev) => prev + 1);
+        if (activeTab !== "friends") {
+          setActiveTab("friends");
+        }
       }
+      
+      await loadData();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al responder solicitud"));
     } finally {
@@ -218,6 +268,13 @@ const Friends = () => {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
+      
+      if (activeTab === "sent") {
+        setSentCount((prev) => Math.max(0, prev - 1));
+      } else if (activeTab === "friends") {
+        setFriendsCount((prev) => Math.max(0, prev - 1));
+      }
+      
       await loadData();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al eliminar relación"));
@@ -240,6 +297,8 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
+      setBlockedCount((prev) => prev + 1);
+      
       // Actualizar el estado local según la pestaña activa
       if (activeTab === "search") {
         setSearchResults((prev) =>
@@ -271,6 +330,8 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
+      setBlockedCount((prev) => Math.max(0, prev - 1));
+      
       // Actualizar el estado local según la pestaña activa
       if (activeTab === "search") {
         setSearchResults((prev) =>
