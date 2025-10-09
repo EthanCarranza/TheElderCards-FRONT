@@ -43,10 +43,11 @@ const CollectionDetail: React.FC = () => {
     likes: 0,
     favorites: 0,
   });
-  const [collectionInteraction, setCollectionInteraction] = useState<CollectionInteraction>({
-    liked: false,
-    favorited: false,
-  });
+  const [collectionInteraction, setCollectionInteraction] =
+    useState<CollectionInteraction>({
+      liked: false,
+      favorited: false,
+    });
   useEffect(() => {
     const load = async () => {
       if (!id) {
@@ -66,51 +67,52 @@ const CollectionDetail: React.FC = () => {
         );
         setCollection(resp.data);
 
-          const isUserPrivateCollection = resp.data.isPrivate && user && resp.data.creator === user.userId;
-        
-          if (!isUserPrivateCollection) {
-            try {
-              const statsResp = await apiFetch<CollectionStats>(
-                `/collections/${id}/stats`
-              );
-              setCollectionStats(statsResp.data);
-            } catch {
-              setCollectionStats({ likes: 0, favorites: 0 });
-            }
-          } else {
+        const isUserPrivateCollection =
+          resp.data.isPrivate && user && resp.data.creator === user.userId;
+
+        if (!isUserPrivateCollection) {
+          try {
+            const statsResp = await apiFetch<CollectionStats>(
+              `/collections/${id}/stats`
+            );
+            setCollectionStats(statsResp.data);
+          } catch {
             setCollectionStats({ likes: 0, favorites: 0 });
           }
+        } else {
+          setCollectionStats({ likes: 0, favorites: 0 });
+        }
 
         if (user) {
-            if (!isUserPrivateCollection) {
-              try {
-                const favResp = await apiFetch<CollectionDetailData[]>(
-                  "/collections/favorites/mine",
-                  {
-                    headers: { Authorization: `Bearer ${user.token}` },
-                  }
-                );
-                const favorites = (favResp.data || []).map((c) => c._id);
-                setIsFavorite(favorites.includes(id));
-              } catch {
-                setIsFavorite(false);
-              }
-
-              try {
-                const interactionResp = await apiFetch<CollectionInteraction>(
-                  `/collections/${id}/interaction`,
-                  {
-                    headers: { Authorization: `Bearer ${user.token}` },
-                  }
-                );
-                setCollectionInteraction(interactionResp.data);
-              } catch {
-                setCollectionInteraction({ liked: false, favorited: false });
-              }
-            } else {
+          if (!isUserPrivateCollection) {
+            try {
+              const favResp = await apiFetch<CollectionDetailData[]>(
+                "/collections/favorites/mine",
+                {
+                  headers: { Authorization: `Bearer ${user.token}` },
+                }
+              );
+              const favorites = (favResp.data || []).map((c) => c._id);
+              setIsFavorite(favorites.includes(id));
+            } catch {
               setIsFavorite(false);
+            }
+
+            try {
+              const interactionResp = await apiFetch<CollectionInteraction>(
+                `/collections/${id}/interaction`,
+                {
+                  headers: { Authorization: `Bearer ${user.token}` },
+                }
+              );
+              setCollectionInteraction(interactionResp.data);
+            } catch {
               setCollectionInteraction({ liked: false, favorited: false });
             }
+          } else {
+            setIsFavorite(false);
+            setCollectionInteraction({ liked: false, favorited: false });
+          }
         }
       } catch (e: unknown) {
         setError(extractErrorMessage(e, "No se pudo cargar la colección"));
@@ -123,21 +125,21 @@ const CollectionDetail: React.FC = () => {
 
   const toggleFavorite = async () => {
     if (!user || !id) return;
-    
+
     try {
-      const response = await apiFetch<{favorited: boolean; stats: CollectionStats}>(
-        `/collections/${id}/favorite`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
-      
+      const response = await apiFetch<{
+        favorited: boolean;
+        stats: CollectionStats;
+      }>(`/collections/${id}/favorite`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
       setIsFavorite(response.data.favorited);
       setCollectionStats(response.data.stats);
-      setCollectionInteraction(prev => ({
+      setCollectionInteraction((prev) => ({
         ...prev,
-        favorited: response.data.favorited
+        favorited: response.data.favorited,
       }));
     } catch {
       setError("Error al gestionar favoritos");
@@ -146,19 +148,19 @@ const CollectionDetail: React.FC = () => {
 
   const toggleLike = async () => {
     if (!user || !id) return;
-    
+
     try {
-      const response = await apiFetch<{liked: boolean; stats: CollectionStats}>(
-        `/collections/${id}/like`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
-      
-      setCollectionInteraction(prev => ({
+      const response = await apiFetch<{
+        liked: boolean;
+        stats: CollectionStats;
+      }>(`/collections/${id}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      setCollectionInteraction((prev) => ({
         ...prev,
-        liked: response.data.liked
+        liked: response.data.liked,
       }));
       setCollectionStats(response.data.stats);
     } catch {
@@ -166,26 +168,30 @@ const CollectionDetail: React.FC = () => {
     }
   };
 
+  // Obtener el ID del creador, sea string o sea objeto
+  type CreatorType = string | { _id: string } | null | undefined;
+  const getCreatorId = (creator: CreatorType) => {
+    if (!creator) return "";
+    if (typeof creator === "string") return creator;
+    if (typeof creator === "object" && creator._id) return creator._id;
+    return String(creator);
+  };
 
-    // Obtener el ID del creador, sea string o sea objeto
-    const getCreatorId = (creator: any) => {
-      if (!creator) return "";
-      if (typeof creator === "string") return creator;
-      if (typeof creator === "object" && creator._id) return creator._id;
-      return String(creator);
-    };
+  const isPrivateCollection = () => {
+    if (!collection || !user) return false;
+    return (
+      collection.isPrivate &&
+      getCreatorId(collection.creator) === String(user.userId)
+    );
+  };
 
-    // Verificar si es una colección privada del usuario actual
-    const isPrivateCollection = () => {
-      if (!collection || !user) return false;
-      return collection.isPrivate && getCreatorId(collection.creator) === String(user.userId);
-    };
-
-    // Verificar si se deben mostrar las interacciones públicas
-    const shouldShowPublicInteractions = () => {
-      if (!collection || !user) return false;
-      return !collection.isPrivate && getCreatorId(collection.creator) !== String(user.userId);
-    };
+  const shouldShowPublicInteractions = () => {
+    if (!collection || !user) return false;
+    return (
+      !collection.isPrivate &&
+      getCreatorId(collection.creator) !== String(user.userId)
+    );
+  };
   return (
     <PageLayout contentClassName="flex-1 overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6">
@@ -223,11 +229,15 @@ const CollectionDetail: React.FC = () => {
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words flex-1">
                   {collection.title}
                 </h1>
-                  {shouldShowPublicInteractions() && (
+                {shouldShowPublicInteractions() && (
                   <div className="ml-4 flex gap-2">
                     <button
                       onClick={toggleLike}
-                      title={collectionInteraction.liked ? "Quitar me gusta" : "Me gusta"}
+                      title={
+                        collectionInteraction.liked
+                          ? "Quitar me gusta"
+                          : "Me gusta"
+                      }
                       className={`rounded-full p-2 lg:p-3 text-lg lg:text-xl transition-colors ${
                         collectionInteraction.liked
                           ? "bg-red-400 text-white"
@@ -238,7 +248,11 @@ const CollectionDetail: React.FC = () => {
                     </button>
                     <button
                       onClick={toggleFavorite}
-                      title={isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                      title={
+                        isFavorite
+                          ? "Quitar de favoritos"
+                          : "Marcar como favorito"
+                      }
                       className={`rounded-full p-2 lg:p-3 text-lg lg:text-xl transition-colors ${
                         isFavorite
                           ? "bg-yellow-400 text-black"
@@ -255,39 +269,41 @@ const CollectionDetail: React.FC = () => {
                   {collection.description}
                 </p>
               )}
-              
-                {/* Estadísticas - Solo mostrar en colecciones públicas */}
-                <div className="mt-4 flex gap-6 text-gray-600">
-                  {!isPrivateCollection() && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">❤️</span>
-                        <span className="text-sm sm:text-base font-medium">
-                          {collectionStats.likes} me gusta{collectionStats.likes !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">⭐</span>
-                        <span className="text-sm sm:text-base font-medium">
-                          {collectionStats.favorites} favorito{collectionStats.favorites !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </>
-                  )}
+
+              <div className="mt-4 flex gap-6 text-gray-600">
+                {!isPrivateCollection() && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">❤️</span>
+                      <span className="text-sm sm:text-base font-medium">
+                        {collectionStats.likes} me gusta
+                        {collectionStats.likes !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">⭐</span>
+                      <span className="text-sm sm:text-base font-medium">
+                        {collectionStats.favorites} favorito
+                        {collectionStats.favorites !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📋</span>
                   <span className="text-sm sm:text-base font-medium">
-                    {collection.cards?.length || 0} carta{(collection.cards?.length || 0) !== 1 ? 's' : ''}
+                    {collection.cards?.length || 0} carta
+                    {(collection.cards?.length || 0) !== 1 ? "s" : ""}
                   </span>
                 </div>
-                  {isPrivateCollection() && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🔒</span>
-                      <span className="text-sm sm:text-base font-medium text-gray-500">
-                        Colección privada
-                      </span>
-                    </div>
-                  )}
+                {isPrivateCollection() && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🔒</span>
+                    <span className="text-sm sm:text-base font-medium text-gray-500">
+                      Colección privada
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="w-full">

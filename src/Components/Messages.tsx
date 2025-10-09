@@ -339,7 +339,7 @@ const Messages = () => {
           {activeChat && activeChatUser ? (
             <>
               {}
-              <div className="p-3 md:p-4 bg-gray-800 border-b border-gray-700 flex items-center gap-3 flex-shrink-0">
+              <div className="sticky top-0 z-20 p-3 md:p-4 bg-gray-800 border-b border-gray-700 flex items-center gap-3 flex-shrink-0">
                 <button
                   onClick={() => {
                     if (window.innerWidth < 768) {
@@ -364,23 +364,19 @@ const Messages = () => {
                     />
                   </svg>
                 </button>
-                <img
-                  src={getUserAvatar(activeChatUser)}
-                  alt={getUserDisplayName(activeChatUser)}
-                  className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-white text-sm md:text-base truncate">
+                <div
+                  className="flex items-center gap-2 cursor-pointer group"
+                  onClick={() => navigate(`/profile/${activeChat}`)}
+                >
+                  <img
+                    src={getUserAvatar(activeChatUser)}
+                    alt={getUserDisplayName(activeChatUser)}
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover group-hover:ring-2 group-hover:ring-blue-400"
+                  />
+                  <div className="font-medium text-white text-sm md:text-base truncate group-hover:text-blue-300">
                     {getUserDisplayName(activeChatUser)}
                   </div>
                 </div>
-                <button
-                  onClick={() => navigate(`/profile/${activeChat}`)}
-                  className="px-2 py-1 md:px-3 md:py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs md:text-sm rounded transition-colors"
-                >
-                  <span className="hidden sm:inline">Ver perfil</span>
-                  <span className="sm:hidden">Perfil</span>
-                </button>
               </div>
               {}
               <div
