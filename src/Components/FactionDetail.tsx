@@ -184,7 +184,10 @@ const FactionDetail = () => {
                 Descripción
               </h2>
               <div className="prose prose-gray max-w-none">
-                <p className="text-gray-700 leading-relaxed text-base lg:text-lg whitespace-pre-line">
+                <p
+                  className="text-gray-700 leading-relaxed text-base lg:text-lg whitespace-pre-line break-words"
+                  style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+                >
                   {faction.description}
                 </p>
               </div>
