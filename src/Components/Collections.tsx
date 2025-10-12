@@ -147,7 +147,7 @@ const Collections: React.FC = () => {
     setLoading(true);
     setError("");
     let query = `?page=${page}&limit=20`;
-    if (user?.userId && (filters.favorites || filters.liked)) {
+    if (user?.userId && (filters.favorites || filters.liked || filters.myCollections)) {
       query += `&user=${encodeURIComponent(user.userId)}`;
     }
     Object.entries(filters).forEach(([key, value]) => {
