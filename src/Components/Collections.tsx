@@ -402,7 +402,6 @@ const Collections: React.FC = () => {
                 onChange={handleSortChange}
                 className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
               >
-                <option value="">Fecha (nuevas primero)</option>
                 <option value="date_desc">Fecha (nuevas primero)</option>
                 <option value="date_asc">Fecha (antiguas primero)</option>
                 <option value="title_asc">Título A-Z</option>
@@ -446,8 +445,12 @@ const Collections: React.FC = () => {
                 </button>
                 <button
                   onClick={() => {
-                    const newValue = filters.myCollections === "true" ? "" : "true";
-                    setFilters((prev) => ({ ...prev, myCollections: newValue }));
+                    const newValue =
+                      filters.myCollections === "true" ? "" : "true";
+                    setFilters((prev) => ({
+                      ...prev,
+                      myCollections: newValue,
+                    }));
                     setPage(1);
                   }}
                   className={`p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full font-medium transition-colors ${

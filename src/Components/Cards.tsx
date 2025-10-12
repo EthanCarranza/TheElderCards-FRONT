@@ -84,7 +84,10 @@ const Cards = () => {
     setLoading(true);
     setError("");
     let query = `?page=${page}&limit=20`;
-    if (user?.userId && (filters.favorites || filters.liked || filters.myCards)) {
+    if (
+      user?.userId &&
+      (filters.favorites || filters.liked || filters.myCards)
+    ) {
       query += `&user=${encodeURIComponent(user.userId)}`;
     }
     Object.entries(filters).forEach(([key, value]) => {
@@ -275,7 +278,6 @@ const Cards = () => {
                 onChange={handleSortChange}
                 className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
               >
-                <option value="">Fecha (nuevas primero)</option>
                 <option value="date_desc">Fecha (nuevas primero)</option>
                 <option value="date_asc">Fecha (antiguas primero)</option>
                 <option value="title_asc">Título A-Z</option>
