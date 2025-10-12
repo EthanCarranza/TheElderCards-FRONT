@@ -40,7 +40,12 @@ const EditFactionForm = ({
     }, 0);
   };
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    if (type === "file") {
+      const file = (e.target as HTMLInputElement).files?.[0] || null;
+      setImg(file);
+      return;
+    }
     if (name === "description") {
       if (countCharacters(value) <= 1000) {
         setForm((prev) => ({ ...prev, description: value }));
@@ -59,17 +64,6 @@ const EditFactionForm = ({
     if (errorMsg) setError(errorMsg);
   }, [errorMsg]);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target;
-    if (type === "file") {
-      const file = (e.target as HTMLInputElement).files?.[0] || null;
-      setImg(file);
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
-  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
