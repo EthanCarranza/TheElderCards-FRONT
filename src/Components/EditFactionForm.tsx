@@ -39,7 +39,9 @@ const EditFactionForm = ({
       return count + (/[A-Z]/.test(char) ? 2 : 1);
     }, 0);
   };
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target;
     if (type === "file") {
       const file = (e.target as HTMLInputElement).files?.[0] || null;
@@ -64,14 +66,13 @@ const EditFactionForm = ({
     if (errorMsg) setError(errorMsg);
   }, [errorMsg]);
 
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
-  setError("");
-  if (clearErrorMsg) clearErrorMsg();
+    setError("");
+    if (clearErrorMsg) clearErrorMsg();
 
     try {
       const formData = new FormData();
@@ -107,7 +108,7 @@ const EditFactionForm = ({
             placeholder="Ej: Skyrim, Cyrodiil, Morrowind..."
             className="w-full rounded-lg p-3 border border-gray-300 text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
-            maxLength={50}
+            maxLength={40}
           />
         </div>
         <div>
@@ -137,7 +138,9 @@ const EditFactionForm = ({
             className="w-full h-24 resize-none rounded-lg p-3 border border-gray-300 text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
           />
-          <div className="text-xs text-gray-500 mt-1">{countCharacters(form.description)} / 1000</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {countCharacters(form.description)} / 1000
+          </div>
           {descError && (
             <div className="text-xs text-red-600 mt-1">{descError}</div>
           )}
