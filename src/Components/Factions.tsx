@@ -74,7 +74,9 @@ const Factions = () => {
     }
   };
 
-  const [editErrorMsg, setEditErrorMsg] = useState<string | undefined>(undefined);
+  const [editErrorMsg, setEditErrorMsg] = useState<string | undefined>(
+    undefined
+  );
   const handleUpdateFaction = async (factionData: FormData) => {
     if (!user || !isAdmin || !editingFaction) return;
     try {
@@ -95,7 +97,10 @@ const Factions = () => {
         setEditingFaction(null);
       }
     } catch (updateError) {
-      const msg = extractErrorMessage(updateError, "No se pudo actualizar la facción");
+      const msg = extractErrorMessage(
+        updateError,
+        "No se pudo actualizar la facción"
+      );
       if (
         msg.includes("Ya existe una facción con ese nombre") ||
         msg.includes("facción con ese nombre")
@@ -282,6 +287,12 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
     territory: "",
     color: "#000000",
   });
+  const [descError, setDescError] = useState("");
+  const countCharacters = (text: string): number => {
+    return text.split("").reduce((count, char) => {
+      return count + (/[A-Z]/.test(char) ? 2 : 1);
+    }, 0);
+  };
   const [img, setImg] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -292,6 +303,15 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
     const { name, value, files, type } = event.target as HTMLInputElement;
     if (type === "file") {
       setImg(files && files[0] ? files[0] : null);
+      return;
+    }
+    if (name === "description") {
+      if (countCharacters(value) <= 1000) {
+        setForm((prev) => ({ ...prev, description: value }));
+        setDescError("");
+      } else {
+        setDescError("La descripción no puede superar los 1000 caracteres.");
+      }
       return;
     }
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -377,6 +397,12 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
             className="w-full h-32 resize-none rounded-lg p-3 border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
             required
           />
+          <div className="text-xs text-gray-400 mt-1">
+            {countCharacters(form.description)} / 1000
+          </div>
+          {descError && (
+            <div className="text-xs text-red-400 mt-1">{descError}</div>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
