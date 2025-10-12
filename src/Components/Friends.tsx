@@ -427,13 +427,11 @@ const Friends = () => {
             Buscar usuarios
           </button>
         </div>
-        {}
         {error && (
           <div className="mb-6 p-4 bg-red-600/20 border border-red-500 rounded-lg text-red-200">
             {error}
           </div>
         )}
-        {}
         {activeTab === "search" && (
           <div className="mb-8 space-y-4">
             <div className="text-center text-gray-300 text-sm mb-4">
@@ -465,7 +463,6 @@ const Friends = () => {
             </div>
           </div>
         )}
-        {}
         <div className="bg-gray-800 rounded-lg p-6">
           {loading ? (
             <div className="text-center text-gray-300 py-8">
