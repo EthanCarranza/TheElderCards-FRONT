@@ -70,15 +70,24 @@ const EditFactionForm = ({
     e.preventDefault();
     if (!user) return;
 
+    const trimmedTitle = form.title.trim();
+    const trimmedDescription = form.description.trim();
+    const trimmedTerritory = form.territory.trim();
+    
+    if (!trimmedTitle || !trimmedDescription || !trimmedTerritory) {
+      setError("Todos los campos son obligatorios y no pueden contener solo espacios vacíos");
+      return;
+    }
+
     setLoading(true);
     setError("");
     if (clearErrorMsg) clearErrorMsg();
 
     try {
       const formData = new FormData();
-      formData.append("title", form.title.trim());
-      formData.append("description", form.description.trim());
-      formData.append("territory", form.territory.trim());
+      formData.append("title", trimmedTitle);
+      formData.append("description", trimmedDescription);
+      formData.append("territory", trimmedTerritory);
       formData.append("color", form.color);
 
       if (img) {
