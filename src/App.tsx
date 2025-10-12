@@ -6,6 +6,7 @@ import Cards from "./Components/Cards";
 import CardDetail from "./Components/CardDetail";
 import { AuthProvider } from "./contexts/AuthContext";
 import { MessageNotificationsProvider } from "./contexts/MessageNotificationsContext";
+import { FriendshipNotificationsProvider } from "./contexts/FriendshipNotificationsContext";
 import Factions from "./Components/Factions";
 import FactionDetail from "./Components/FactionDetail";
 import Profile from "./Components/Profile";
@@ -18,7 +19,8 @@ function App() {
   return (
     <AuthProvider>
       <MessageNotificationsProvider>
-        <Router>
+        <FriendshipNotificationsProvider>
+          <Router>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/register" element={<Register />} />
@@ -36,7 +38,8 @@ function App() {
             <Route path="/profile/:userId" element={<UserPublicProfile />} />
             <Route path="/users/:userId" element={<UserPublicProfile />} />
           </Routes>
-        </Router>
+          </Router>
+        </FriendshipNotificationsProvider>
       </MessageNotificationsProvider>
     </AuthProvider>
   );

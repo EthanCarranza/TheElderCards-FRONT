@@ -1,58 +1,42 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../hooks/useAuth";
-import { apiFetch } from "../Components/api";
+import React, { useCallback } from "react";
+import { useSocketNotifications } from "../hooks/useSocketNotifications";
 import { MessageNotificationsContext } from "./MessageNotificationsContextDefinition";
+
 interface MessageNotificationsProviderProps {
   children: React.ReactNode;
 }
+
 export const MessageNotificationsProvider: React.FC<
   MessageNotificationsProviderProps
 > = ({ children }) => {
-  const { user } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const fetchUnreadCount = useCallback(async () => {
-    if (!user) {
-      setUnreadCount(0);
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await apiFetch<{ unreadCount: number }>(
-        "/messages/unread-count",
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
-      setUnreadCount(response.data.unreadCount || 0);
-    } catch (error) {
-      console.error("Error al obtener conteo de mensajes no leídos:", error);
-      setUnreadCount(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+  const { unreadCount, connected, error, requestInitialCounts } = useSocketNotifications();
+
   const updateUnreadCount = useCallback(() => {
-    fetchUnreadCount();
-  }, [fetchUnreadCount]);
+    // Con WebSockets, las actualizaciones son automáticas
+    // Este método se mantiene para compatibilidad, pero solicita un refresh manual
+    requestInitialCounts();
+  }, [requestInitialCounts]);
+
   const incrementUnreadCount = useCallback(() => {
-    setUnreadCount((prev) => prev + 1);
+    // Con WebSockets, los incrementos son automáticos desde el servidor
+    // Este método se mantiene para compatibilidad pero no hace nada
+    console.log("Incremento automático via WebSocket");
   }, []);
+
   const decrementUnreadCount = useCallback(() => {
-    setUnreadCount((prev) => Math.max(0, prev - 1));
+    // Con WebSockets, los decrementos son automáticos desde el servidor
+    // Este método se mantiene para compatibilidad pero no hace nada
+    console.log("Decremento automático via WebSocket");
   }, []);
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 10000);
-    return () => clearInterval(interval);
-  }, [fetchUnreadCount]);
+
   const value = {
     unreadCount,
     updateUnreadCount,
     incrementUnreadCount,
     decrementUnreadCount,
-    loading,
+    loading: !connected && !error, // Loading si no está conectado y no hay error
   };
+
   return (
     <MessageNotificationsContext.Provider value={value}>
       {children}
