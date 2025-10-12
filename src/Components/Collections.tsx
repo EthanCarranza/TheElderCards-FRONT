@@ -42,8 +42,12 @@ const Collections: React.FC = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [collections, setCollections] = useState<CollectionItem[]>([]);
-  const [collectionStats, setCollectionStats] = useState<Record<string, CollectionStats>>({});
-  const [collectionInteractions, setCollectionInteractions] = useState<Record<string, CollectionInteraction>>({});
+  const [collectionStats, setCollectionStats] = useState<
+    Record<string, CollectionStats>
+  >({});
+  const [collectionInteractions, setCollectionInteractions] = useState<
+    Record<string, CollectionInteraction>
+  >({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
@@ -78,7 +82,9 @@ const Collections: React.FC = () => {
   };
   const [image, setImage] = useState<File | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingCollection, setEditingCollection] = useState<string | null>(null);
+  const [editingCollection, setEditingCollection] = useState<string | null>(
+    null
+  );
   const [editForm, setEditForm] = useState({
     title: "",
     description: "",
@@ -106,32 +112,35 @@ const Collections: React.FC = () => {
       const response = await apiFetch<CollectionStats>(
         `/collections/${collectionId}/stats`
       );
-      setCollectionStats(prev => ({
+      setCollectionStats((prev) => ({
         ...prev,
-        [collectionId]: response.data
+        [collectionId]: response.data,
       }));
     } catch (err) {
       console.error("Error loading stats:", err);
     }
   }, []);
 
-  const loadCollectionInteraction = useCallback(async (collectionId: string) => {
-    if (!user) return;
-    try {
-      const response = await apiFetch<CollectionInteraction>(
-        `/collections/${collectionId}/interaction`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
-      setCollectionInteractions(prev => ({
-        ...prev,
-        [collectionId]: response.data
-      }));
-    } catch (err) {
-      console.error("Error loading interaction:", err);
-    }
-  }, [user]);
+  const loadCollectionInteraction = useCallback(
+    async (collectionId: string) => {
+      if (!user) return;
+      try {
+        const response = await apiFetch<CollectionInteraction>(
+          `/collections/${collectionId}/interaction`,
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
+        );
+        setCollectionInteractions((prev) => ({
+          ...prev,
+          [collectionId]: response.data,
+        }));
+      } catch (err) {
+        console.error("Error loading interaction:", err);
+      }
+    },
+    [user]
+  );
 
   const fetchCollections = useCallback(async () => {
     setLoading(true);
@@ -148,16 +157,21 @@ const Collections: React.FC = () => {
       const headers: Record<string, string> = user
         ? { Authorization: `Bearer ${user.token}` }
         : {};
-      
-      const response = await apiFetch<CollectionsResponse>(`/collections${query}`, {
-        headers,
-      });
-      const { collections: fetchedCollections = [], totalPages: fetchedTotalPages = 1 } =
-        response.data;
+
+      const response = await apiFetch<CollectionsResponse>(
+        `/collections${query}`,
+        {
+          headers,
+        }
+      );
+      const {
+        collections: fetchedCollections = [],
+        totalPages: fetchedTotalPages = 1,
+      } = response.data;
       setCollections(fetchedCollections);
       setTotalPages(fetchedTotalPages);
 
-      fetchedCollections.forEach(col => {
+      fetchedCollections.forEach((col) => {
         void loadCollectionStats(col._id);
         if (user) {
           void loadCollectionInteraction(col._id);
@@ -302,25 +316,25 @@ const Collections: React.FC = () => {
   const toggleFavorite = async (collectionId: string) => {
     if (!user) return;
     try {
-      const response = await apiFetch<{ favorited: boolean; stats: CollectionStats }>(
-        `/collections/${collectionId}/favorite`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
-      
-      setCollectionStats(prev => ({
+      const response = await apiFetch<{
+        favorited: boolean;
+        stats: CollectionStats;
+      }>(`/collections/${collectionId}/favorite`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      setCollectionStats((prev) => ({
         ...prev,
-        [collectionId]: response.data.stats
+        [collectionId]: response.data.stats,
       }));
-      
-      setCollectionInteractions(prev => ({
+
+      setCollectionInteractions((prev) => ({
         ...prev,
         [collectionId]: {
           ...prev[collectionId],
-          favorited: response.data.favorited
-        }
+          favorited: response.data.favorited,
+        },
       }));
     } catch (err) {
       console.error("Error al gestionar favoritos:", err);
@@ -331,25 +345,25 @@ const Collections: React.FC = () => {
   const toggleLike = async (collectionId: string) => {
     if (!user) return;
     try {
-      const response = await apiFetch<{ liked: boolean; stats: CollectionStats }>(
-        `/collections/${collectionId}/like`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
-      );
-      
-      setCollectionInteractions(prev => ({
+      const response = await apiFetch<{
+        liked: boolean;
+        stats: CollectionStats;
+      }>(`/collections/${collectionId}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      setCollectionInteractions((prev) => ({
         ...prev,
         [collectionId]: {
           ...prev[collectionId],
-          liked: response.data.liked
-        }
+          liked: response.data.liked,
+        },
       }));
-      
-      setCollectionStats(prev => ({
+
+      setCollectionStats((prev) => ({
         ...prev,
-        [collectionId]: response.data.stats
+        [collectionId]: response.data.stats,
       }));
     } catch (err) {
       console.error("Error al dar me gusta:", err);
@@ -440,7 +454,7 @@ const Collections: React.FC = () => {
       )}
 
       {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
-      
+
       {loading ? (
         <div className="text-white text-center py-8">Cargando...</div>
       ) : collections.length === 0 ? (
@@ -480,8 +494,8 @@ const Collections: React.FC = () => {
                         {!isOwner && (
                           <button
                             title={
-                              collectionInteractions[col._id]?.liked 
-                                ? "Quitar me gusta" 
+                              collectionInteractions[col._id]?.liked
+                                ? "Quitar me gusta"
                                 : "Me gusta"
                             }
                             onClick={(e) => {
@@ -498,12 +512,12 @@ const Collections: React.FC = () => {
                             ❤️
                           </button>
                         )}
-                        
+
                         {!isOwner && (
                           <button
                             title={
                               collectionInteractions[col._id]?.favorited
-                                ? "Quitar de favoritos" 
+                                ? "Quitar de favoritos"
                                 : "Marcar como favorito"
                             }
                             onClick={(e) => {
@@ -603,9 +617,7 @@ const Collections: React.FC = () => {
             </span>
             {page < totalPages && totalPages > 1 && (
               <button
-                onClick={() =>
-                  setPage((p) => Math.min(totalPages, p + 1))
-                }
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
               >
                 Siguiente
@@ -647,7 +659,7 @@ const Collections: React.FC = () => {
                 setForm((f) => ({ ...f, title: e.target.value }))
               }
               required
-              maxLength={60}
+              maxLength={40}
             />
             <textarea
               className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
@@ -659,12 +671,16 @@ const Collections: React.FC = () => {
                   setForm((f) => ({ ...f, description: value }));
                   setDescError("");
                 } else {
-                  setDescError("La descripción no puede superar los 1000 caracteres.");
+                  setDescError(
+                    "La descripción no puede superar los 1000 caracteres."
+                  );
                 }
               }}
               rows={3}
             />
-            <div className="text-xs text-gray-300 mt-1">{countCharacters(form.description)} / 1000</div>
+            <div className="text-xs text-gray-300 mt-1">
+              {countCharacters(form.description)} / 1000
+            </div>
             {descError && (
               <div className="text-xs text-red-400 mt-1">{descError}</div>
             )}
@@ -737,6 +753,7 @@ const Collections: React.FC = () => {
                   }
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-black"
                   required
+                  maxLength={40}
                 />
               </div>
 
@@ -756,13 +773,17 @@ const Collections: React.FC = () => {
                       setEditForm((f) => ({ ...f, description: value }));
                       setDescError("");
                     } else {
-                      setDescError("La descripción no puede superar los 1000 caracteres.");
+                      setDescError(
+                        "La descripción no puede superar los 1000 caracteres."
+                      );
                     }
                   }}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-black"
                   rows={3}
                 />
-                <div className="text-xs text-gray-500 mt-1">{countCharacters(editForm.description)} / 1000</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {countCharacters(editForm.description)} / 1000
+                </div>
                 {descError && (
                   <div className="text-xs text-red-600 mt-1">{descError}</div>
                 )}
