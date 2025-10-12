@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { extractErrorMessage } from "../utils/errors";
 
@@ -15,12 +15,16 @@ interface EditFactionFormProps {
   faction: Faction;
   onUpdated: (factionData: FormData) => Promise<void>;
   onCancel: () => void;
+  errorMsg?: string;
+  clearErrorMsg?: () => void;
 }
 
 const EditFactionForm = ({
   faction,
   onUpdated,
   onCancel,
+  errorMsg,
+  clearErrorMsg,
 }: EditFactionFormProps) => {
   const { user } = useAuth();
   const [form, setForm] = useState({
@@ -32,6 +36,9 @@ const EditFactionForm = ({
   const [img, setImg] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+    if (errorMsg) setError(errorMsg);
+  }, [errorMsg]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -50,7 +57,8 @@ const EditFactionForm = ({
     if (!user) return;
 
     setLoading(true);
-    setError("");
+  setError("");
+  if (clearErrorMsg) clearErrorMsg();
 
     try {
       const formData = new FormData();
@@ -171,7 +179,11 @@ const EditFactionForm = ({
       <div className="flex gap-3 pt-4">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => {
+            setError("");
+            if (clearErrorMsg) clearErrorMsg();
+            onCancel();
+          }}
           className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
         >
           Cancelar

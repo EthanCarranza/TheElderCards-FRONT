@@ -74,9 +74,9 @@ const Factions = () => {
     }
   };
 
+  const [editErrorMsg, setEditErrorMsg] = useState<string | undefined>(undefined);
   const handleUpdateFaction = async (factionData: FormData) => {
     if (!user || !isAdmin || !editingFaction) return;
-
     try {
       const response = await apiFetch<Faction>(
         `/factions/${editingFaction._id}`,
@@ -86,7 +86,6 @@ const Factions = () => {
           body: factionData,
         }
       );
-
       if (response.data) {
         setFactions((prev) =>
           prev.map((faction) =>
@@ -95,11 +94,16 @@ const Factions = () => {
         );
         setEditingFaction(null);
       }
-    } catch (updateError: unknown) {
-      console.error("Error al actualizar facción:", updateError);
-      setError(
-        extractErrorMessage(updateError, "No se pudo actualizar la facción")
-      );
+    } catch (updateError) {
+      const msg = extractErrorMessage(updateError, "No se pudo actualizar la facción");
+      if (
+        msg.includes("Ya existe una facción con ese nombre") ||
+        msg.includes("facción con ese nombre")
+      ) {
+        setEditErrorMsg(msg);
+      } else {
+        setError(msg);
+      }
     }
   };
 
@@ -252,7 +256,13 @@ const Factions = () => {
               <EditFactionForm
                 faction={editingFaction}
                 onUpdated={handleUpdateFaction}
-                onCancel={() => setEditingFaction(null)}
+                onCancel={() => {
+                  setEditingFaction(null);
+                  setError("");
+                  setEditErrorMsg(undefined);
+                }}
+                errorMsg={editErrorMsg}
+                clearErrorMsg={() => setEditErrorMsg(undefined)}
               />
             </div>
           </div>
