@@ -70,6 +70,12 @@ const Collections: React.FC = () => {
     description: "",
     isPrivate: false,
   });
+  const [descError, setDescError] = useState("");
+  const countCharacters = (text: string): number => {
+    return text.split("").reduce((count, char) => {
+      return count + (/[A-Z]/.test(char) ? 2 : 1);
+    }, 0);
+  };
   const [image, setImage] = useState<File | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCollection, setEditingCollection] = useState<string | null>(null);
@@ -647,11 +653,21 @@ const Collections: React.FC = () => {
               className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
               placeholder="Descripción"
               value={form.description}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, description: e.target.value }))
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                if (countCharacters(value) <= 1000) {
+                  setForm((f) => ({ ...f, description: value }));
+                  setDescError("");
+                } else {
+                  setDescError("La descripción no puede superar los 1000 caracteres.");
+                }
+              }}
               rows={3}
             />
+            <div className="text-xs text-gray-300 mt-1">{countCharacters(form.description)} / 1000</div>
+            {descError && (
+              <div className="text-xs text-red-400 mt-1">{descError}</div>
+            )}
             <div className="flex items-center gap-2">
               <input
                 id="isPrivate"
@@ -734,12 +750,22 @@ const Collections: React.FC = () => {
                 <textarea
                   id="edit-description"
                   value={editForm.description}
-                  onChange={(e) =>
-                    setEditForm((f) => ({ ...f, description: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (countCharacters(value) <= 1000) {
+                      setEditForm((f) => ({ ...f, description: value }));
+                      setDescError("");
+                    } else {
+                      setDescError("La descripción no puede superar los 1000 caracteres.");
+                    }
+                  }}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-black"
                   rows={3}
                 />
+                <div className="text-xs text-gray-500 mt-1">{countCharacters(editForm.description)} / 1000</div>
+                {descError && (
+                  <div className="text-xs text-red-600 mt-1">{descError}</div>
+                )}
               </div>
 
               <div className="flex items-center gap-2">

@@ -33,6 +33,25 @@ const EditFactionForm = ({
     territory: faction.territory,
     color: faction.color,
   });
+  const [descError, setDescError] = useState("");
+  const countCharacters = (text: string): number => {
+    return text.split("").reduce((count, char) => {
+      return count + (/[A-Z]/.test(char) ? 2 : 1);
+    }, 0);
+  };
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    if (name === "description") {
+      if (countCharacters(value) <= 1000) {
+        setForm((prev) => ({ ...prev, description: value }));
+        setDescError("");
+      } else {
+        setDescError("La descripción no puede superar los 1000 caracteres.");
+      }
+      return;
+    }
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
   const [img, setImg] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -124,6 +143,10 @@ const EditFactionForm = ({
             className="w-full h-24 resize-none rounded-lg p-3 border border-gray-300 text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             required
           />
+          <div className="text-xs text-gray-500 mt-1">{countCharacters(form.description)} / 1000</div>
+          {descError && (
+            <div className="text-xs text-red-600 mt-1">{descError}</div>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
