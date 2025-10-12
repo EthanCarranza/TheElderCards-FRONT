@@ -36,6 +36,7 @@ interface Filters {
   sort?: string;
   favorites?: string;
   liked?: string;
+  myCollections?: string;
 }
 
 const Collections: React.FC = () => {
@@ -378,79 +379,99 @@ const Collections: React.FC = () => {
       </h2>
 
       {!showCreateForm && (
-        <div className="mb-4 text-black grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
-          <input
-            name="title"
-            value={filters.title || ""}
-            onChange={handleFilterChange}
-            placeholder="Título"
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
-          />
-          <input
-            name="creator"
-            value={filters.creator || ""}
-            onChange={handleFilterChange}
-            placeholder="Creador"
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
-          />
+        <>
+          <div className="mb-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 text-black">
+              <input
+                name="title"
+                value={filters.title || ""}
+                onChange={handleFilterChange}
+                placeholder="Título"
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+              />
+              <input
+                name="creator"
+                value={filters.creator || ""}
+                onChange={handleFilterChange}
+                placeholder="Creador"
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+              />
+              <select
+                name="sort"
+                value={filters.sort ?? ""}
+                onChange={handleSortChange}
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+              >
+                <option value="">Fecha (nuevas primero)</option>
+                <option value="date_desc">Fecha (nuevas primero)</option>
+                <option value="date_asc">Fecha (antiguas primero)</option>
+                <option value="title_asc">Título A-Z</option>
+                <option value="title_desc">Título Z-A</option>
+                <option value="creator_asc">Creador A-Z</option>
+                <option value="creator_desc">Creador Z-A</option>
+                <option value="most_liked">Más valoradas</option>
+              </select>
+            </div>
+          </div>
           {user && (
-            <>
-              <button
-                onClick={() => {
-                  const newValue = filters.favorites === "true" ? "" : "true";
-                  setFilters((prev) => ({ ...prev, favorites: newValue }));
-                  setPage(1);
-                }}
-                className={`p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
-                  filters.favorites === "true"
-                    ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                    : "bg-white hover:bg-gray-50 text-black border border-gray-300"
-                }`}
-              >
-                ⭐ Favoritas
-              </button>
-              <button
-                onClick={() => {
-                  const newValue = filters.liked === "true" ? "" : "true";
-                  setFilters((prev) => ({ ...prev, liked: newValue }));
-                  setPage(1);
-                }}
-                className={`p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
-                  filters.liked === "true"
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-white hover:bg-gray-50 text-black border border-gray-300"
-                }`}
-              >
-                ❤️ Me Gustan
-              </button>
-            </>
+            <div className="mb-4 max-w-4xl mx-auto">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6">
+                <button
+                  onClick={() => {
+                    const newValue = filters.favorites === "true" ? "" : "true";
+                    setFilters((prev) => ({ ...prev, favorites: newValue }));
+                    setPage(1);
+                  }}
+                  className={`p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
+                    filters.favorites === "true"
+                      ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-black border border-gray-300"
+                  }`}
+                >
+                  ⭐ Favoritas
+                </button>
+                <button
+                  onClick={() => {
+                    const newValue = filters.liked === "true" ? "" : "true";
+                    setFilters((prev) => ({ ...prev, liked: newValue }));
+                    setPage(1);
+                  }}
+                  className={`p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
+                    filters.liked === "true"
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-black border border-gray-300"
+                  }`}
+                >
+                  ❤️ Me Gustan
+                </button>
+                <button
+                  onClick={() => {
+                    const newValue = filters.myCollections === "true" ? "" : "true";
+                    setFilters((prev) => ({ ...prev, myCollections: newValue }));
+                    setPage(1);
+                  }}
+                  className={`p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
+                    filters.myCollections === "true"
+                      ? "bg-blue-500 hover:bg-blue-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-black border border-gray-300"
+                  }`}
+                >
+                  👤 Mis Colecciones
+                </button>
+              </div>
+            </div>
           )}
-          <select
-            name="sort"
-            value={filters.sort ?? ""}
-            onChange={handleSortChange}
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full lg:col-span-2 xl:col-span-1"
-          >
-            <option value="">Ordenar por...</option>
-            <option value="date_desc">Fecha (nuevas primero)</option>
-            <option value="date_asc">Fecha (antiguas primero)</option>
-            <option value="title_asc">Título A-Z</option>
-            <option value="title_desc">Título Z-A</option>
-            <option value="creator_asc">Creador A-Z</option>
-            <option value="creator_desc">Creador Z-A</option>
-            <option value="most_liked">Más valoradas</option>
-          </select>
           {user && (
-            <div className="sm:col-span-2 md:col-span-3 lg:col-span-2 xl:col-span-1">
+            <div className="mb-4 flex justify-center">
               <button
-                className="bg-gray-600 hover:bg-gray-700 text-white text-sm md:text-lg xl:text-xl font-light py-2 md:py-3 px-4 md:px-6 rounded-lg w-full"
+                className="bg-gray-600 hover:bg-gray-700 text-white text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-light py-2 sm:py-2.5 md:py-3 lg:py-3.5 xl:py-4 px-6 sm:px-7 md:px-8 lg:px-10 xl:px-12 rounded-lg transition-colors"
                 onClick={() => setShowCreateForm(true)}
               >
                 Crear colección
               </button>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}

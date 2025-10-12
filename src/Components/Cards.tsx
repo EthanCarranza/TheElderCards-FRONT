@@ -40,6 +40,7 @@ interface Filters {
   sort?: string;
   favorites?: string;
   liked?: string;
+  myCards?: string;
 }
 const Cards = () => {
   const [searchParams] = useSearchParams();
@@ -60,6 +61,7 @@ const Cards = () => {
     const sort = searchParams.get("sort");
     const favorites = searchParams.get("favorites");
     const liked = searchParams.get("liked");
+    const myCards = searchParams.get("myCards");
     if (faction) urlFilters.faction = faction;
     if (type) urlFilters.type = type;
     if (title) urlFilters.title = title;
@@ -70,6 +72,7 @@ const Cards = () => {
     if (sort) urlFilters.sort = sort;
     if (favorites) urlFilters.favorites = favorites;
     if (liked) urlFilters.liked = liked;
+    if (myCards) urlFilters.myCards = myCards;
     return urlFilters;
   });
   const [loading, setLoading] = useState(false);
@@ -81,7 +84,7 @@ const Cards = () => {
     setLoading(true);
     setError("");
     let query = `?page=${page}&limit=20`;
-    if (user?.userId && (filters.favorites || filters.liked)) {
+    if (user?.userId && (filters.favorites || filters.liked || filters.myCards)) {
       query += `&user=${encodeURIComponent(user.userId)}`;
     }
     Object.entries(filters).forEach(([key, value]) => {
@@ -210,153 +213,173 @@ const Cards = () => {
           />
         </>
       ) : (
-        <div className="mb-4 text-black grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
-          <select
-            name="type"
-            value={filters.type ? filters.type.toLowerCase() : ""}
-            onChange={handleFilterChange}
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
-          >
-            <option value="">Tipo</option>
-            {CARD_TYPES.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-          <select
-            name="faction"
-            value={filters.faction || ""}
-            onChange={handleFilterChange}
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
-            disabled={factions.length === 0}
-          >
-            <option value="">
-              {factions.length === 0 ? "Sin facciones" : "Facción"}
-            </option>
-            {factions.map((f) => (
-              <option key={f._id} value={f._id}>
-                {f.title}
-              </option>
-            ))}
-          </select>
-          <input
-            name="title"
-            value={filters.title || ""}
-            onChange={handleFilterChange}
-            placeholder="Título"
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
-          />
-          <input
-            name="creator"
-            value={filters.creator || ""}
-            onChange={handleFilterChange}
-            placeholder="Creador"
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
-          />
-          <input
-            name="cost"
-            type="number"
-            min={0}
-            max={10}
-            value={filters.cost || ""}
-            onChange={handleFilterChange}
-            placeholder="Coste"
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
-          />
-          {filters.type === "Creature" && (
-            <>
+        <>
+          <div className="mb-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 text-black">
               <input
-                name="attack"
+                name="title"
+                value={filters.title || ""}
+                onChange={handleFilterChange}
+                placeholder="Título"
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+              />
+              <input
+                name="creator"
+                value={filters.creator || ""}
+                onChange={handleFilterChange}
+                placeholder="Creador"
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+              />
+              <input
+                name="cost"
                 type="number"
                 min={0}
                 max={10}
-                value={filters.attack || ""}
+                value={filters.cost || ""}
                 onChange={handleFilterChange}
-                placeholder="Ataque"
-                className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
+                placeholder="Coste"
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
               />
-              <input
-                name="defense"
-                type="number"
-                min={1}
-                max={10}
-                value={filters.defense || ""}
+              <select
+                name="type"
+                value={filters.type ? filters.type.toLowerCase() : ""}
                 onChange={handleFilterChange}
-                placeholder="Defensa"
-                className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full"
-              />
-            </>
-          )}
-          {}
-          {user && (
-            <>
-              <button
-                onClick={() => {
-                  const newValue = filters.favorites === "true" ? "" : "true";
-                  setFilters((prev) => ({ ...prev, favorites: newValue }));
-                  setPage(1);
-                }}
-                className={`p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
-                  filters.favorites === "true"
-                    ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                    : "bg-white hover:bg-gray-50 text-black border border-gray-300"
-                }`}
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
               >
-                ⭐ Favoritas
-              </button>
-              <button
-                onClick={() => {
-                  const newValue = filters.liked === "true" ? "" : "true";
-                  setFilters((prev) => ({ ...prev, liked: newValue }));
-                  setPage(1);
-                }}
-                className={`p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
-                  filters.liked === "true"
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-white hover:bg-gray-50 text-black border border-gray-300"
-                }`}
+                <option value="">Tipo</option>
+                {CARD_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                name="faction"
+                value={filters.faction || ""}
+                onChange={handleFilterChange}
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+                disabled={factions.length === 0}
               >
-                ❤️ Me Gustan
-              </button>
-            </>
-          )}
-          <select
-            name="sort"
-            value={filters.sort ?? ""}
-            onChange={handleSortChange}
-            className="p-2 md:p-3 text-sm md:text-lg xl:text-xl rounded w-full lg:col-span-2 xl:col-span-1"
-          >
-            <option value="">Ordenar por...</option>
-            <option value="date_desc">Fecha (nuevas primero)</option>
-            <option value="date_asc">Fecha (antiguas primero)</option>
-            <option value="title_asc">Título A-Z</option>
-            <option value="title_desc">Título Z-A</option>
-            <option value="creator_asc">Creador A-Z</option>
-            <option value="creator_desc">Creador Z-A</option>
-            <option value="faction_asc">Facción A-Z</option>
-            <option value="faction_desc">Facción Z-A</option>
-            <option value="type_asc">Tipo A-Z</option>
-            <option value="type_desc">Tipo Z-A</option>
-            <option value="cost_asc">Coste asc</option>
-            <option value="cost_desc">Coste desc</option>
-            <option value="attack_asc">Ataque asc</option>
-            <option value="attack_desc">Ataque desc</option>
-            <option value="defense_asc">Defensa asc</option>
-            <option value="defense_desc">Defensa desc</option>
-            <option value="most_liked">Más valoradas</option>
-          </select>
+                <option value="">
+                  {factions.length === 0 ? "Sin facciones" : "Facción"}
+                </option>
+                {factions.map((f) => (
+                  <option key={f._id} value={f._id}>
+                    {f.title}
+                  </option>
+                ))}
+              </select>
+              <select
+                name="sort"
+                value={filters.sort ?? ""}
+                onChange={handleSortChange}
+                className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+              >
+                <option value="">Fecha (nuevas primero)</option>
+                <option value="date_desc">Fecha (nuevas primero)</option>
+                <option value="date_asc">Fecha (antiguas primero)</option>
+                <option value="title_asc">Título A-Z</option>
+                <option value="title_desc">Título Z-A</option>
+                <option value="creator_asc">Creador A-Z</option>
+                <option value="creator_desc">Creador Z-A</option>
+                <option value="faction_asc">Facción A-Z</option>
+                <option value="faction_desc">Facción Z-A</option>
+                <option value="type_asc">Tipo A-Z</option>
+                <option value="type_desc">Tipo Z-A</option>
+                <option value="cost_asc">Coste asc</option>
+                <option value="cost_desc">Coste desc</option>
+                <option value="attack_asc">Ataque asc</option>
+                <option value="attack_desc">Ataque desc</option>
+                <option value="defense_asc">Defensa asc</option>
+                <option value="defense_desc">Defensa desc</option>
+                <option value="most_liked">Más valoradas</option>
+              </select>
+            </div>
+            {filters.type === "Creature" && (
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 text-black mt-2 sm:mt-3 md:mt-4">
+                <input
+                  name="attack"
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={filters.attack || ""}
+                  onChange={handleFilterChange}
+                  placeholder="Ataque"
+                  className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+                />
+                <input
+                  name="defense"
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={filters.defense || ""}
+                  onChange={handleFilterChange}
+                  placeholder="Defensa"
+                  className="p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full"
+                />
+                <div></div>
+              </div>
+            )}
+          </div>
           {user && (
-            <div className="sm:col-span-2 md:col-span-3 lg:col-span-2 xl:col-span-1">
+            <div className="mb-4 max-w-4xl mx-auto">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6">
+                <button
+                  onClick={() => {
+                    const newValue = filters.favorites === "true" ? "" : "true";
+                    setFilters((prev) => ({ ...prev, favorites: newValue }));
+                    setPage(1);
+                  }}
+                  className={`p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
+                    filters.favorites === "true"
+                      ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-black border border-gray-300"
+                  }`}
+                >
+                  ⭐ Favoritas
+                </button>
+                <button
+                  onClick={() => {
+                    const newValue = filters.liked === "true" ? "" : "true";
+                    setFilters((prev) => ({ ...prev, liked: newValue }));
+                    setPage(1);
+                  }}
+                  className={`p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
+                    filters.liked === "true"
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-black border border-gray-300"
+                  }`}
+                >
+                  ❤️ Me Gustan
+                </button>
+                <button
+                  onClick={() => {
+                    const newValue = filters.myCards === "true" ? "" : "true";
+                    setFilters((prev) => ({ ...prev, myCards: newValue }));
+                    setPage(1);
+                  }}
+                  className={`p-2 sm:p-2.5 md:p-3 lg:p-3.5 xl:p-4 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl rounded w-full font-medium transition-colors ${
+                    filters.myCards === "true"
+                      ? "bg-blue-500 hover:bg-blue-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-black border border-gray-300"
+                  }`}
+                >
+                  👤 Mis Cartas
+                </button>
+              </div>
+            </div>
+          )}
+          {user && (
+            <div className="mb-4 flex justify-center">
               <button
-                className="bg-gray-600 hover:bg-gray-700 text-white text-sm md:text-lg xl:text-xl font-light py-2 md:py-3 px-4 md:px-6 rounded-lg w-full"
+                className="bg-gray-600 hover:bg-gray-700 text-white text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-light py-2 sm:py-2.5 md:py-3 lg:py-3.5 xl:py-4 px-6 sm:px-7 md:px-8 lg:px-10 xl:px-12 rounded-lg transition-colors"
                 onClick={() => setShowCreate(true)}
               >
                 Crear carta
               </button>
             </div>
           )}
-        </div>
+        </>
       )}
       {!showCreate &&
         (loading ? (
