@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import PageLayout from "./PageLayout";
 import { apiFetch } from "./api";
 import { useAuth } from "../hooks/useAuth";
@@ -42,6 +42,7 @@ interface Filters {
 const Collections: React.FC = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [collections, setCollections] = useState<CollectionItem[]>([]);
   const [collectionStats, setCollectionStats] = useState<
     Record<string, CollectionStats>
@@ -92,7 +93,6 @@ const Collections: React.FC = () => {
     isPrivate: false,
   });
   const [editImage, setEditImage] = useState<File | null>(null);
-  const canCreate = !!user;
 
   const getCreatorName = (
     creator: string | { _id: string; username?: string; email?: string }
@@ -147,7 +147,10 @@ const Collections: React.FC = () => {
     setLoading(true);
     setError("");
     let query = `?page=${page}&limit=20`;
-    if (user?.userId && (filters.favorites || filters.liked || filters.myCollections)) {
+    if (
+      user?.userId &&
+      (filters.favorites || filters.liked || filters.myCollections)
+    ) {
       query += `&user=${encodeURIComponent(user.userId)}`;
     }
     Object.entries(filters).forEach(([key, value]) => {
@@ -302,11 +305,11 @@ const Collections: React.FC = () => {
       setCollections((prev) => [resp.data, ...prev]);
       setForm({ title: "", description: "", isPrivate: false });
       setImage(null);
-      setCreateSuccess("Colección creada");
+      setCreateSuccess("Colección creada, redirigiendo...");
+
       setTimeout(() => {
-        setShowCreateForm(false);
-        setCreateSuccess("");
-      }, 2000);
+        navigate(`/collections/${resp.data._id}`);
+      }, 1000);
     } catch (e: unknown) {
       setCreateError(extractErrorMessage(e, "Error al crear colección"));
     } finally {
@@ -374,12 +377,118 @@ const Collections: React.FC = () => {
 
   return (
     <PageLayout contentClassName="overflow-y-auto p-3 sm:p-6">
-      <h2 className="text-5xl text-center font-light pb-10 text-white">
-        Colecciones
-      </h2>
-
-      {!showCreateForm && (
+      {showCreateForm ? (
         <>
+          <h2 className="text-5xl text-center font-light pb-10 text-white">
+            Crear Colección
+          </h2>
+          <div className="flex justify-center">
+            <form
+              onSubmit={handleCreate}
+              className="bg-gray-700 p-6 sm:p-8 rounded-lg text-white flex flex-col gap-4 sm:gap-6 w-full max-w-lg mx-auto"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-2xl sm:text-3xl font-semibold">
+                  Nueva Colección
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setForm({ title: "", description: "", isPrivate: false });
+                    setImage(null);
+                    setCreateError("");
+                    setCreateSuccess("");
+                  }}
+                  className="text-gray-300 hover:text-white text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              <input
+                className="p-3 sm:p-4 rounded text-black text-base sm:text-lg"
+                placeholder="Nombre de la colección"
+                value={form.title}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, title: e.target.value }))
+                }
+                required
+                maxLength={40}
+              />
+              <textarea
+                className="p-3 sm:p-4 rounded text-black text-base sm:text-lg"
+                placeholder="Descripción"
+                value={form.description}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (countCharacters(value) <= 1000) {
+                    setForm((f) => ({ ...f, description: value }));
+                    setDescError("");
+                  } else {
+                    setDescError(
+                      "La descripción no puede superar los 1000 caracteres."
+                    );
+                  }
+                }}
+                rows={4}
+              />
+              <div className="text-sm text-gray-300 mt-1">
+                {countCharacters(form.description)} / 1000
+              </div>
+              {descError && (
+                <div className="text-sm text-red-400 mt-1">{descError}</div>
+              )}
+              <div className="flex items-center gap-3">
+                <input
+                  id="isPrivate"
+                  type="checkbox"
+                  checked={form.isPrivate}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, isPrivate: e.target.checked }))
+                  }
+                  className="rounded w-4 h-4"
+                />
+                <label
+                  htmlFor="isPrivate"
+                  className="text-base sm:text-lg text-white"
+                >
+                  Colección privada (solo tú puedes verla)
+                </label>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                className="text-sm sm:text-base"
+                onChange={(e) => setImage(e.target.files?.[0] || null)}
+              />
+              <div className="flex flex-col items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="rounded bg-gray-500 px-6 py-3 font-semibold text-white hover:bg-gray-400 disabled:opacity-60 text-base sm:text-lg w-full"
+                >
+                  {creating ? "Creando..." : "Crear colección"}
+                </button>
+                {createSuccess && (
+                  <span className="text-green-400 text-base text-center">
+                    {createSuccess}
+                  </span>
+                )}
+                {createError && (
+                  <span className="text-red-400 text-base text-center break-words">
+                    {createError}
+                  </span>
+                )}
+              </div>
+            </form>
+          </div>
+        </>
+      ) : (
+        <>
+          <h2 className="text-5xl text-center font-light pb-10 text-white">
+            Colecciones
+          </h2>
+
           <div className="mb-4 max-w-4xl mx-auto">
             <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 text-black">
               <input
@@ -474,284 +583,183 @@ const Collections: React.FC = () => {
               </button>
             </div>
           )}
-        </>
-      )}
 
-      {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
+          {error && <div className="mb-4 text-red-400 text-sm">{error}</div>}
 
-      {loading ? (
-        <div className="text-white text-center py-8">Cargando...</div>
-      ) : collections.length === 0 ? (
-        <div className="flex flex-col items-center justify-center w-full py-12 px-4">
-          <span className="text-lg md:text-xl text-gray-300 font-semibold text-center">
-            No se han encontrado colecciones
-          </span>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 xl:gap-6 pt-4 sm:pt-8 md:pt-12 lg:pt-16 px-2 sm:px-0">
-            {collections.map((col) => {
-              const creatorId =
-                typeof col.creator === "string" ? col.creator : col.creator._id;
-              const isOwner = user?.userId && creatorId === user.userId;
-              return (
-                <Link
-                  key={col._id}
-                  to={`/collections/${col._id}`}
-                  className="group block rounded bg-white/90 text-black shadow p-3 relative hover:shadow-lg transition"
-                  aria-label={`Abrir colección ${col.title}`}
-                >
-                  <div className="relative">
-                    {col.img ? (
-                      <img
-                        src={col.img}
-                        alt={col.title}
-                        className="w-full h-32 sm:h-36 lg:h-40 xl:h-48 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="w-full h-32 sm:h-36 lg:h-40 xl:h-48 bg-gray-200 rounded flex items-center justify-center text-gray-600 text-sm">
-                        Sin imagen
-                      </div>
-                    )}
-                    {user && (
-                      <div className="absolute top-2 right-2 flex gap-1">
-                        {!isOwner && (
-                          <button
-                            title={
-                              collectionInteractions[col._id]?.liked
-                                ? "Quitar me gusta"
-                                : "Me gusta"
-                            }
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              void toggleLike(col._id);
-                            }}
-                            className={`rounded-full p-1.5 sm:p-2 text-sm ${
-                              collectionInteractions[col._id]?.liked
-                                ? "bg-red-400 text-white"
-                                : "bg-black/60 text-white"
-                            }`}
-                          >
-                            ❤️
-                          </button>
-                        )}
-
-                        {!isOwner && (
-                          <button
-                            title={
-                              collectionInteractions[col._id]?.favorited
-                                ? "Quitar de favoritos"
-                                : "Marcar como favorito"
-                            }
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              void toggleFavorite(col._id);
-                            }}
-                            className={`rounded-full p-1.5 sm:p-2 text-sm ${
-                              collectionInteractions[col._id]?.favorited
-                                ? "bg-yellow-400 text-black"
-                                : "bg-black/60 text-white"
-                            }`}
-                          >
-                            ⭐
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-2">
-                    <div className="font-semibold group-hover:underline text-sm sm:text-base lg:text-lg break-words">
-                      {col.title}
-                    </div>
-                    {col.description && (
-                      <div className="text-xs sm:text-sm lg:text-base text-gray-700 line-clamp-2 break-words">
-                        {col.description}
-                      </div>
-                    )}
-                    <div className="mt-2 text-xs sm:text-sm text-gray-600 space-y-1">
-                      <div>{col.cards?.length || 0} cartas</div>
-                      {!col.isPrivate && (
-                        <div className="text-gray-500">
-                          Por: {getCreatorName(col.creator)}
-                        </div>
-                      )}
-                      {col.isPrivate && (
-                        <div className="flex items-center gap-1 text-amber-600">
-                          <span>🔒</span>
-                          <span>Privada</span>
-                        </div>
-                      )}
-                      {collectionStats[col._id] && (
-                        <div className="flex gap-3 text-gray-500 text-xs">
-                          <span className="flex items-center gap-1">
-                            ❤️ {collectionStats[col._id].likes}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            ⭐ {collectionStats[col._id].favorites}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    {user && isOwner && (
-                      <div className="absolute top-2 right-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                        <div className="flex gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEdit(col);
-                            }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
-                            title="Editar colección"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              void handleDelete(col._id);
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
-                            title="Eliminar colección"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-2 mt-6 px-4">
-            {page > 1 && (
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
-              >
-                Anterior
-              </button>
-            )}
-            <span className="text-white text-lg md:text-xl xl:text-2xl font-medium text-center">
-              Página {page} de {totalPages}
-            </span>
-            {page < totalPages && totalPages > 1 && (
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
-              >
-                Siguiente
-              </button>
-            )}
-          </div>
-        </>
-      )}
-
-      {canCreate && showCreateForm && (
-        <div className="mt-6 sm:mt-8 flex flex-col items-center">
-          <form
-            onSubmit={handleCreate}
-            className="bg-gray-700 p-4 sm:p-6 rounded text-white flex flex-col gap-3 sm:gap-4 w-full max-w-md mx-auto"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl sm:text-2xl font-semibold">
-                Crear colección
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCreateForm(false);
-                  setForm({ title: "", description: "", isPrivate: false });
-                  setImage(null);
-                  setCreateError("");
-                  setCreateSuccess("");
-                }}
-                className="text-gray-300 hover:text-white text-xl font-bold"
-              >
-                ×
-              </button>
+          {loading ? (
+            <div className="text-white text-center py-8">Cargando...</div>
+          ) : collections.length === 0 ? (
+            <div className="flex flex-col items-center justify-center w-full py-12 px-4">
+              <span className="text-lg md:text-xl text-gray-300 font-semibold text-center">
+                No se han encontrado colecciones
+              </span>
             </div>
-            <input
-              className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
-              placeholder="Nombre de la colección"
-              value={form.title}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, title: e.target.value }))
-              }
-              required
-              maxLength={40}
-            />
-            <textarea
-              className="p-2 sm:p-3 rounded text-black text-sm sm:text-base"
-              placeholder="Descripción"
-              value={form.description}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (countCharacters(value) <= 1000) {
-                  setForm((f) => ({ ...f, description: value }));
-                  setDescError("");
-                } else {
-                  setDescError(
-                    "La descripción no puede superar los 1000 caracteres."
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 xl:gap-6 pt-4 sm:pt-8 md:pt-12 lg:pt-16 px-2 sm:px-0">
+                {collections.map((col) => {
+                  const creatorId =
+                    typeof col.creator === "string"
+                      ? col.creator
+                      : col.creator._id;
+                  const isOwner = user?.userId && creatorId === user.userId;
+                  return (
+                    <Link
+                      key={col._id}
+                      to={`/collections/${col._id}`}
+                      className="group block rounded bg-white/90 text-black shadow p-3 relative hover:shadow-lg transition"
+                      aria-label={`Abrir colección ${col.title}`}
+                    >
+                      <div className="relative">
+                        {col.img ? (
+                          <img
+                            src={col.img}
+                            alt={col.title}
+                            className="w-full h-32 sm:h-36 lg:h-40 xl:h-48 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-full h-32 sm:h-36 lg:h-40 xl:h-48 bg-gray-200 rounded flex items-center justify-center text-gray-600 text-sm">
+                            Sin imagen
+                          </div>
+                        )}
+                        {user && (
+                          <div className="absolute top-2 right-2 flex gap-1">
+                            {!isOwner && (
+                              <button
+                                title={
+                                  collectionInteractions[col._id]?.liked
+                                    ? "Quitar me gusta"
+                                    : "Me gusta"
+                                }
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  void toggleLike(col._id);
+                                }}
+                                className={`rounded-full p-1.5 sm:p-2 text-sm ${
+                                  collectionInteractions[col._id]?.liked
+                                    ? "bg-red-400 text-white"
+                                    : "bg-black/60 text-white"
+                                }`}
+                              >
+                                ❤️
+                              </button>
+                            )}
+
+                            {!isOwner && (
+                              <button
+                                title={
+                                  collectionInteractions[col._id]?.favorited
+                                    ? "Quitar de favoritos"
+                                    : "Marcar como favorito"
+                                }
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  void toggleFavorite(col._id);
+                                }}
+                                className={`rounded-full p-1.5 sm:p-2 text-sm ${
+                                  collectionInteractions[col._id]?.favorited
+                                    ? "bg-yellow-400 text-black"
+                                    : "bg-black/60 text-white"
+                                }`}
+                              >
+                                ⭐
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-2">
+                        <div className="font-semibold group-hover:underline text-sm sm:text-base lg:text-lg break-words">
+                          {col.title}
+                        </div>
+                        {col.description && (
+                          <div className="text-xs sm:text-sm lg:text-base text-gray-700 line-clamp-2 break-words">
+                            {col.description}
+                          </div>
+                        )}
+                        <div className="mt-2 text-xs sm:text-sm text-gray-600 space-y-1">
+                          <div>{col.cards?.length || 0} cartas</div>
+                          {!col.isPrivate && (
+                            <div className="text-gray-500">
+                              Por: {getCreatorName(col.creator)}
+                            </div>
+                          )}
+                          {col.isPrivate && (
+                            <div className="flex items-center gap-1 text-amber-600">
+                              <span>🔒</span>
+                              <span>Privada</span>
+                            </div>
+                          )}
+                          {collectionStats[col._id] && (
+                            <div className="flex gap-3 text-gray-500 text-xs">
+                              <span className="flex items-center gap-1">
+                                ❤️ {collectionStats[col._id].likes}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                ⭐ {collectionStats[col._id].favorites}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {user && isOwner && (
+                          <div className="absolute top-2 right-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                            <div className="flex gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleEdit(col);
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
+                                title="Editar colección"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  void handleDelete(col._id);
+                                }}
+                                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
+                                title="Eliminar colección"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
                   );
-                }
-              }}
-              rows={3}
-            />
-            <div className="text-xs text-gray-300 mt-1">
-              {countCharacters(form.description)} / 1000
-            </div>
-            {descError && (
-              <div className="text-xs text-red-400 mt-1">{descError}</div>
-            )}
-            <div className="flex items-center gap-2">
-              <input
-                id="isPrivate"
-                type="checkbox"
-                checked={form.isPrivate}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, isPrivate: e.target.checked }))
-                }
-                className="rounded"
-              />
-              <label
-                htmlFor="isPrivate"
-                className="text-sm sm:text-base text-white"
-              >
-                Colección privada (solo tú puedes verla)
-              </label>
-            </div>
-            <input
-              type="file"
-              accept="image/*"
-              className="text-xs sm:text-sm"
-              onChange={(e) => setImage(e.target.files?.[0] || null)}
-            />
-            <div className="flex flex-col items-center gap-3">
-              <button
-                type="submit"
-                disabled={creating}
-                className="rounded bg-gray-500 px-4 py-2 font-semibold text-white hover:bg-gray-400 disabled:opacity-60 text-sm sm:text-base w-full"
-              >
-                {creating ? "Creando..." : "Crear colección"}
-              </button>
-              {createSuccess && (
-                <span className="text-green-400 text-sm text-center">
-                  {createSuccess}
+                })}
+              </div>
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-2 mt-6 px-4">
+                {page > 1 && (
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
+                  >
+                    Anterior
+                  </button>
+                )}
+                <span className="text-white text-lg md:text-xl xl:text-2xl font-medium text-center">
+                  Página {page} de {totalPages}
                 </span>
-              )}
-              {createError && (
-                <span className="text-red-400 text-sm text-center break-words">
-                  {createError}
-                </span>
-              )}
-            </div>
-          </form>
-        </div>
+                {page < totalPages && totalPages > 1 && (
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm md:text-base font-semibold text-gray-800 w-full sm:w-auto"
+                  >
+                    Siguiente
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </>
       )}
 
       {editingCollection && (
