@@ -463,12 +463,19 @@ const Friends = () => {
             </div>
           </div>
         )}
-        <div className="bg-gray-800 rounded-lg p-6">
-          {loading ? (
-            <div className="text-center text-gray-300 py-8">
-              <div>Cargando...</div>
-            </div>
-          ) : activeTab === "friends" ? (
+        {(loading || 
+          (activeTab === "friends") ||
+          (activeTab === "received" && receivedRequests.length > 0) ||
+          (activeTab === "sent" && sentRequests.length > 0) ||
+          (activeTab === "blocked" && blockedUsers.length > 0) ||
+          (activeTab === "search" && (searchResults.length > 0 || (searchQuery.trim() && searchResults.length === 0)))
+        ) && (
+          <div className="bg-gray-800 rounded-lg p-6">
+            {loading ? (
+              <div className="text-center text-gray-300 py-8">
+                <div>Cargando...</div>
+              </div>
+            ) : activeTab === "friends" ? (
             friends.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
                 <h3 className="text-lg font-medium mb-2">
@@ -878,7 +885,8 @@ const Friends = () => {
               </div>
             )
           ) : null}
-        </div>
+          </div>
+        )}
       </div>
     </PageLayout>
   );
