@@ -1,6 +1,5 @@
 import { useFriendshipNotifications } from "../hooks/useFriendshipNotifications";
 
-// Instancia global para actualizar notificaciones desde cualquier componente
 let globalFriendshipNotifications: ReturnType<
   typeof useFriendshipNotifications
 > | null = null;

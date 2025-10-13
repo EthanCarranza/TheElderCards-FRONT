@@ -168,7 +168,6 @@ const CollectionDetail: React.FC = () => {
     }
   };
 
-  // Obtener el ID del creador, sea string o sea objeto
   type CreatorType = string | { _id: string } | null | undefined;
   const getCreatorId = (creator: CreatorType) => {
     if (!creator) return "";

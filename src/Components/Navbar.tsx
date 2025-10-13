@@ -23,7 +23,6 @@ function Navbar() {
   const friendshipNotifications = useFriendshipNotifications();
   const { unreadCount } = useMessageNotifications();
 
-  // Registrar la instancia global para que otros componentes puedan actualizarla
   useEffect(() => {
     setGlobalFriendshipNotifications(friendshipNotifications);
   }, [friendshipNotifications]);

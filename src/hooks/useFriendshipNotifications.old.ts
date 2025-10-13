@@ -47,7 +47,6 @@ export const useFriendshipNotifications =
 
     useEffect(() => {
       fetchPendingCount();
-      // Actualizar cada 10 segundos para sincronizar con nuevas notificaciones
       const interval = setInterval(fetchPendingCount, 10000);
       return () => clearInterval(interval);
     }, [fetchPendingCount]);

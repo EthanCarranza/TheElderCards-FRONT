@@ -116,9 +116,8 @@ const UserPublicProfile = () => {
           try {
             setRelationshipStatus("none");
             setFriendshipId(null);
-            setFriendshipError(""); // Limpiar errores anteriores
+            setFriendshipError("");
 
-            // Verificar PRIMERO si el usuario está bloqueado
             try {
               const blockedResp = await apiFetch<{
                 blockedUsers?: Array<{ _id: string }>;
@@ -197,7 +196,7 @@ const UserPublicProfile = () => {
             );
             if (isActive) {
               setRelationshipStatus("none");
-              setFriendshipError(""); // No mostrar error por problemas de conexión
+              setFriendshipError("");
             }
           }
         }
@@ -314,7 +313,6 @@ const UserPublicProfile = () => {
         headers: { Authorization: `Bearer ${currentUser.token}` },
       });
 
-      // Actualizar el estado después del bloqueo
       setRelationshipStatus("blocked");
       setFriendshipId(null);
     } catch (err) {
@@ -338,7 +336,6 @@ const UserPublicProfile = () => {
         headers: { Authorization: `Bearer ${currentUser.token}` },
       });
 
-      // Actualizar el estado después del desbloqueo
       setRelationshipStatus("none");
       setFriendshipId(null);
     } catch (err) {

@@ -31,7 +31,6 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
 
   useEffect(() => {
     if (!user?.token) {
-      // Limpiar estado cuando no hay usuario
       setUnreadCount(0);
       setPendingCount(0);
       setConnected(false);
@@ -44,12 +43,10 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
       return;
     }
 
-    // Configurar URL del servidor según el entorno
-    const serverUrl = import.meta.env.PROD 
-      ? "https://the-elder-cards-back.vercel.app" 
+    const serverUrl = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL
       : "http://localhost:3000";
 
-    // Crear conexión WebSocket
     const socket = io(serverUrl, {
       auth: {
         token: user.token,
@@ -62,12 +59,10 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
 
     socketRef.current = socket;
 
-    // Event listeners
     socket.on("connect", () => {
       console.log("WebSocket conectado");
       setConnected(true);
       setError(null);
-      // Solicitar conteos iniciales al conectar
       socket.emit("request_initial_counts");
     });
 
@@ -82,7 +77,6 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
       setConnected(false);
     });
 
-    // Eventos de notificaciones
     socket.on("notification_counts", (data: NotificationCounts) => {
       setUnreadCount(data.unreadCount);
       setPendingCount(data.pendingCount);
@@ -98,12 +92,10 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
 
     socket.on("new_message", (message) => {
       console.log("Nuevo mensaje recibido:", message);
-      // El conteo se actualizará con el evento unread_count_updated
     });
 
     socket.on("new_friend_request", (request) => {
       console.log("Nueva solicitud de amistad:", request);
-      // El conteo se actualizará con el evento pending_requests_updated
     });
 
     socket.on("friend_request_response", (response) => {

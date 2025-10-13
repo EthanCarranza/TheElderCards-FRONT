@@ -148,7 +148,7 @@ const Messages = () => {
     } catch (err) {
       console.error("Error al enviar mensaje:", err);
       setError(extractErrorMessage(err, "Error al enviar mensaje"));
-      setNewMessage(messageContent); // Restaurar el mensaje si falló
+      setNewMessage(messageContent);
     } finally {
       setSending(false);
     }

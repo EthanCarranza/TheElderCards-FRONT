@@ -24,7 +24,7 @@ const CARD_DIMENSIONS: CardDimensions = {
   canvasHeight: 600,
   border: 12,
   cutSize: 48,
-  imageHeight: 300, // Half of canvasHeight
+  imageHeight: 300,
   titleBarHeight: 56,
   typeBarHeight: 32,
   footerHeight: 68,
@@ -48,7 +48,7 @@ async function ensureFontLoaded() {
       document.fonts.add(font);
     }
   } catch {
-    // Silently fail and use fallback fonts
+    // Intenta cargar la fuente, y si falla, pone las fuentes predeterminadas
   }
 }
 export async function drawCard(
@@ -190,13 +190,13 @@ export async function drawCard(
   );
   ctx.restore();
   const descY = imageHeight + titleBarHeight + typeBarHeight;
-  const defenseHeight = 38; // Altura del recuadro de ataque/defensa
-  const defenseMargin = 8; // Margen adicional para separación
+  const defenseHeight = 38;
+  const defenseMargin = 8;
   const availableDescHeight = Math.max(
     canvasHeight - border - descY - defenseHeight - defenseMargin,
     0
   );
-  const descHeight = availableDescHeight; // Usar todo el espacio disponible
+  const descHeight = availableDescHeight;
   if (descHeight > 0) {
     ctx.save();
     ctx.fillStyle = "#f0f0f0";
@@ -251,8 +251,8 @@ export async function drawCard(
     if (currentLine && lines.length < maxLines) {
       lines.push(currentLine);
     }
-    const fixedPadding = 16; // Padding fijo arriba y abajo
-    const availableHeight = descHeight - fixedPadding * 2; // Espacio disponible entre paddings
+    const fixedPadding = 16;
+    const availableHeight = descHeight - fixedPadding * 2;
     const totalLines = Math.min(lines.length, maxLines);
     const totalTextHeight = totalLines * lineHeight;
     const extraSpace = Math.max(availableHeight - totalTextHeight, 0);
@@ -262,7 +262,7 @@ export async function drawCard(
       ctx.fillText(line, canvasWidth / 2, y);
     });
     ctx.restore();
-  } // Pie con nombre del creador
+  }
   const footerY = canvasHeight - border - footerHeight;
   ctx.save();
   const footerLabelFont = 12;
