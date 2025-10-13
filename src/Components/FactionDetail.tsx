@@ -115,7 +115,7 @@ const FactionDetail = () => {
             <div className="bg-gradient-to-r from-gray-800 to-gray-900 p-6 lg:p-8 relative">
               <div className="flex items-center gap-4">
                 <span
-                  className="inline-block h-12 w-12 lg:h-16 lg:w-16 rounded-full border-4 border-white shadow-lg"
+                  className="inline-block h-12 w-12 lg:h-16 lg:w-16 rounded-full border-4 border-white shadow-lg flex-shrink-0"
                   style={{ backgroundColor: faction.color }}
                 ></span>
                 <div className="flex-1">
@@ -126,45 +126,45 @@ const FactionDetail = () => {
                     {faction.territory}
                   </p>
                 </div>
-                {isAdmin && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setEditingFaction(faction)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded shadow-lg transition-colors"
-                      title="Editar facción"
-                    >
-                      ✏️ Editar
-                    </button>
-                    {!confirmingDelete ? (
-                      <button
-                        onClick={() => setConfirmingDelete(true)}
-                        disabled={deleting}
-                        className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded shadow-lg transition-colors disabled:opacity-50"
-                        title="Eliminar facción"
-                      >
-                        🗑️ Eliminar
-                      </button>
-                    ) : (
-                      <div className="flex gap-1">
-                        <button
-                          onClick={handleDeleteFaction}
-                          disabled={deleting}
-                          className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded transition-colors disabled:opacity-50"
-                        >
-                          {deleting ? "..." : "Confirmar"}
-                        </button>
-                        <button
-                          onClick={() => setConfirmingDelete(false)}
-                          disabled={deleting}
-                          className="bg-gray-500 hover:bg-gray-600 text-white text-xs font-semibold px-2 py-1 rounded transition-colors disabled:opacity-50"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
+              {isAdmin && (
+                <div className="flex gap-2 mt-4 justify-end">
+                  <button
+                    onClick={() => setEditingFaction(faction)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded shadow-lg transition-colors"
+                    title="Editar facción"
+                  >
+                    ✏️ Editar
+                  </button>
+                  {!confirmingDelete ? (
+                    <button
+                      onClick={() => setConfirmingDelete(true)}
+                      disabled={deleting}
+                      className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded shadow-lg transition-colors disabled:opacity-50"
+                      title="Eliminar facción"
+                    >
+                      🗑️ Eliminar
+                    </button>
+                  ) : (
+                    <div className="flex gap-1">
+                      <button
+                        onClick={handleDeleteFaction}
+                        disabled={deleting}
+                        className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded transition-colors disabled:opacity-50"
+                      >
+                        {deleting ? "..." : "Confirmar"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmingDelete(false)}
+                        disabled={deleting}
+                        className="bg-gray-500 hover:bg-gray-600 text-white text-xs font-semibold px-2 py-1 rounded transition-colors disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             {}
             {faction.img && (
@@ -211,7 +211,7 @@ const FactionDetail = () => {
                     </div>
                     <div className="mt-1 flex items-center gap-3">
                       <span
-                        className="inline-block h-8 w-8 rounded-full border-2 border-gray-400 shadow-sm"
+                        className="inline-block h-8 w-8 rounded-full border-2 border-gray-400 shadow-sm flex-shrink-0"
                         style={{ backgroundColor: faction.color }}
                       ></span>
                       <span className="font-mono text-sm text-gray-700 bg-gray-200 px-2 py-1 rounded">
