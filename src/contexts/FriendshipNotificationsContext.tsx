@@ -9,20 +9,26 @@ interface FriendshipNotificationsProviderProps {
 export const FriendshipNotificationsProvider: React.FC<
   FriendshipNotificationsProviderProps
 > = ({ children }) => {
-  const { pendingCount, connected, error, requestInitialCounts } =
-    useSocketNotifications();
+  const {
+    pendingCount,
+    connected,
+    error,
+    requestInitialCounts,
+    incrementPendingCount,
+    decrementPendingCount,
+  } = useSocketNotifications();
 
   const refreshCount = useCallback(() => {
     requestInitialCounts();
   }, [requestInitialCounts]);
 
   const decrementCount = useCallback(() => {
-    console.log("Decremento automático via WebSocket");
-  }, []);
+    decrementPendingCount();
+  }, [decrementPendingCount]);
 
   const incrementCount = useCallback(() => {
-    console.log("Incremento automático via WebSocket");
-  }, []);
+    incrementPendingCount();
+  }, [incrementPendingCount]);
 
   const value = {
     pendingRequestsCount: pendingCount,

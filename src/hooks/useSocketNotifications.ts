@@ -13,6 +13,14 @@ interface UseSocketNotificationsReturn {
   connected: boolean;
   error: string | null;
   requestInitialCounts: () => void;
+  incrementUnreadCount: () => void;
+  decrementUnreadCount: () => void;
+  incrementPendingCount: () => void;
+  decrementPendingCount: () => void;
+  onNewFriendRequest: (callback: (request: unknown) => void) => void;
+  onFriendRequestResponse: (callback: (response: unknown) => void) => void;
+  onNewMessage: (callback: (message: unknown) => void) => void;
+  onFriendshipRemoved: (callback: (payload: unknown) => void) => void;
 }
 
 export const useSocketNotifications = (): UseSocketNotificationsReturn => {
@@ -29,13 +37,67 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     }
   }, []);
 
+  const incrementUnreadCount = useCallback(() => {
+    setUnreadCount((prev) => prev + 1);
+  }, []);
+
+  const decrementUnreadCount = useCallback(() => {
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const incrementPendingCount = useCallback(() => {
+    setPendingCount((prev) => prev + 1);
+  }, []);
+
+  const decrementPendingCount = useCallback(() => {
+    setPendingCount((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const newFriendRequestCallbackRef = useRef<
+    ((request: unknown) => void) | null
+  >(null);
+  const friendRequestResponseCallbackRef = useRef<
+    ((response: unknown) => void) | null
+  >(null);
+  const newMessageCallbackRef = useRef<((message: unknown) => void) | null>(
+    null
+  );
+  const friendshipRemovedCallbackRef = useRef<
+    ((payload: unknown) => void) | null
+  >(null);
+
+  const onNewFriendRequest = useCallback(
+    (callback: (request: unknown) => void) => {
+      newFriendRequestCallbackRef.current = callback;
+    },
+    []
+  );
+
+  const onFriendRequestResponse = useCallback(
+    (callback: (response: unknown) => void) => {
+      friendRequestResponseCallbackRef.current = callback;
+    },
+    []
+  );
+
+  const onNewMessage = useCallback((callback: (message: unknown) => void) => {
+    newMessageCallbackRef.current = callback;
+  }, []);
+
+  const onFriendshipRemoved = useCallback(
+    (callback: (payload: unknown) => void) => {
+      friendshipRemovedCallbackRef.current = callback;
+    },
+    []
+  );
+
   useEffect(() => {
     if (!user?.token) {
       setUnreadCount(0);
       setPendingCount(0);
       setConnected(false);
       setError(null);
-      
+
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -92,14 +154,30 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
 
     socket.on("new_message", (message) => {
       console.log("Nuevo mensaje recibido:", message);
+      if (newMessageCallbackRef.current) {
+        newMessageCallbackRef.current(message);
+      }
     });
 
     socket.on("new_friend_request", (request) => {
       console.log("Nueva solicitud de amistad:", request);
+      if (newFriendRequestCallbackRef.current) {
+        newFriendRequestCallbackRef.current(request);
+      }
     });
 
     socket.on("friend_request_response", (response) => {
       console.log("Respuesta a solicitud de amistad:", response);
+      if (friendRequestResponseCallbackRef.current) {
+        friendRequestResponseCallbackRef.current(response);
+      }
+    });
+
+    socket.on("friendship_removed", (payload) => {
+      console.log("Amistad/solicitud eliminada:", payload);
+      if (friendshipRemovedCallbackRef.current) {
+        friendshipRemovedCallbackRef.current(payload);
+      }
     });
 
     socket.on("notification_error", (error: string) => {
@@ -120,5 +198,13 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     connected,
     error,
     requestInitialCounts,
+    incrementUnreadCount,
+    decrementUnreadCount,
+    incrementPendingCount,
+    decrementPendingCount,
+    onNewFriendRequest,
+    onFriendRequestResponse,
+    onNewMessage,
+    onFriendshipRemoved,
   };
 };

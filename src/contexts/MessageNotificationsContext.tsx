@@ -9,20 +9,26 @@ interface MessageNotificationsProviderProps {
 export const MessageNotificationsProvider: React.FC<
   MessageNotificationsProviderProps
 > = ({ children }) => {
-  const { unreadCount, connected, error, requestInitialCounts } =
-    useSocketNotifications();
+  const {
+    unreadCount,
+    connected,
+    error,
+    requestInitialCounts,
+    incrementUnreadCount: socketIncrementUnread,
+    decrementUnreadCount: socketDecrementUnread,
+  } = useSocketNotifications();
 
   const updateUnreadCount = useCallback(() => {
     requestInitialCounts();
   }, [requestInitialCounts]);
 
   const incrementUnreadCount = useCallback(() => {
-    console.log("Incremento automático via WebSocket");
-  }, []);
+    socketIncrementUnread();
+  }, [socketIncrementUnread]);
 
   const decrementUnreadCount = useCallback(() => {
-    console.log("Decremento automático via WebSocket");
-  }, []);
+    socketDecrementUnread();
+  }, [socketDecrementUnread]);
 
   const value = {
     unreadCount,

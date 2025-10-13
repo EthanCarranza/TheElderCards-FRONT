@@ -94,7 +94,12 @@ const Cards = () => {
       if (value) query += `&${key}=${encodeURIComponent(value)}`;
     });
     try {
-      const response = await apiFetch<CardsResponse>(`/cards${query}`);
+      const headers: Record<string, string> = user
+        ? { Authorization: `Bearer ${user.token}` }
+        : {};
+      const response = await apiFetch<CardsResponse>(`/cards${query}`, {
+        headers,
+      });
       const { cards: fetchedCards = [], totalPages: fetchedTotalPages = 1 } =
         response.data;
       setCards(fetchedCards);

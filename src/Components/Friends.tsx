@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { updateFriendshipNotifications } from "../utils/friendshipNotifications";
+import { useFriendshipNotifications } from "../hooks/useFriendshipNotifications";
+import { useSocketNotifications } from "../hooks/useSocketNotifications";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import PageLayout from "./PageLayout";
@@ -25,12 +26,20 @@ interface FriendRequest {
   createdAt: string;
 }
 interface SearchUser extends User {
-  relationshipStatus: "none" | "friends" | "sent" | "received" | "blocked";
+  relationshipStatus:
+    | "none"
+    | "friends"
+    | "sent"
+    | "received"
+    | "blocked"
+    | "blocked_by";
 }
 type TabType = "friends" | "received" | "sent" | "search" | "blocked";
 const Friends = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const friendshipNotifications = useFriendshipNotifications();
+  const socketNotifications = useSocketNotifications();
 
   const [activeTab, setActiveTab] = useState<TabType>("friends");
   const [loading, setLoading] = useState(false);
@@ -46,6 +55,19 @@ const Friends = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchShowAll, setSearchShowAll] = useState(false);
+
+  const searchQueryRef = useRef(searchQuery);
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
+  const searchShowAllRef = useRef(searchShowAll);
+  useEffect(() => {
+    searchShowAllRef.current = searchShowAll;
+  }, [searchShowAll]);
+  const performSearchRef = useRef<
+    ((q: string, showAll?: boolean) => void) | null
+  >(null);
   const [processing, setProcessing] = useState<Set<string>>(new Set());
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -106,7 +128,6 @@ const Friends = () => {
   const updateAllCounts = useCallback(async () => {
     if (!user) return;
     try {
-      // Cargar contadores de todas las secciones en paralelo
       const [friendsRes, receivedRes, sentRes, blockedRes] = await Promise.all([
         apiFetch<{ count: number }>("/friendships", {
           headers: { Authorization: `Bearer ${user.token}` },
@@ -131,8 +152,60 @@ const Friends = () => {
     }
   }, [user]);
 
+  const reloadAllData = useCallback(async () => {
+    if (!user) return;
+
+    console.log("Recargando TODOS los datos de amistad");
+
+    try {
+      const [friendsResponse, receivedResponse, sentResponse, blockedResponse] =
+        await Promise.all([
+          apiFetch<{ friends: Friend[]; count: number }>("/friendships", {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+          apiFetch<{ requests: FriendRequest[]; count: number }>(
+            "/friendships/pending",
+            {
+              headers: { Authorization: `Bearer ${user.token}` },
+            }
+          ),
+          apiFetch<{ requests: FriendRequest[]; count: number }>(
+            "/friendships/sent",
+            {
+              headers: { Authorization: `Bearer ${user.token}` },
+            }
+          ),
+          apiFetch<{ blockedUsers: User[]; count: number }>(
+            "/friendships/blocked",
+            {
+              headers: { Authorization: `Bearer ${user.token}` },
+            }
+          ),
+        ]);
+
+      setFriends(friendsResponse.data.friends || []);
+      setFriendsCount(friendsResponse.data.count || 0);
+      setReceivedRequests(receivedResponse.data.requests || []);
+      setReceivedCount(receivedResponse.data.count || 0);
+      setSentRequests(sentResponse.data.requests || []);
+      setSentCount(sentResponse.data.count || 0);
+      setBlockedUsers(blockedResponse.data.blockedUsers || []);
+      setBlockedCount(blockedResponse.data.count || 0);
+
+      if (activeTab === "search") {
+        const fn = performSearchRef.current;
+        if (fn) {
+          fn(searchQueryRef.current, searchShowAllRef.current);
+        }
+      }
+    } catch (err) {
+      console.error("Error recargando todos los datos:", err);
+    }
+  }, [user, activeTab]);
+
   const performSearch = useCallback(
     async (query: string, showAll = false) => {
+      setSearchShowAll(showAll);
       if (!user) return;
 
       setSearching(true);
@@ -166,16 +239,24 @@ const Friends = () => {
     [user]
   );
 
+  useEffect(() => {
+    performSearchRef.current = (q: string, showAll?: boolean) => {
+      void (async () => {
+        await performSearch(q, showAll);
+      })();
+    };
+  }, [performSearch]);
+
   const handleSearchAll = () => {
-    setSearchQuery(""); // Limpiar el campo de búsqueda
-    performSearch("", true);
+    setSearchShowAll(true);
+    setSearchQuery("");
+    void performSearch("", true);
   };
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Cargar contadores al montar el componente y mantenerlos actualizados
   useEffect(() => {
     updateAllCounts();
   }, [updateAllCounts]);
@@ -189,6 +270,27 @@ const Friends = () => {
       setSearchResults([]);
     }
   }, [searchQuery, activeTab, performSearch]);
+
+  useEffect(() => {
+    socketNotifications.onNewFriendRequest(() => {
+      console.log("Nueva solicitud recibida - recargando TODO");
+      reloadAllData();
+    });
+
+    socketNotifications.onFriendRequestResponse(() => {
+      console.log("Respuesta a solicitud recibida - recargando TODO");
+      reloadAllData();
+    });
+
+    socketNotifications.onNewMessage(() => {
+      console.log("Nuevo mensaje recibido");
+    });
+
+    socketNotifications.onFriendshipRemoved(() => {
+      console.log("Amistad eliminada - recargando TODO");
+      reloadAllData();
+    });
+  }, [socketNotifications, reloadAllData]);
 
   const sendFriendRequest = async (
     recipientId: string,
@@ -208,8 +310,7 @@ const Friends = () => {
           u._id === recipientId ? { ...u, relationshipStatus: "sent" } : u
         )
       );
-      // Actualizar contadores automáticamente
-      await updateAllCounts();
+      await reloadAllData();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al enviar solicitud"));
     } finally {
@@ -233,11 +334,8 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
         body: { action },
       });
-      await loadData();
-      // Actualizar contadores automáticamente
-      await updateAllCounts();
-      // Decrementar notificaciones de amistad en la navbar
-      updateFriendshipNotifications.decrement();
+      await reloadAllData();
+      friendshipNotifications.decrementCount();
       if (action === "accept" && activeTab !== "friends") {
         setActiveTab("friends");
       }
@@ -260,9 +358,7 @@ const Friends = () => {
         method: "DELETE",
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      await loadData();
-      // Actualizar contadores automáticamente
-      await updateAllCounts();
+      await reloadAllData();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al eliminar relación"));
     } finally {
@@ -284,7 +380,6 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      // Actualizar el estado local según la pestaña activa
       if (activeTab === "search") {
         setSearchResults((prev) =>
           prev.map((u) =>
@@ -292,10 +387,8 @@ const Friends = () => {
           )
         );
       } else {
-        await loadData(); // Recargar datos para otras pestañas
+        await reloadAllData();
       }
-      // Actualizar contadores automáticamente
-      await updateAllCounts();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al bloquear usuario"));
     } finally {
@@ -317,7 +410,6 @@ const Friends = () => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      // Actualizar el estado local según la pestaña activa
       if (activeTab === "search") {
         setSearchResults((prev) =>
           prev.map((u) =>
@@ -325,10 +417,8 @@ const Friends = () => {
           )
         );
       } else {
-        await loadData(); // Recargar datos para otras pestañas
+        await reloadAllData();
       }
-      // Actualizar contadores automáticamente
-      await updateAllCounts();
     } catch (err) {
       setError(extractErrorMessage(err, "Error al desbloquear usuario"));
     } finally {
@@ -463,428 +553,448 @@ const Friends = () => {
             </div>
           </div>
         )}
-        {(loading || 
-          (activeTab === "friends") ||
+        {(loading ||
+          activeTab === "friends" ||
           (activeTab === "received" && receivedRequests.length > 0) ||
           (activeTab === "sent" && sentRequests.length > 0) ||
           (activeTab === "blocked" && blockedUsers.length > 0) ||
-          (activeTab === "search" && (searchResults.length > 0 || (searchQuery.trim() && searchResults.length === 0)))
-        ) && (
+          (activeTab === "search" &&
+            (searchResults.length > 0 ||
+              (searchQuery.trim() && searchResults.length === 0)))) && (
           <div className="bg-gray-800 rounded-lg p-6">
             {loading ? (
               <div className="text-center text-gray-300 py-8">
                 <div>Cargando...</div>
               </div>
             ) : activeTab === "friends" ? (
-            friends.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
-                <h3 className="text-lg font-medium mb-2">
-                  No tienes amigos aún
-                </h3>
-                <p>Busca usuarios y envíales solicitudes de amistad</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {friends.map((friend) => (
-                  <div
-                    key={friend.friendshipId}
-                    className="bg-gray-700 rounded-lg p-4"
-                  >
+              friends.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <h3 className="text-lg font-medium mb-2">
+                    No tienes amigos aún
+                  </h3>
+                  <p>Busca usuarios y envíales solicitudes de amistad</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {friends.map((friend) => (
                     <div
-                      className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors"
-                      onClick={() =>
-                        friend.user && handleUserClick(friend.user._id)
-                      }
-                      title={friend.user ? "Ver perfil" : "Usuario eliminado"}
+                      key={friend.friendshipId}
+                      className="bg-gray-700 rounded-lg p-4"
                     >
-                      <img
-                        src={getUserAvatar(friend.user)}
-                        alt={getUserDisplayName(friend.user)}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <div className="font-semibold text-white">
-                          {getUserDisplayName(friend.user)}
-                        </div>
-                        <div className="text-sm text-gray-400">
-                          Amigos desde {formatDate(friend.friendsSince)}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {friend.user
-                            ? "Clic para ver perfil"
-                            : "Este usuario ya no existe"}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() =>
-                            friend.user &&
-                            navigate(`/messages/${friend.user._id}`)
-                          }
-                          disabled={!friend.user}
-                          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                        >
-                          {friend.user ? "Enviar mensaje" : "Usuario eliminado"}
-                        </button>
-                        <button
-                          onClick={() => removeFriendship(friend.friendshipId)}
-                          disabled={processing.has(friend.friendshipId)}
-                          className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                        >
-                          {processing.has(friend.friendshipId)
-                            ? "Eliminando..."
-                            : "Eliminar amistad"}
-                        </button>
-                      </div>
-                      {friend.user && (
-                        <button
-                          onClick={() => blockUser(friend.user!._id)}
-                          disabled={processing.has(friend.user._id)}
-                          className="w-full px-4 py-1 bg-gray-700 hover:bg-gray-800 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors border border-gray-600"
-                        >
-                          {processing.has(friend.user._id)
-                            ? "Bloqueando..."
-                            : "🚫 Bloquear usuario"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : activeTab === "received" ? (
-            receivedRequests.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
-                <h3 className="text-lg font-medium mb-2">
-                  No tienes solicitudes pendientes
-                </h3>
-                <p>Cuando alguien te envíe una solicitud aparecerá aquí</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {receivedRequests.map((request) => (
-                  <div
-                    key={request.friendshipId}
-                    className="bg-gray-700 rounded-lg p-4"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                       <div
-                        className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
+                        className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors"
                         onClick={() =>
-                          request.requester &&
-                          handleUserClick(request.requester._id)
+                          friend.user && handleUserClick(friend.user._id)
                         }
-                        title={
-                          request.requester ? "Ver perfil" : "Usuario eliminado"
-                        }
+                        title={friend.user ? "Ver perfil" : "Usuario eliminado"}
                       >
                         <img
-                          src={getUserAvatar(request.requester)}
-                          alt={getUserDisplayName(request.requester)}
+                          src={getUserAvatar(friend.user)}
+                          alt={getUserDisplayName(friend.user)}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div className="flex-1">
                           <div className="font-semibold text-white">
-                            {getUserDisplayName(request.requester)}
+                            {getUserDisplayName(friend.user)}
                           </div>
                           <div className="text-sm text-gray-400">
-                            {formatDate(request.createdAt)}
+                            Amigos desde {formatDate(friend.friendsSince)}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
-                            {request.requester
+                            {friend.user
                               ? "Clic para ver perfil"
                               : "Este usuario ya no existe"}
                           </div>
-                          {request.message && (
-                            <div className="text-sm text-gray-300 mt-1">
-                              "{request.message}"
-                            </div>
-                          )}
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-2 sm:flex-shrink-0">
-                        <button
-                          onClick={() =>
-                            respondToRequest(request.friendshipId, "accept")
-                          }
-                          disabled={
-                            processing.has(request.friendshipId) ||
-                            !request.requester
-                          }
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                        >
-                          {!request.requester ? "Usuario eliminado" : "Aceptar"}
-                        </button>
-                        <button
-                          onClick={() =>
-                            respondToRequest(request.friendshipId, "decline")
-                          }
-                          disabled={processing.has(request.friendshipId)}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                        >
-                          Rechazar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : activeTab === "sent" ? (
-            sentRequests.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
-                <h3 className="text-lg font-medium mb-2">
-                  No has enviado solicitudes
-                </h3>
-                <p>Busca usuarios y envíales solicitudes de amistad</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {sentRequests.map((request) => (
-                  <div
-                    key={request.friendshipId}
-                    className="bg-gray-700 rounded-lg p-4"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div
-                        className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
-                        onClick={() =>
-                          request.recipient &&
-                          handleUserClick(request.recipient._id)
-                        }
-                        title={
-                          request.recipient ? "Ver perfil" : "Usuario eliminado"
-                        }
-                      >
-                        <img
-                          src={getUserAvatar(request.recipient)}
-                          alt={getUserDisplayName(request.recipient)}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                        <div className="flex-1">
-                          <div className="font-semibold text-white">
-                            {getUserDisplayName(request.recipient)}
-                          </div>
-                          <div className="text-sm text-gray-400">
-                            Enviada el {formatDate(request.createdAt)}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {request.recipient
-                              ? "Clic para ver perfil"
-                              : "Este usuario ya no existe"}
-                          </div>
-                          {request.message && (
-                            <div className="text-sm text-gray-300 mt-1">
-                              "{request.message}"
-                            </div>
-                          )}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() =>
+                              friend.user &&
+                              navigate(`/messages/${friend.user._id}`)
+                            }
+                            disabled={!friend.user}
+                            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                          >
+                            {friend.user
+                              ? "Enviar mensaje"
+                              : "Usuario eliminado"}
+                          </button>
+                          <button
+                            onClick={() =>
+                              removeFriendship(friend.friendshipId)
+                            }
+                            disabled={processing.has(friend.friendshipId)}
+                            className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                          >
+                            {processing.has(friend.friendshipId)
+                              ? "Eliminando..."
+                              : "Eliminar amistad"}
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex sm:flex-shrink-0">
-                        <button
-                          onClick={() => removeFriendship(request.friendshipId)}
-                          disabled={processing.has(request.friendshipId)}
-                          className="px-4 py-2 bg-gray-600 hover:bg-gray-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                        >
-                          {processing.has(request.friendshipId)
-                            ? "Cancelando..."
-                            : "Cancelar"}
-                        </button>
+                        {friend.user && (
+                          <button
+                            onClick={() => blockUser(friend.user!._id)}
+                            disabled={processing.has(friend.user._id)}
+                            className="w-full px-4 py-1 bg-gray-700 hover:bg-gray-800 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors border border-gray-600"
+                          >
+                            {processing.has(friend.user._id)
+                              ? "Bloqueando..."
+                              : "🚫 Bloquear usuario"}
+                          </button>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : activeTab === "blocked" ? (
-            blockedUsers.length === 0 ? (
-              <div className="text-center text-gray-400 py-8">
-                <h3 className="text-lg font-medium mb-2">
-                  No tienes usuarios bloqueados
-                </h3>
-                <p>Los usuarios que bloquees aparecerán aquí</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {blockedUsers.map((blockedUser) => (
-                  <div
-                    key={blockedUser._id}
-                    className="bg-gray-700 rounded-lg p-4"
-                  >
+                  ))}
+                </div>
+              )
+            ) : activeTab === "received" ? (
+              receivedRequests.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <h3 className="text-lg font-medium mb-2">
+                    No tienes solicitudes pendientes
+                  </h3>
+                  <p>Cuando alguien te envíe una solicitud aparecerá aquí</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {receivedRequests.map((request) => (
                     <div
-                      className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors"
-                      onClick={() => handleUserClick(blockedUser._id)}
-                      title="Ver perfil"
+                      key={request.friendshipId}
+                      className="bg-gray-700 rounded-lg p-4"
                     >
-                      <img
-                        src={blockedUser.image || DEFAULT_PROFILE_IMAGE}
-                        alt={
-                          blockedUser.username || blockedUser.email || "Usuario"
-                        }
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <div className="font-semibold text-white">
-                          {blockedUser.username ||
-                            blockedUser.email ||
-                            "Usuario"}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div
+                          className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
+                          onClick={() =>
+                            request.requester &&
+                            handleUserClick(request.requester._id)
+                          }
+                          title={
+                            request.requester
+                              ? "Ver perfil"
+                              : "Usuario eliminado"
+                          }
+                        >
+                          <img
+                            src={getUserAvatar(request.requester)}
+                            alt={getUserDisplayName(request.requester)}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <div className="font-semibold text-white">
+                              {getUserDisplayName(request.requester)}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {formatDate(request.createdAt)}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {request.requester
+                                ? "Clic para ver perfil"
+                                : "Este usuario ya no existe"}
+                            </div>
+                            {request.message && (
+                              <div className="text-sm text-gray-300 mt-1">
+                                "{request.message}"
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-sm text-red-400">
-                          Usuario bloqueado
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          Clic para ver perfil
+                        <div className="flex flex-col sm:flex-row gap-2 sm:flex-shrink-0">
+                          <button
+                            onClick={() =>
+                              respondToRequest(request.friendshipId, "accept")
+                            }
+                            disabled={
+                              processing.has(request.friendshipId) ||
+                              !request.requester
+                            }
+                            className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                          >
+                            {!request.requester
+                              ? "Usuario eliminado"
+                              : "Aceptar"}
+                          </button>
+                          <button
+                            onClick={() =>
+                              respondToRequest(request.friendshipId, "decline")
+                            }
+                            disabled={processing.has(request.friendshipId)}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                          >
+                            Rechazar
+                          </button>
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => unblockUser(blockedUser._id)}
-                        disabled={processing.has(blockedUser._id)}
-                        className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                      >
-                        {processing.has(blockedUser._id)
-                          ? "Desbloqueando..."
-                          : "Desbloquear usuario"}
-                      </button>
+                  ))}
+                </div>
+              )
+            ) : activeTab === "sent" ? (
+              sentRequests.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <h3 className="text-lg font-medium mb-2">
+                    No has enviado solicitudes
+                  </h3>
+                  <p>Busca usuarios y envíales solicitudes de amistad</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sentRequests.map((request) => (
+                    <div
+                      key={request.friendshipId}
+                      className="bg-gray-700 rounded-lg p-4"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div
+                          className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
+                          onClick={() =>
+                            request.recipient &&
+                            handleUserClick(request.recipient._id)
+                          }
+                          title={
+                            request.recipient
+                              ? "Ver perfil"
+                              : "Usuario eliminado"
+                          }
+                        >
+                          <img
+                            src={getUserAvatar(request.recipient)}
+                            alt={getUserDisplayName(request.recipient)}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <div className="font-semibold text-white">
+                              {getUserDisplayName(request.recipient)}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              Enviada el {formatDate(request.createdAt)}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {request.recipient
+                                ? "Clic para ver perfil"
+                                : "Este usuario ya no existe"}
+                            </div>
+                            {request.message && (
+                              <div className="text-sm text-gray-300 mt-1">
+                                "{request.message}"
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex sm:flex-shrink-0">
+                          <button
+                            onClick={() =>
+                              removeFriendship(request.friendshipId)
+                            }
+                            disabled={processing.has(request.friendshipId)}
+                            className="px-4 py-2 bg-gray-600 hover:bg-gray-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                          >
+                            {processing.has(request.friendshipId)
+                              ? "Cancelando..."
+                              : "Cancelar"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : activeTab === "search" ? (
-            searchResults.length === 0 && searchQuery.trim() ? (
-              <div className="text-center text-gray-400 py-8">
-                <h3 className="text-lg font-medium mb-2">
-                  No se encontraron usuarios
-                </h3>
-                <p>Intenta con otro término de búsqueda</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {searchResults.map((searchUser) => (
-                  <div
-                    key={searchUser._id}
-                    className="bg-gray-700 rounded-lg p-4"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+                  ))}
+                </div>
+              )
+            ) : activeTab === "blocked" ? (
+              blockedUsers.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <h3 className="text-lg font-medium mb-2">
+                    No tienes usuarios bloqueados
+                  </h3>
+                  <p>Los usuarios que bloquees aparecerán aquí</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {blockedUsers.map((blockedUser) => (
+                    <div
+                      key={blockedUser._id}
+                      className="bg-gray-700 rounded-lg p-4"
+                    >
                       <div
-                        className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
-                        onClick={() => handleUserClick(searchUser._id)}
+                        className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors"
+                        onClick={() => handleUserClick(blockedUser._id)}
                         title="Ver perfil"
                       >
                         <img
-                          src={getUserAvatar(searchUser)}
-                          alt={getUserDisplayName(searchUser)}
+                          src={blockedUser.image || DEFAULT_PROFILE_IMAGE}
+                          alt={
+                            blockedUser.username ||
+                            blockedUser.email ||
+                            "Usuario"
+                          }
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div className="flex-1">
                           <div className="font-semibold text-white">
-                            {getUserDisplayName(searchUser)}
+                            {blockedUser.username ||
+                              blockedUser.email ||
+                              "Usuario"}
                           </div>
-                          <div className="text-sm text-gray-400">
-                            {searchUser.email}
+                          <div className="text-sm text-red-400">
+                            Usuario bloqueado
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             Clic para ver perfil
                           </div>
                         </div>
                       </div>
-                      <div className="flex-shrink-0 sm:ml-4">
-                        <div className="flex flex-col gap-2">
-                          {searchUser.relationshipStatus === "none" && (
-                            <>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => unblockUser(blockedUser._id)}
+                          disabled={processing.has(blockedUser._id)}
+                          className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                        >
+                          {processing.has(blockedUser._id)
+                            ? "Desbloqueando..."
+                            : "Desbloquear usuario"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : activeTab === "search" ? (
+              searchResults.length === 0 && searchQuery.trim() ? (
+                <div className="text-center text-gray-400 py-8">
+                  <h3 className="text-lg font-medium mb-2">
+                    No se encontraron usuarios
+                  </h3>
+                  <p>Intenta con otro término de búsqueda</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {searchResults.map((searchUser) => (
+                    <div
+                      key={searchUser._id}
+                      className="bg-gray-700 rounded-lg p-4"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+                        <div
+                          className="flex items-center gap-3 cursor-pointer hover:bg-gray-600/50 rounded-lg p-2 transition-colors flex-1"
+                          onClick={() => handleUserClick(searchUser._id)}
+                          title="Ver perfil"
+                        >
+                          <img
+                            src={getUserAvatar(searchUser)}
+                            alt={getUserDisplayName(searchUser)}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                          <div className="flex-1">
+                            <div className="font-semibold text-white">
+                              {getUserDisplayName(searchUser)}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {searchUser.email}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Clic para ver perfil
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 sm:ml-4">
+                          <div className="flex flex-col gap-2">
+                            {searchUser.relationshipStatus === "none" && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    sendFriendRequest(searchUser._id)
+                                  }
+                                  disabled={processing.has(searchUser._id)}
+                                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                                >
+                                  {processing.has(searchUser._id)
+                                    ? "Enviando..."
+                                    : "Enviar solicitud"}
+                                </button>
+                                <button
+                                  onClick={() => blockUser(searchUser._id)}
+                                  disabled={processing.has(searchUser._id)}
+                                  className="px-4 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
+                                >
+                                  {processing.has(searchUser._id)
+                                    ? "Bloqueando..."
+                                    : "Bloquear"}
+                                </button>
+                              </>
+                            )}
+                            {searchUser.relationshipStatus === "friends" && (
+                              <>
+                                <span className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded text-center">
+                                  Ya sois amigos
+                                </span>
+                                <button
+                                  onClick={() => blockUser(searchUser._id)}
+                                  disabled={processing.has(searchUser._id)}
+                                  className="px-4 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
+                                >
+                                  {processing.has(searchUser._id)
+                                    ? "Bloqueando..."
+                                    : "Bloquear"}
+                                </button>
+                              </>
+                            )}
+                            {searchUser.relationshipStatus === "sent" && (
+                              <>
+                                <span className="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded text-center">
+                                  Solicitud enviada
+                                </span>
+                                <button
+                                  onClick={() => blockUser(searchUser._id)}
+                                  disabled={processing.has(searchUser._id)}
+                                  className="px-4 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
+                                >
+                                  {processing.has(searchUser._id)
+                                    ? "Bloqueando..."
+                                    : "Bloquear"}
+                                </button>
+                              </>
+                            )}
+                            {searchUser.relationshipStatus === "received" && (
+                              <>
+                                <span className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded text-center">
+                                  Te envió solicitud
+                                </span>
+                                <button
+                                  onClick={() => blockUser(searchUser._id)}
+                                  disabled={processing.has(searchUser._id)}
+                                  className="px-4 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
+                                >
+                                  {processing.has(searchUser._id)
+                                    ? "Bloqueando..."
+                                    : "Bloquear"}
+                                </button>
+                              </>
+                            )}
+                            {searchUser.relationshipStatus === "blocked" && (
                               <button
-                                onClick={() =>
-                                  sendFriendRequest(searchUser._id)
-                                }
+                                onClick={() => unblockUser(searchUser._id)}
                                 disabled={processing.has(searchUser._id)}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
                               >
                                 {processing.has(searchUser._id)
-                                  ? "Enviando..."
-                                  : "Enviar solicitud"}
+                                  ? "Desbloqueando..."
+                                  : "Desbloquear"}
                               </button>
-                              <button
-                                onClick={() => blockUser(searchUser._id)}
-                                disabled={processing.has(searchUser._id)}
-                                className="px-4 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
-                              >
-                                {processing.has(searchUser._id)
-                                  ? "Bloqueando..."
-                                  : "Bloquear"}
-                              </button>
-                            </>
-                          )}
-                          {searchUser.relationshipStatus === "friends" && (
-                            <>
-                              <span className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded text-center">
-                                Ya sois amigos
-                              </span>
-                              <button
-                                onClick={() => blockUser(searchUser._id)}
-                                disabled={processing.has(searchUser._id)}
-                                className="px-4 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
-                              >
-                                {processing.has(searchUser._id)
-                                  ? "Bloqueando..."
-                                  : "Bloquear"}
-                              </button>
-                            </>
-                          )}
-                          {searchUser.relationshipStatus === "sent" && (
-                            <>
-                              <span className="px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded text-center">
-                                Solicitud enviada
-                              </span>
-                              <button
-                                onClick={() => blockUser(searchUser._id)}
-                                disabled={processing.has(searchUser._id)}
-                                className="px-4 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
-                              >
-                                {processing.has(searchUser._id)
-                                  ? "Bloqueando..."
-                                  : "Bloquear"}
-                              </button>
-                            </>
-                          )}
-                          {searchUser.relationshipStatus === "received" && (
-                            <>
-                              <span className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded text-center">
-                                Te envió solicitud
-                              </span>
-                              <button
-                                onClick={() => blockUser(searchUser._id)}
-                                disabled={processing.has(searchUser._id)}
-                                className="px-4 py-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
-                              >
-                                {processing.has(searchUser._id)
-                                  ? "Bloqueando..."
-                                  : "Bloquear"}
-                              </button>
-                            </>
-                          )}
-                          {searchUser.relationshipStatus === "blocked" && (
-                            <button
-                              onClick={() => unblockUser(searchUser._id)}
-                              disabled={processing.has(searchUser._id)}
-                              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
-                            >
-                              {processing.has(searchUser._id)
-                                ? "Desbloqueando..."
-                                : "Desbloquear"}
-                            </button>
-                          )}
+                            )}
+                            {searchUser.relationshipStatus === "blocked_by" && (
+                              <div className="px-4 py-2 bg-red-700/20 border border-red-600/40 text-red-300 text-sm font-medium rounded text-center">
+                                Este usuario te ha bloqueado
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : null}
+                  ))}
+                </div>
+              )
+            ) : null}
           </div>
         )}
       </div>
