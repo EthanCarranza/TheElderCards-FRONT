@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useRobustNotifications } from "../hooks/useRobustNotifications";
+import { useSocketNotifications } from "../hooks/useSocketNotifications";
 import { FriendshipNotificationsContext } from "./FriendshipNotificationsContextDefinition";
 
 interface FriendshipNotificationsProviderProps {
@@ -16,7 +16,7 @@ export const FriendshipNotificationsProvider: React.FC<
     requestInitialCounts,
     incrementPendingCount,
     decrementPendingCount,
-  } = useRobustNotifications();
+  } = useSocketNotifications();
 
   const refreshCount = useCallback(() => {
     requestInitialCounts();

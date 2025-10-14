@@ -113,46 +113,35 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
       return;
     }
 
-    const serverUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+    const serverUrl = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL
+      : "http://localhost:3000";
 
-    const socketOptions = {
+    const socket = io(serverUrl, {
       auth: {
         token: user.token,
       },
-      transports: ["polling" as const, "websocket" as const],
+      transports: ["websocket", "polling"],
       reconnection: true,
-      reconnectionAttempts: 2, // Reduced attempts
-      reconnectionDelay: 3000, // Longer delay
-      timeout: 15000, // Longer timeout
-      forceNew: true,
-    };
-
-    const socket = io(serverUrl, socketOptions);
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
 
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("Socket.IO connected successfully");
       setConnected(true);
       setError(null);
       socket.emit("request_initial_counts");
     });
 
-    socket.on("disconnect", (reason) => {
-      console.log(`Socket.IO disconnected: ${reason}`);
+    socket.on("disconnect", () => {
       setConnected(false);
     });
 
     socket.on("connect_error", (err) => {
-      console.warn(`Socket.IO connection failed: ${err.message}`);
+      setError(`Error de conexión: ${err.message}`);
       setConnected(false);
-      
-      if (!import.meta.env.PROD) {
-        setError(`Error de conexión: ${err.message}`);
-      } else {
-        setError(null);
-        console.info("Real-time notifications unavailable, using manual refresh");
-      }
     });
 
     socket.on("notification_counts", (data: NotificationCounts) => {

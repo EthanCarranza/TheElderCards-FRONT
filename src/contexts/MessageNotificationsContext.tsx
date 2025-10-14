@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useRobustNotifications } from "../hooks/useRobustNotifications";
+import { useSocketNotifications } from "../hooks/useSocketNotifications";
 import { MessageNotificationsContext } from "./MessageNotificationsContextDefinition";
 
 interface MessageNotificationsProviderProps {
@@ -16,7 +16,7 @@ export const MessageNotificationsProvider: React.FC<
     requestInitialCounts,
     incrementUnreadCount: socketIncrementUnread,
     decrementUnreadCount: socketDecrementUnread,
-  } = useRobustNotifications();
+  } = useSocketNotifications();
 
   const updateUnreadCount = useCallback(() => {
     requestInitialCounts();

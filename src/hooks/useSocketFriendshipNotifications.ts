@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useRobustNotifications } from "./useRobustNotifications";
+import { useSocketNotifications } from "./useSocketNotifications";
 import { useFriendshipToast } from "./useFriendshipToast";
 import { useAuth } from "./useAuth";
 
@@ -43,7 +43,7 @@ interface BackendUserBlocked {
 }
 
 export const useSocketFriendshipNotifications = () => {
-  const socketNotifications = useRobustNotifications();
+  const socketNotifications = useSocketNotifications();
   const friendshipToast = useFriendshipToast();
   const { user } = useAuth();
   useEffect(() => {
