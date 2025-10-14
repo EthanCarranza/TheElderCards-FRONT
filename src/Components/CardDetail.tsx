@@ -638,9 +638,25 @@ const CardDetail = () => {
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     {deletingCard ? (
                       <div className="inline-flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white w-full sm:w-auto">
-                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         Eliminando...
                       </div>
@@ -869,16 +885,16 @@ const CardDetail = () => {
                         )}
                       </div>
                       {}
-                      <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-                        <h4 className="text-sm font-semibold text-red-800 mb-3">
-                          Eliminar de tus colecciones
+                      <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+                        <h4 className="text-sm font-semibold text-blue-800 mb-3">
+                          En Tus Colecciones
                         </h4>
                         {collectionsWithCard.length === 0 ? (
-                          <p className="text-sm text-red-700">
+                          <p className="text-sm text-blue-700">
                             Esta carta no está en ninguna de tus colecciones.
                           </p>
                         ) : (
-                          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 max-h-64 overflow-y-auto">
                             {collectionsWithCard.map((collection) => {
                               const isPending =
                                 pendingRemovalId === collection._id;
@@ -886,20 +902,25 @@ const CardDetail = () => {
                               return (
                                 <div
                                   key={collection._id}
-                                  className="flex flex-col items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white p-3 text-center shadow-sm min-h-[100px]"
+                                  className="flex flex-col gap-3 rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
                                 >
+                                  <span className="text-sm font-medium text-gray-900 text-center break-words">
+                                    {collection.title}
+                                  </span>
+
                                   {isRemoving ? (
-                                    <div className="text-xs font-semibold text-gray-600">
+                                    <div className="text-xs font-semibold text-gray-600 text-center">
                                       Eliminando...
                                     </div>
                                   ) : isPending ? (
                                     <div className="flex flex-col items-center gap-2">
                                       <span className="text-xs font-semibold text-gray-900 text-center">
-                                        ¿Estás seguro?
+                                        ¿Estás seguro de que deseas eliminar la
+                                        carta de esta colección?
                                       </span>
-                                      <div className="flex gap-2">
+                                      <div className="flex gap-2 w-full">
                                         <button
-                                          className="rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white disabled:opacity-60 hover:bg-red-700"
+                                          className="flex-1 rounded bg-red-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60 hover:bg-red-700 transition-colors"
                                           onClick={() =>
                                             void handleRemoveFromCollection(
                                               collection._id
@@ -907,35 +928,42 @@ const CardDetail = () => {
                                           }
                                           disabled={isRemoving}
                                         >
-                                          Sí
+                                          Sí, eliminar
                                         </button>
                                         <button
-                                          className="rounded bg-gray-300 px-3 py-1 text-xs font-semibold text-gray-800 disabled:opacity-60 hover:bg-gray-400"
+                                          className="flex-1 rounded bg-gray-300 px-3 py-2 text-xs font-semibold text-gray-800 disabled:opacity-60 hover:bg-gray-400 transition-colors"
                                           onClick={() =>
                                             setPendingRemovalId(null)
                                           }
                                           disabled={isRemoving}
                                         >
-                                          No
+                                          Cancelar
                                         </button>
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="flex flex-col items-center gap-2 w-full">
-                                      <span className="text-xs font-medium text-gray-900 text-center break-words">
-                                        {collection.title}
-                                      </span>
+                                    <div className="flex flex-col gap-2">
                                       <button
-                                        className="rounded-full bg-gray-200 w-6 h-6 text-sm font-semibold text-gray-700 hover:bg-red-200 hover:text-red-700 transition-colors"
+                                        className="w-full rounded bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60"
+                                        onClick={() =>
+                                          navigate(
+                                            `/collections/${collection._id}`
+                                          )
+                                        }
+                                        disabled={Boolean(removingId)}
+                                      >
+                                        Ver Colección
+                                      </button>
+                                      <button
+                                        className="w-full rounded bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-60"
                                         onClick={() => {
                                           setPendingRemovalId(collection._id);
                                           setActionMsg("");
                                           setActionErr("");
                                         }}
-                                        aria-label={`Eliminar carta de ${collection.title}`}
                                         disabled={Boolean(removingId)}
                                       >
-                                        🗑️
+                                        Eliminar de Colección
                                       </button>
                                     </div>
                                   )}
