@@ -21,6 +21,7 @@ interface UseSocketNotificationsReturn {
   onFriendRequestResponse: (callback: (response: unknown) => void) => void;
   onNewMessage: (callback: (message: unknown) => void) => void;
   onFriendshipRemoved: (callback: (payload: unknown) => void) => void;
+  onUserBlocked: (callback: (payload: unknown) => void) => void;
 }
 
 export const useSocketNotifications = (): UseSocketNotificationsReturn => {
@@ -65,6 +66,9 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
   const friendshipRemovedCallbackRef = useRef<
     ((payload: unknown) => void) | null
   >(null);
+  const userBlockedCallbackRef = useRef<
+    ((payload: unknown) => void) | null
+  >(null);
 
   const onNewFriendRequest = useCallback(
     (callback: (request: unknown) => void) => {
@@ -87,6 +91,13 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
   const onFriendshipRemoved = useCallback(
     (callback: (payload: unknown) => void) => {
       friendshipRemovedCallbackRef.current = callback;
+    },
+    []
+  );
+
+  const onUserBlocked = useCallback(
+    (callback: (payload: unknown) => void) => {
+      userBlockedCallbackRef.current = callback;
     },
     []
   );
@@ -180,6 +191,13 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
       }
     });
 
+    socket.on("user_blocked", (payload) => {
+      console.log("Usuario bloqueado:", payload);
+      if (userBlockedCallbackRef.current) {
+        userBlockedCallbackRef.current(payload);
+      }
+    });
+
     socket.on("notification_error", (error: string) => {
       console.error("Error de notificación:", error);
       setError(error);
@@ -206,5 +224,6 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     onFriendRequestResponse,
     onNewMessage,
     onFriendshipRemoved,
+    onUserBlocked,
   };
 };

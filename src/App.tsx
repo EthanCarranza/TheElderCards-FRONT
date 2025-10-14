@@ -7,6 +7,7 @@ import CardDetail from "./Components/CardDetail";
 import { AuthProvider } from "./contexts/AuthContext";
 import { MessageNotificationsProvider } from "./contexts/MessageNotificationsContext";
 import { FriendshipNotificationsProvider } from "./contexts/FriendshipNotificationsContext";
+import { FriendshipToastProvider } from "./contexts/FriendshipToastContext";
 import Factions from "./Components/Factions";
 import FactionDetail from "./Components/FactionDetail";
 import Profile from "./Components/Profile";
@@ -15,30 +16,50 @@ import CollectionDetail from "./Components/CollectionDetail";
 import UserPublicProfile from "./Components/UserPublicProfile";
 import Friends from "./Components/Friends";
 import Messages from "./Components/Messages";
+import FriendshipToastContainer from "./Components/FriendshipToastContainer";
+import FriendshipNotificationTestPanel from "./Components/FriendshipNotificationTestPanel";
+import SocketNotificationListener from "./Components/SocketNotificationListener";
 function App() {
   return (
     <AuthProvider>
       <MessageNotificationsProvider>
         <FriendshipNotificationsProvider>
-          <Router>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/cards" element={<Cards />} />
-            <Route path="/cards/:id" element={<CardDetail />} />
-            <Route path="/collections" element={<Collections />} />
-            <Route path="/collections/:id" element={<CollectionDetail />} />
-            <Route path="/factions" element={<Factions />} />
-            <Route path="/factions/:id" element={<FactionDetail />} />
-            <Route path="/friends" element={<Friends />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/messages/:userId" element={<Messages />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:userId" element={<UserPublicProfile />} />
-            <Route path="/users/:userId" element={<UserPublicProfile />} />
-          </Routes>
-          </Router>
+          <FriendshipToastProvider>
+            <SocketNotificationListener>
+              <Router>
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/cards" element={<Cards />} />
+                  <Route path="/cards/:id" element={<CardDetail />} />
+                  <Route path="/collections" element={<Collections />} />
+                  <Route
+                    path="/collections/:id"
+                    element={<CollectionDetail />}
+                  />
+                  <Route path="/factions" element={<Factions />} />
+                  <Route path="/factions/:id" element={<FactionDetail />} />
+                  <Route path="/friends" element={<Friends />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/messages/:userId" element={<Messages />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route
+                    path="/profile/:userId"
+                    element={<UserPublicProfile />}
+                  />
+                  <Route
+                    path="/users/:userId"
+                    element={<UserPublicProfile />}
+                  />
+                </Routes>
+                {/* Container de notificaciones que aparece en todas las páginas */}
+                <FriendshipToastContainer />
+                {/* Panel de prueba (solo en desarrollo) */}
+                <FriendshipNotificationTestPanel />
+              </Router>
+            </SocketNotificationListener>
+          </FriendshipToastProvider>
         </FriendshipNotificationsProvider>
       </MessageNotificationsProvider>
     </AuthProvider>
