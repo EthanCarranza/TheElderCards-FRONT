@@ -156,8 +156,8 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({ notification, onClose
 
         <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
           <div
-            className="h-full bg-white/60 rounded-full transition-all duration-[5000ms] ease-linear"
-            style={{ width: isVisible ? "0%" : "100%", transition: `width ${TOAST_DURATION}ms linear` }}
+            className={`h-full bg-white/60 rounded-full transition-all duration-[${TOAST_DURATION}ms]`}
+            style={{ width: isVisible && !isRemoving ? "100%" : "0%" }}
           />
         </div>
       </div>
