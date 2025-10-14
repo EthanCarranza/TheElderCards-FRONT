@@ -1,3 +1,5 @@
+
+
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,23 +13,71 @@ export interface FriendshipNotification {
     | "user_blocked";
   username: string;
   message?: string;
-  timestamp: number;
   userId?: string;
+  timestamp: number;
 }
 
 interface FriendshipToastProps {
   notification: FriendshipNotification;
-  onClose: (id: string) => void;
-  autoClose?: boolean;
-  duration?: number;
+  onClose: () => void;
 }
 
-const FriendshipToast: React.FC<FriendshipToastProps> = ({
-  notification,
-  onClose,
-  autoClose = true,
-  duration = 5000,
-}) => {
+const TOAST_DURATION = 5000;
+
+const getNotificationContent = (notification: FriendshipNotification) => {
+  switch (notification.type) {
+    case "new_request":
+      return {
+        icon: "👋",
+        title: "¡Nueva solicitud de amistad!",
+        message: `${notification.username} te ha enviado una solicitud de amistad.`,
+        bgColor: "bg-blue-600",
+        borderColor: "border-blue-500",
+      };
+    case "request_accepted":
+      return {
+        icon: "✅",
+        title: "¡Solicitud aceptada!",
+        message: `${notification.username} ha aceptado tu solicitud de amistad.`,
+        bgColor: "bg-green-600",
+        borderColor: "border-green-500",
+      };
+    case "request_declined":
+      return {
+        icon: "❌",
+        title: "Solicitud rechazada",
+        message: `${notification.username} ha rechazado tu solicitud de amistad.`,
+        bgColor: "bg-red-600",
+        borderColor: "border-red-500",
+      };
+    case "friendship_removed":
+      return {
+        icon: "💔",
+        title: "Amistad eliminada",
+        message: `${notification.username} te ha eliminado de su lista de amigos.`,
+        bgColor: "bg-orange-600",
+        borderColor: "border-orange-500",
+      };
+    case "user_blocked":
+      return {
+        icon: "🚫",
+        title: "Usuario bloqueado",
+        message: `${notification.username} te ha bloqueado.`,
+        bgColor: "bg-red-700",
+        borderColor: "border-red-600",
+      };
+    default:
+      return {
+        icon: "📢",
+        title: "Notificación",
+        message: notification.message || "",
+        bgColor: "bg-gray-600",
+        borderColor: "border-gray-500",
+      };
+  }
+};
+
+const FriendshipToast: React.FC<FriendshipToastProps> = ({ notification, onClose }) => {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -35,12 +85,14 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
   const handleClose = useCallback(() => {
     setIsRemoving(true);
     setTimeout(() => {
-      onClose(notification.id);
+      onClose();
     }, 300);
-  }, [notification.id, onClose]);
+  }, [onClose]);
+
   const handleNotificationClick = useCallback(() => {
     handleClose();
     if (notification.userId) {
+      navigate(`/profile/${notification.userId}`);
     } else {
       navigate("/friends");
     }
@@ -52,79 +104,21 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
   }, []);
 
   useEffect(() => {
-    if (autoClose) {
-      const timer = setTimeout(() => {
-        handleClose();
-      }, duration);
-      return () => clearTimeout(timer);
-    }
-  }, [autoClose, duration, handleClose]);
+    if (!isVisible) return;
+    const timer = setTimeout(() => {
+      handleClose();
+    }, TOAST_DURATION);
+    return () => clearTimeout(timer);
+  }, [isVisible, handleClose]);
 
-  const getNotificationContent = () => {
-    switch (notification.type) {
-      case "new_request":
-        return {
-          icon: "👋",
-          title: "¡Nueva solicitud de amistad!",
-          message: `${notification.username} te ha enviado una solicitud de amistad.`,
-          bgColor: "bg-blue-600",
-          borderColor: "border-blue-500",
-        };
-      case "request_accepted":
-        return {
-          icon: "✅",
-          title: "¡Solicitud aceptada!",
-          message: `${notification.username} ha aceptado tu solicitud de amistad.`,
-          bgColor: "bg-green-600",
-          borderColor: "border-green-500",
-        };
-      case "request_declined":
-        return {
-          icon: "❌",
-          title: "Solicitud rechazada",
-          message: `${notification.username} ha rechazado tu solicitud de amistad.`,
-          bgColor: "bg-red-600",
-          borderColor: "border-red-500",
-        };
-      case "friendship_removed":
-        return {
-          icon: "💔",
-          title: "Amistad eliminada",
-          message: `${notification.username} te ha eliminado de su lista de amigos.`,
-          bgColor: "bg-orange-600",
-          borderColor: "border-orange-500",
-        };
-      case "user_blocked":
-        return {
-          icon: "🚫",
-          title: "Usuario bloqueado",
-          message: `${notification.username} te ha bloqueado.`,
-          bgColor: "bg-red-700",
-          borderColor: "border-red-600",
-        };
-      default:
-        return {
-          icon: "📢",
-          title: "Notificación",
-          message: notification.message || "",
-          bgColor: "bg-gray-600",
-          borderColor: "border-gray-500",
-        };
-    }
-  };
-
-  const content = getNotificationContent();
+  const content = getNotificationContent(notification);
 
   return (
     <div
       className={`
         relative z-50 w-full max-w-sm
         transform transition-all duration-300 ease-in-out
-        ${
-          isVisible && !isRemoving
-            ? "translate-x-0 opacity-100"
-            : "translate-x-full opacity-0"
-        }
+        ${isVisible && !isRemoving ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
       `}
     >
       <div
@@ -160,17 +154,12 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
           </button>
         </div>
 
-        {autoClose && (
-          <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-white/60 rounded-full transition-all duration-[5000ms] ease-linear"
-              style={{
-                width: isVisible ? "0%" : "100%",
-                transition: `width ${duration}ms linear`,
-              }}
-            />
-          </div>
-        )}
+        <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-white/60 rounded-full transition-all duration-[5000ms] ease-linear"
+            style={{ width: isVisible ? "0%" : "100%", transition: `width ${TOAST_DURATION}ms linear` }}
+          />
+        </div>
       </div>
     </div>
   );

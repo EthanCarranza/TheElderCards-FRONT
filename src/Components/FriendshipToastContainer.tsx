@@ -10,12 +10,12 @@ const FriendshipToastContainer: React.FC = () => {
   }
 
   return (
-    <div className="fixed top-20 right-4 z-50 flex flex-col gap-3 pointer-events-none">
+    <div className="fixed top-20 right-4 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full">
       {notifications.map((notification) => (
-        <div key={notification.id} className="pointer-events-auto">
+        <div key={notification.id} className="pointer-events-auto w-full">
           <FriendshipToast
             notification={notification}
-            onClose={removeNotification}
+            onClose={() => removeNotification(notification.id)}
           />
         </div>
       ))}
