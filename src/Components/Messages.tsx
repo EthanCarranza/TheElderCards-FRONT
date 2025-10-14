@@ -48,7 +48,13 @@ const Messages = () => {
   const [sending, setSending] = useState(false);
   const [showConversations, setShowConversations] = useState(true);
   const [relationshipStatus, setRelationshipStatus] = useState<
-    "friends" | "sent" | "received" | "blocked" | "blocked_by" | "none" | "unknown"
+    | "friends"
+    | "sent"
+    | "received"
+    | "blocked"
+    | "blocked_by"
+    | "none"
+    | "unknown"
   >("unknown");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -123,8 +129,8 @@ const Messages = () => {
         setTimeout(scrollToBottom, 100);
       } catch (err: unknown) {
         console.error("Error al cargar mensajes:", err);
-        const status = (err as { response?: { status?: number } })?.response?.
-          status;
+        const status = (err as { response?: { status?: number } })?.response
+          ?.status;
         if (status === 404) {
           setMessages([]);
         } else {
@@ -462,9 +468,8 @@ const Messages = () => {
                   const nonFriendStatuses: ReadonlyArray<
                     typeof relationshipStatus
                   > = ["none", "sent", "received"];
-                  const notFriends = nonFriendStatuses.includes(
-                    relationshipStatus
-                  );
+                  const notFriends =
+                    nonFriendStatuses.includes(relationshipStatus);
                   const isUnknown = relationshipStatus === "unknown";
                   if (blockedBy) {
                     return (

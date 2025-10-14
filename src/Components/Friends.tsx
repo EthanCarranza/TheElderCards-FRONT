@@ -555,12 +555,13 @@ const Friends = () => {
         )}
         {(loading ||
           activeTab === "friends" ||
-          (activeTab === "received" && receivedRequests.length > 0) ||
-          (activeTab === "sent" && sentRequests.length > 0) ||
-          (activeTab === "blocked" && blockedUsers.length > 0) ||
+          activeTab === "received" ||
+          activeTab === "sent" ||
+          activeTab === "blocked" ||
           (activeTab === "search" &&
             (searchResults.length > 0 ||
-              (searchQuery.trim() && searchResults.length === 0)))) && (
+              (searchQuery.trim() && searchResults.length === 0) ||
+              searchShowAll))) && (
           <div className="bg-gray-800 rounded-lg p-6">
             {loading ? (
               <div className="text-center text-gray-300 py-8">
