@@ -1,13 +1,14 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "./useAuth";
+import { apiFetch } from "../Components/api";
 
 interface NotificationCounts {
   unreadCount: number;
   pendingCount: number;
 }
 
-interface UseSocketNotificationsReturn {
+interface UseRobustNotificationsReturn {
   unreadCount: number;
   pendingCount: number;
   connected: boolean;
@@ -24,19 +25,39 @@ interface UseSocketNotificationsReturn {
   onUserBlocked: (callback: (payload: unknown) => void) => void;
 }
 
-export const useSocketNotifications = (): UseSocketNotificationsReturn => {
+export const useRobustNotifications = (): UseRobustNotificationsReturn => {
   const { user } = useAuth();
   const socketRef = useRef<Socket | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usePolling, setUsePolling] = useState(false);
+  const pollingRef = useRef<number | null>(null);
 
-  const requestInitialCounts = useCallback(() => {
+  const requestInitialCounts = useCallback(async () => {
+    if (!user?.token) return;
+
     if (socketRef.current?.connected) {
       socketRef.current.emit("request_initial_counts");
+    } else {
+      try {
+        const [unreadResponse, pendingResponse] = await Promise.all([
+          apiFetch<{ count: number }>("/messages/unread-count", {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+          apiFetch<{ count: number }>("/friendships/pending", {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
+        ]);
+
+        setUnreadCount(unreadResponse.data.count || 0);
+        setPendingCount(pendingResponse.data.count || 0);
+      } catch (error) {
+        console.warn("Failed to fetch notification counts:", error);
+      }
     }
-  }, []);
+  }, [user?.token]);
 
   const incrementUnreadCount = useCallback(() => {
     setUnreadCount((prev) => prev + 1);
@@ -54,49 +75,49 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     setPendingCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  const newFriendRequestCallbackRef = useRef<
-    ((request: unknown) => void) | null
-  >(null);
-  const friendRequestResponseCallbackRef = useRef<
-    ((response: unknown) => void) | null
-  >(null);
-  const newMessageCallbackRef = useRef<((message: unknown) => void) | null>(
-    null
-  );
-  const friendshipRemovedCallbackRef = useRef<
-    ((payload: unknown) => void) | null
-  >(null);
-  const userBlockedCallbackRef = useRef<((payload: unknown) => void) | null>(
-    null
-  );
+  const newFriendRequestCallbackRef = useRef<((request: unknown) => void) | null>(null);
+  const friendRequestResponseCallbackRef = useRef<((response: unknown) => void) | null>(null);
+  const newMessageCallbackRef = useRef<((message: unknown) => void) | null>(null);
+  const friendshipRemovedCallbackRef = useRef<((payload: unknown) => void) | null>(null);
+  const userBlockedCallbackRef = useRef<((payload: unknown) => void) | null>(null);
 
-  const onNewFriendRequest = useCallback(
-    (callback: (request: unknown) => void) => {
-      newFriendRequestCallbackRef.current = callback;
-    },
-    []
-  );
+  const onNewFriendRequest = useCallback((callback: (request: unknown) => void) => {
+    newFriendRequestCallbackRef.current = callback;
+  }, []);
 
-  const onFriendRequestResponse = useCallback(
-    (callback: (response: unknown) => void) => {
-      friendRequestResponseCallbackRef.current = callback;
-    },
-    []
-  );
+  const onFriendRequestResponse = useCallback((callback: (response: unknown) => void) => {
+    friendRequestResponseCallbackRef.current = callback;
+  }, []);
 
   const onNewMessage = useCallback((callback: (message: unknown) => void) => {
     newMessageCallbackRef.current = callback;
   }, []);
 
-  const onFriendshipRemoved = useCallback(
-    (callback: (payload: unknown) => void) => {
-      friendshipRemovedCallbackRef.current = callback;
-    },
-    []
-  );
+  const onFriendshipRemoved = useCallback((callback: (payload: unknown) => void) => {
+    friendshipRemovedCallbackRef.current = callback;
+  }, []);
 
   const onUserBlocked = useCallback((callback: (payload: unknown) => void) => {
     userBlockedCallbackRef.current = callback;
+  }, []);
+
+  const startPolling = useCallback(() => {
+    if (pollingRef.current) return;
+    
+    setUsePolling(true);
+    console.log("Starting notification polling...");
+    
+    pollingRef.current = window.setInterval(() => {
+      requestInitialCounts();
+    }, 15000); // Poll every 15 seconds
+  }, [requestInitialCounts]);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      window.clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+    setUsePolling(false);
   }, []);
 
   useEffect(() => {
@@ -105,53 +126,59 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
       setPendingCount(0);
       setConnected(false);
       setError(null);
-
+      
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
       }
+      
+      stopPolling();
       return;
     }
 
     const serverUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-    const socketOptions = {
+    
+    const socket = io(serverUrl, {
       auth: {
         token: user.token,
       },
-      transports: ["polling" as const, "websocket" as const],
+      transports: ["polling", "websocket"],
       reconnection: true,
-      reconnectionAttempts: 2, // Reduced attempts
-      reconnectionDelay: 3000, // Longer delay
-      timeout: 15000, // Longer timeout
-      forceNew: true,
-    };
-
-    const socket = io(serverUrl, socketOptions);
+      reconnectionAttempts: 2,
+      reconnectionDelay: 3000,
+      timeout: 10000,
+    });
 
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("Socket.IO connected successfully");
+      console.log("✅ Socket.IO connected - real-time notifications enabled");
       setConnected(true);
       setError(null);
+      stopPolling(); // Stop polling if socket connects
       socket.emit("request_initial_counts");
     });
 
     socket.on("disconnect", (reason) => {
-      console.log(`Socket.IO disconnected: ${reason}`);
+      console.log(`❌ Socket.IO disconnected: ${reason}`);
       setConnected(false);
+      
+      if (!usePolling) {
+        startPolling();
+      }
     });
 
     socket.on("connect_error", (err) => {
-      console.warn(`Socket.IO connection failed: ${err.message}`);
+      console.warn(`⚠️ Socket.IO connection failed: ${err.message}`);
       setConnected(false);
       
+      if (!usePolling) {
+        console.log("🔄 Falling back to HTTP polling for notifications");
+        startPolling();
+      }
+      
       if (!import.meta.env.PROD) {
-        setError(`Error de conexión: ${err.message}`);
-      } else {
-        setError(null);
-        console.info("Real-time notifications unavailable, using manual refresh");
+        setError(`Socket connection failed: ${err.message}`);
       }
     });
 
@@ -198,21 +225,22 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
       }
     });
 
-    socket.on("notification_error", (error: string) => {
-      setError(error);
-    });
+    setTimeout(() => {
+      requestInitialCounts();
+    }, 1000);
 
     return () => {
       if (socket) {
         socket.disconnect();
       }
+      stopPolling();
     };
-  }, [user?.token]);
+  }, [user?.token, requestInitialCounts, startPolling, stopPolling, usePolling]);
 
   return {
     unreadCount,
     pendingCount,
-    connected,
+    connected: connected || usePolling, // Show as connected if either works
     error,
     requestInitialCounts,
     incrementUnreadCount,

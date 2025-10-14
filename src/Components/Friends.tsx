@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useFriendshipNotifications } from "../hooks/useFriendshipNotifications";
-import { useSocketNotifications } from "../hooks/useSocketNotifications";
+import { useRobustNotifications } from "../hooks/useRobustNotifications";
 import { apiFetch } from "./api";
 import { extractErrorMessage } from "../utils/errors";
 import PageLayout from "./PageLayout";
@@ -39,7 +39,7 @@ const Friends = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const friendshipNotifications = useFriendshipNotifications();
-  const socketNotifications = useSocketNotifications();
+  const socketNotifications = useRobustNotifications();
 
   const [activeTab, setActiveTab] = useState<TabType>("friends");
   const [loading, setLoading] = useState(false);
