@@ -47,6 +47,9 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [showConversations, setShowConversations] = useState(true);
+  const [relationshipStatus, setRelationshipStatus] = useState<
+    "friends" | "sent" | "received" | "blocked" | "blocked_by" | "none" | "unknown"
+  >("unknown");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const getUserDisplayName = (user: User) => {
@@ -118,14 +121,37 @@ const Messages = () => {
         });
         await Promise.all([loadConversations(), updateUnreadCount()]);
         setTimeout(scrollToBottom, 100);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Error al cargar mensajes:", err);
-        setError(extractErrorMessage(err, "Error al cargar mensajes"));
+        const status = (err as { response?: { status?: number } })?.response?.
+          status;
+        if (status === 404) {
+          setMessages([]);
+        } else {
+          setError(extractErrorMessage(err, "Error al cargar mensajes"));
+        }
       } finally {
         setLoadingMessages(false);
       }
     },
     [user, loadConversations, updateUnreadCount]
+  );
+  const loadRelationship = useCallback(
+    async (otherUserId: string) => {
+      if (!user) return;
+      try {
+        const res = await apiFetch<{ status: string }>(
+          `/friendships/status/${otherUserId}`,
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
+        const status = (res.data.status || "none") as typeof relationshipStatus;
+        setRelationshipStatus(status);
+      } catch (err) {
+        console.error("Error al obtener estado de relación:", err);
+        setRelationshipStatus("none");
+      }
+    },
+    [user]
   );
   const sendMessage = async () => {
     if (!user || !activeChat || !newMessage.trim()) return;
@@ -158,7 +184,7 @@ const Messages = () => {
     setActiveChat(userId);
     setShowConversations(false);
     navigate(`/messages/${userId}`, { replace: true });
-    await loadMessages(userId);
+    await Promise.all([loadMessages(userId), loadRelationship(userId)]);
   };
   useEffect(() => {
     loadConversations();
@@ -168,11 +194,12 @@ const Messages = () => {
     if (targetUserId && targetUserId !== activeChat) {
       setActiveChat(targetUserId);
       loadMessages(targetUserId);
+      loadRelationship(targetUserId);
       if (window.innerWidth < 768) {
         setShowConversations(false);
       }
     }
-  }, [chatUserId, searchParams, activeChat, loadMessages]);
+  }, [chatUserId, searchParams, activeChat, loadMessages, loadRelationship]);
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -429,59 +456,100 @@ const Messages = () => {
               </div>
               {}
               <div className="p-3 md:p-4 bg-gray-800 border-t border-gray-700 pb-safe flex-shrink-0">
-                <div className="flex gap-2 md:gap-3 items-end">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Escribe un mensaje..."
-                    className="flex-1 px-3 py-2 md:px-4 md:py-2 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
-                    inputMode="text"
-                    autoFocus
-                    onFocus={() => {
-                      if (window.innerWidth < 768) {
-                        setTimeout(() => {
-                          messagesEndRef.current?.scrollIntoView({
-                            behavior: "smooth",
-                          });
-                        }, 200);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                      }
-                    }}
-                    disabled={sending}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={sending || !newMessage.trim()}
-                    className="px-4 py-2 md:px-6 md:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors text-sm md:text-base min-w-[60px] md:min-w-[80px]"
-                  >
-                    {sending ? (
-                      <span className="block md:hidden">•••</span>
-                    ) : (
-                      <svg
-                        className="w-5 h-5 md:hidden"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                {(() => {
+                  const blockedBy = relationshipStatus === "blocked_by";
+                  const iBlocked = relationshipStatus === "blocked";
+                  const nonFriendStatuses: ReadonlyArray<
+                    typeof relationshipStatus
+                  > = ["none", "sent", "received"];
+                  const notFriends = nonFriendStatuses.includes(
+                    relationshipStatus
+                  );
+                  const isUnknown = relationshipStatus === "unknown";
+                  if (blockedBy) {
+                    return (
+                      <div className="text-center text-red-300 bg-red-900/20 border border-red-700 rounded-lg px-3 py-2 text-sm md:text-base">
+                        Este usuario te ha bloqueado
+                      </div>
+                    );
+                  }
+                  if (iBlocked) {
+                    return (
+                      <div className="text-center text-yellow-200 bg-yellow-900/20 border border-yellow-700 rounded-lg px-3 py-2 text-sm md:text-base">
+                        Has bloqueado a este usuario
+                      </div>
+                    );
+                  }
+                  if (notFriends) {
+                    return (
+                      <div className="text-center text-gray-200 bg-gray-700/50 border border-gray-600 rounded-lg px-3 py-2 text-sm md:text-base">
+                        Este usuario no es tu amigo
+                      </div>
+                    );
+                  }
+                  if (isUnknown) {
+                    return (
+                      <div className="text-center text-gray-300 bg-gray-700/30 border border-gray-600/50 rounded-lg px-3 py-2 text-sm md:text-base">
+                        Comprobando relación...
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex gap-2 md:gap-3 items-end">
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Escribe un mensaje..."
+                        className="flex-1 px-3 py-2 md:px-4 md:py-2 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                        inputMode="text"
+                        autoFocus
+                        onFocus={() => {
+                          if (window.innerWidth < 768) {
+                            setTimeout(() => {
+                              messagesEndRef.current?.scrollIntoView({
+                                behavior: "smooth",
+                              });
+                            }, 200);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            sendMessage();
+                          }
+                        }}
+                        disabled={sending}
+                      />
+                      <button
+                        onClick={sendMessage}
+                        disabled={sending || !newMessage.trim()}
+                        className="px-4 py-2 md:px-6 md:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors text-sm md:text-base min-w-[60px] md:min-w-[80px]"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                        />
-                      </svg>
-                    )}
-                    <span className="hidden md:inline">
-                      {sending ? "Enviando..." : "Enviar"}
-                    </span>
-                  </button>
-                </div>
+                        {sending ? (
+                          <span className="block md:hidden">•••</span>
+                        ) : (
+                          <svg
+                            className="w-5 h-5 md:hidden"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                            />
+                          </svg>
+                        )}
+                        <span className="hidden md:inline">
+                          {sending ? "Enviando..." : "Enviar"}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             </>
           ) : (
