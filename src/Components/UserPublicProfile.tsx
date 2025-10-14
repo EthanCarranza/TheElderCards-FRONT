@@ -23,7 +23,13 @@ interface CollectionSummary {
 interface CardsResponse {
   cards?: Array<{ _id: string; title: string; img?: string }>;
 }
-type RelationshipStatus = "none" | "friends" | "sent" | "received" | "blocked";
+type RelationshipStatus =
+  | "none"
+  | "friends"
+  | "sent"
+  | "received"
+  | "blocked"
+  | "blocked_by";
 const UserPublicProfile = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
@@ -67,45 +73,7 @@ const UserPublicProfile = () => {
         if (isActive) {
           setProfile(userData);
         }
-        let collectionsData: CollectionSummary[] = [];
-        try {
-          const headers: Record<string, string> = currentUser
-            ? { Authorization: `Bearer ${currentUser.token}` }
-            : {};
-          const collectionsResp = await apiFetch<CollectionSummary[]>(
-            `/collections/by/user/${userData._id ?? userData.id ?? userId}`,
-            { headers }
-          );
-          collectionsData = collectionsResp.data ?? [];
-        } catch (collectionsError) {
-          console.error(
-            "Error al cargar las colecciones del usuario",
-            collectionsError
-          );
-          collectionsData = [];
-        }
-        let cardsData: CardTileData[] = [];
-        const creatorFilter = userData.username || userData.email;
-        if (creatorFilter) {
-          try {
-            const cardsResp = await apiFetch<CardsResponse>(
-              `/cards?creator=${encodeURIComponent(creatorFilter)}`
-            );
-            const fetchedCards = cardsResp.data?.cards ?? [];
-            cardsData = fetchedCards.map((card) => ({
-              _id: card._id,
-              title: card.title,
-              img: card.img,
-            }));
-          } catch (cardsError) {
-            console.error("Error al cargar las cartas del usuario", cardsError);
-            cardsData = [];
-          }
-        }
-        if (isActive) {
-          setCollections(collectionsData);
-          setCards(cardsData);
-        }
+        let shouldLoadContent = true;
         if (
           currentUser &&
           (userData._id || userData.id) &&
@@ -116,90 +84,126 @@ const UserPublicProfile = () => {
           try {
             setRelationshipStatus("none");
             setFriendshipId(null);
-            setFriendshipError(""); // Limpiar errores anteriores
+            setFriendshipError("");
+            const searchResp = await apiFetch<{
+              users?: Array<{
+                _id: string;
+                relationshipStatus: RelationshipStatus;
+              }>;
+            }>(`/friendships/users/search?all=true`, {
+              headers: { Authorization: `Bearer ${currentUser.token}` },
+            });
 
-            // Verificar PRIMERO si el usuario está bloqueado
-            try {
-              const blockedResp = await apiFetch<{
-                blockedUsers?: Array<{ _id: string }>;
-              }>("/friendships/blocked", {
-                headers: { Authorization: `Bearer ${currentUser.token}` },
-              });
+            const targetUser = searchResp.data.users?.find((u) => {
+              return u._id === targetUserId;
+            });
 
-              const isBlocked = blockedResp.data.blockedUsers?.some((u) => {
-                return u._id === targetUserId;
-              });
-
-              if (isBlocked && isActive) {
-                setRelationshipStatus("blocked");
-                return;
+            if (targetUser && isActive) {
+              setRelationshipStatus(targetUser.relationshipStatus);
+              if (targetUser.relationshipStatus === "blocked_by") {
+                shouldLoadContent = false;
               }
-            } catch (blockedError) {
-              console.error(
-                "Error al verificar usuarios bloqueados:",
-                blockedError
-              );
+              if (targetUser.relationshipStatus === "friends") {
+                const friendsResp = await apiFetch<{
+                  friends?: Array<{
+                    friendshipId: string;
+                    user?: { _id: string };
+                  }>;
+                }>("/friendships", {
+                  headers: { Authorization: `Bearer ${currentUser.token}` },
+                });
+                const friendship = friendsResp.data.friends?.find((f) => {
+                  return f.user?._id === targetUserId;
+                });
+                if (friendship) {
+                  setFriendshipId(friendship.friendshipId);
+                }
+              } else if (targetUser.relationshipStatus === "received") {
+                const pendingResp = await apiFetch<{
+                  requests?: Array<{
+                    friendshipId: string;
+                    requester?: { _id: string };
+                  }>;
+                }>("/friendships/pending", {
+                  headers: { Authorization: `Bearer ${currentUser.token}` },
+                });
+                const receivedRequest = pendingResp.data.requests?.find((r) => {
+                  return r.requester?._id === targetUserId;
+                });
+                if (receivedRequest) {
+                  setFriendshipId(receivedRequest.friendshipId);
+                }
+              } else if (targetUser.relationshipStatus === "sent") {
+                const sentResp = await apiFetch<{
+                  requests?: Array<{
+                    friendshipId: string;
+                    recipient?: { _id: string };
+                  }>;
+                }>("/friendships/sent", {
+                  headers: { Authorization: `Bearer ${currentUser.token}` },
+                });
+                const sentRequest = sentResp.data.requests?.find((r) => {
+                  return r.recipient?._id === targetUserId;
+                });
+                if (sentRequest) {
+                  setFriendshipId(sentRequest.friendshipId);
+                }
+              }
             }
-
-            const friendsResp = await apiFetch<{
-              friends?: Array<{ friendshipId: string; user?: { _id: string } }>;
-            }>("/friendships", {
-              headers: { Authorization: `Bearer ${currentUser.token}` },
-            });
-            const friendship = friendsResp.data.friends?.find((f) => {
-              return f.user?._id === targetUserId;
-            });
-            if (friendship && isActive) {
-              setRelationshipStatus("friends");
-              setFriendshipId(friendship.friendshipId);
-              return;
-            }
-            const pendingResp = await apiFetch<{
-              requests?: Array<{
-                friendshipId: string;
-                requester?: { _id: string };
-              }>;
-            }>("/friendships/pending", {
-              headers: { Authorization: `Bearer ${currentUser.token}` },
-            });
-            const receivedRequest = pendingResp.data.requests?.find((r) => {
-              return r.requester?._id === targetUserId;
-            });
-            if (receivedRequest && isActive) {
-              setRelationshipStatus("received");
-              setFriendshipId(receivedRequest.friendshipId);
-              return;
-            }
-            const sentResp = await apiFetch<{
-              requests?: Array<{
-                friendshipId: string;
-                recipient?: { _id: string };
-              }>;
-            }>("/friendships/sent", {
-              headers: { Authorization: `Bearer ${currentUser.token}` },
-            });
-            const sentRequest = sentResp.data.requests?.find((r) => {
-              return r.recipient?._id === targetUserId;
-            });
-            if (sentRequest && isActive) {
-              setRelationshipStatus("sent");
-              setFriendshipId(sentRequest.friendshipId);
-              return;
-            }
-
-            if (isActive) {
-              setRelationshipStatus("none");
-            }
-          } catch (friendshipError) {
+          } catch (relationshipError) {
             console.error(
-              "❌ Error al verificar estado de amistad:",
-              friendshipError
+              "Error al obtener el estado de la relación:",
+              relationshipError
             );
-            if (isActive) {
-              setRelationshipStatus("none");
-              setFriendshipError(""); // No mostrar error por problemas de conexión
+          }
+        }
+
+        let collectionsData: CollectionSummary[] = [];
+        let cardsData: CardTileData[] = [];
+
+        if (shouldLoadContent) {
+          try {
+            const headers: Record<string, string> = currentUser
+              ? { Authorization: `Bearer ${currentUser.token}` }
+              : {};
+            const collectionsResp = await apiFetch<CollectionSummary[]>(
+              `/collections/by/user/${userData._id ?? userData.id ?? userId}`,
+              { headers }
+            );
+            collectionsData = collectionsResp.data ?? [];
+          } catch (collectionsError) {
+            console.error(
+              "Error al cargar las colecciones del usuario",
+              collectionsError
+            );
+            collectionsData = [];
+          }
+
+          const creatorFilter = userData.username || userData.email;
+          if (creatorFilter) {
+            try {
+              const cardsResp = await apiFetch<CardsResponse>(
+                `/cards?creator=${encodeURIComponent(creatorFilter)}`
+              );
+              const fetchedCards = cardsResp.data?.cards ?? [];
+              cardsData = fetchedCards.map((card) => ({
+                _id: card._id,
+                title: card.title,
+                img: card.img,
+              }));
+            } catch (cardsError) {
+              console.error(
+                "Error al cargar las cartas del usuario",
+                cardsError
+              );
+              cardsData = [];
             }
           }
+        }
+
+        if (isActive) {
+          setCollections(collectionsData);
+          setCards(cardsData);
         }
       } catch (loadError) {
         const message = extractErrorMessage(
@@ -314,7 +318,6 @@ const UserPublicProfile = () => {
         headers: { Authorization: `Bearer ${currentUser.token}` },
       });
 
-      // Actualizar el estado después del bloqueo
       setRelationshipStatus("blocked");
       setFriendshipId(null);
     } catch (err) {
@@ -338,7 +341,6 @@ const UserPublicProfile = () => {
         headers: { Authorization: `Bearer ${currentUser.token}` },
       });
 
-      // Actualizar el estado después del desbloqueo
       setRelationshipStatus("none");
       setFriendshipId(null);
     } catch (err) {
@@ -795,6 +797,29 @@ const UserPublicProfile = () => {
                         </div>
                       </div>
                     )}
+                    {relationshipStatus === "blocked_by" && (
+                      <div className="space-y-3">
+                        <div className="inline-flex items-center gap-2 rounded-lg bg-red-700/20 border border-red-600/40 px-3 py-2 text-red-300 text-sm font-medium">
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                            />
+                          </svg>
+                          Este usuario te ha bloqueado
+                        </div>
+                        <div className="pt-2 text-gray-400 text-sm">
+                          No puedes interactuar con este usuario
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               {}
@@ -805,69 +830,104 @@ const UserPublicProfile = () => {
               )}
             </div>
           </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">Colecciones</h2>
-            {collections.length === 0 ? (
-              <p className="mt-2 text-sm text-white/70">
-                Este usuario aún no tiene colecciones públicas.
-              </p>
-            ) : (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {collections.map((collection) => {
-                  const cardsCount = Array.isArray(collection.cards)
-                    ? collection.cards.length
-                    : 0;
-                  return (
-                    <Link
-                      key={collection._id}
-                      to={`/collections/${collection._id}`}
-                      className="flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-white/10 shadow transition hover:border-emerald-400/60"
-                    >
-                      {collection.img ? (
-                        <img
-                          src={collection.img}
-                          alt={`Colección ${collection.title}`}
-                          className="h-40 w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="flex h-40 w-full items-center justify-center bg-slate-800 text-sm text-white/70">
-                          Sin imagen
-                        </div>
-                      )}
-                      <div className="flex flex-1 flex-col gap-2 p-4">
-                        <h3 className="text-lg font-semibold text-white">
-                          {collection.title}
-                        </h3>
-                        {collection.description && (
-                          <p className="text-sm text-white/70">
-                            {collection.description}
-                          </p>
-                        )}
-                        <span className="text-xs text-white/50">
-                          {cardsCount} cartas
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
+          {relationshipStatus === "blocked_by" ? (
+            <div className="space-y-6">
+              <div className="rounded-lg bg-red-700/20 border border-red-600/40 p-6 text-center">
+                <div className="flex justify-center mb-4">
+                  <svg
+                    className="w-12 h-12 text-red-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-red-300 mb-2">
+                  Contenido no disponible
+                </h3>
+                <p className="text-red-200 text-sm">
+                  Este usuario te ha bloqueado, por lo que no puedes ver sus
+                  colecciones ni cartas.
+                </p>
               </div>
-            )}
-          </section>
-          <section>
-            <h2 className="text-xl font-semibold text-white">Cartas creadas</h2>
-            {cards.length === 0 ? (
-              <p className="mt-2 text-sm text-white/70">
-                Este usuario todavía no ha creado cartas.
-              </p>
-            ) : (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {cards.map((card) => (
-                  <CardTile key={card._id} card={card} />
-                ))}
-              </div>
-            )}
-          </section>
+            </div>
+          ) : (
+            <>
+              <section>
+                <h2 className="text-xl font-semibold text-white">
+                  Colecciones
+                </h2>
+                {collections.length === 0 ? (
+                  <p className="mt-2 text-sm text-white/70">
+                    Este usuario aún no tiene colecciones públicas.
+                  </p>
+                ) : (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {collections.map((collection) => {
+                      const cardsCount = Array.isArray(collection.cards)
+                        ? collection.cards.length
+                        : 0;
+                      return (
+                        <Link
+                          key={collection._id}
+                          to={`/collections/${collection._id}`}
+                          className="flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-white/10 shadow transition hover:border-emerald-400/60"
+                        >
+                          {collection.img ? (
+                            <img
+                              src={collection.img}
+                              alt={`Colección ${collection.title}`}
+                              className="h-40 w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="flex h-40 w-full items-center justify-center bg-slate-800 text-sm text-white/70">
+                              Sin imagen
+                            </div>
+                          )}
+                          <div className="flex flex-1 flex-col gap-2 p-4">
+                            <h3 className="text-lg font-semibold text-white">
+                              {collection.title}
+                            </h3>
+                            {collection.description && (
+                              <p className="text-sm text-white/70">
+                                {collection.description}
+                              </p>
+                            )}
+                            <span className="text-xs text-white/50">
+                              {cardsCount} cartas
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+              <section>
+                <h2 className="text-xl font-semibold text-white">
+                  Cartas creadas
+                </h2>
+                {cards.length === 0 ? (
+                  <p className="mt-2 text-sm text-white/70">
+                    Este usuario todavía no ha creado cartas.
+                  </p>
+                ) : (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {cards.map((card) => (
+                      <CardTile key={card._id} card={card} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </>
+          )}
         </div>
       ) : (
         <div className="rounded border border-red-400 bg-red-500/20 p-4 text-red-100">

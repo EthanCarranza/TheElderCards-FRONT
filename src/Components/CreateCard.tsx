@@ -14,8 +14,22 @@ interface FactionOption {
   title: string;
   color: string;
 }
+
+interface CreatedCard {
+  _id: string;
+  title: string;
+  description: string;
+  type: string;
+  faction: string;
+  creator: string;
+  cost: number;
+  img?: string;
+  attack?: number;
+  defense?: number;
+}
+
 interface Props {
-  onCreated?: () => void;
+  onCreated?: (createdCardId?: string) => void;
   factions: FactionOption[];
 }
 const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
@@ -148,7 +162,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
         formData.append("img", image);
       }
       const token = localStorage.getItem("token");
-      await apiFetch("/cards", {
+      const response = await apiFetch<CreatedCard>("/cards", {
         method: "POST",
         body: formData,
         headers: {
@@ -166,7 +180,7 @@ const CreateCard: React.FC<Props> = ({ onCreated, factions }) => {
         defense: "",
       });
       setImage(null);
-      if (onCreated) onCreated();
+      if (onCreated) onCreated(response.data?._id);
     } catch (error: unknown) {
       setError(extractErrorMessage(error, "Error al crear carta"));
     } finally {

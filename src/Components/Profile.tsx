@@ -250,7 +250,7 @@ const Profile = () => {
 
   const handleDeleteAccount = async () => {
     if (!user || !profile) return;
-    
+
     if (!deletePassword.trim()) {
       setErrorMessage("Ingresa tu contraseña para confirmar la eliminación");
       return;
@@ -261,16 +261,14 @@ const Profile = () => {
     setSuccessMessage("");
 
     try {
-      // Primero verificamos la contraseña haciendo login
       await apiFetch("/users/login", {
         method: "POST",
         body: {
           email: profile.email,
-          password: deletePassword
-        }
+          password: deletePassword,
+        },
       });
 
-      // Si el login es exitoso, procedemos a eliminar la cuenta
       await apiFetch(`/users/${profile._id}`, {
         method: "DELETE",
         headers: {
@@ -279,16 +277,17 @@ const Profile = () => {
       });
 
       setSuccessMessage("Cuenta eliminada correctamente. Serás redirigido...");
-      
-      // Esperamos un momento y luego cerramos sesión y redirigimos
+
       setTimeout(() => {
         logoutRef.current();
         navigate("/");
       }, 2000);
-
     } catch (error) {
       setErrorMessage(
-        extractErrorMessage(error, "Error al eliminar la cuenta. Verifica tu contraseña.")
+        extractErrorMessage(
+          error,
+          "Error al eliminar la cuenta. Verifica tu contraseña."
+        )
       );
     } finally {
       setDeleting(false);
@@ -387,8 +386,10 @@ const Profile = () => {
 
         {/* Sección para eliminar cuenta */}
         <div className="mt-8 border-t pt-6">
-          <h2 className="text-xl font-bold text-red-600 mb-4">Zona peligrosa</h2>
-          
+          <h2 className="text-xl font-bold text-red-600 mb-4">
+            Zona peligrosa
+          </h2>
+
           {!showDeleteConfirmation ? (
             <button
               onClick={() => setShowDeleteConfirmation(true)}
@@ -411,7 +412,7 @@ const Profile = () => {
                 <li>Todos tus mensajes y conversaciones</li>
                 <li>Todas tus conexiones de amistad</li>
               </ul>
-              
+
               <FormInput
                 id="delete-password"
                 type="password"
@@ -421,7 +422,7 @@ const Profile = () => {
                 icon={<FaLock />}
                 autoComplete="current-password"
               />
-              
+
               <div className="flex gap-3">
                 <button
                   onClick={() => {
