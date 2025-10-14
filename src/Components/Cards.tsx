@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import CreateCard from "./CreateCard";
 import { CARD_TYPES } from "../constants/cardTypes";
@@ -44,6 +44,7 @@ interface Filters {
 }
 const Cards = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [cards, setCards] = useState<Card[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const { user } = useAuth();
@@ -126,7 +127,7 @@ const Cards = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, page, user?.userId]);
+  }, [filters, page, user]);
   const fetchFactions = useCallback(async () => {
     try {
       const response = await apiFetch<Faction[]>("/factions");
@@ -209,9 +210,13 @@ const Cards = () => {
             &lt; Volver al listado
           </button>
           <CreateCard
-            onCreated={() => {
-              setShowCreate(false);
-              fetchCards();
+            onCreated={(createdCardId) => {
+              if (createdCardId) {
+                navigate(`/cards/${createdCardId}`);
+              } else {
+                setShowCreate(false);
+                fetchCards();
+              }
             }}
             factions={factions.map((f) => ({
               _id: f._id,
