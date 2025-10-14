@@ -66,9 +66,9 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
   const friendshipRemovedCallbackRef = useRef<
     ((payload: unknown) => void) | null
   >(null);
-  const userBlockedCallbackRef = useRef<
-    ((payload: unknown) => void) | null
-  >(null);
+  const userBlockedCallbackRef = useRef<((payload: unknown) => void) | null>(
+    null
+  );
 
   const onNewFriendRequest = useCallback(
     (callback: (request: unknown) => void) => {
@@ -95,12 +95,9 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     []
   );
 
-  const onUserBlocked = useCallback(
-    (callback: (payload: unknown) => void) => {
-      userBlockedCallbackRef.current = callback;
-    },
-    []
-  );
+  const onUserBlocked = useCallback((callback: (payload: unknown) => void) => {
+    userBlockedCallbackRef.current = callback;
+  }, []);
 
   useEffect(() => {
     if (!user?.token) {
@@ -133,19 +130,16 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("WebSocket conectado");
       setConnected(true);
       setError(null);
       socket.emit("request_initial_counts");
     });
 
     socket.on("disconnect", () => {
-      console.log("WebSocket desconectado");
       setConnected(false);
     });
 
     socket.on("connect_error", (err) => {
-      console.error("Error de conexión WebSocket:", err);
       setError(`Error de conexión: ${err.message}`);
       setConnected(false);
     });
@@ -164,42 +158,36 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     });
 
     socket.on("new_message", (message) => {
-      console.log("Nuevo mensaje recibido:", message);
       if (newMessageCallbackRef.current) {
         newMessageCallbackRef.current(message);
       }
     });
 
     socket.on("new_friend_request", (request) => {
-      console.log("Nueva solicitud de amistad:", request);
       if (newFriendRequestCallbackRef.current) {
         newFriendRequestCallbackRef.current(request);
       }
     });
 
     socket.on("friend_request_response", (response) => {
-      console.log("Respuesta a solicitud de amistad:", response);
       if (friendRequestResponseCallbackRef.current) {
         friendRequestResponseCallbackRef.current(response);
       }
     });
 
     socket.on("friendship_removed", (payload) => {
-      console.log("Amistad/solicitud eliminada:", payload);
       if (friendshipRemovedCallbackRef.current) {
         friendshipRemovedCallbackRef.current(payload);
       }
     });
 
     socket.on("user_blocked", (payload) => {
-      console.log("Usuario bloqueado:", payload);
       if (userBlockedCallbackRef.current) {
         userBlockedCallbackRef.current(payload);
       }
     });
 
     socket.on("notification_error", (error: string) => {
-      console.error("Error de notificación:", error);
       setError(error);
     });
 

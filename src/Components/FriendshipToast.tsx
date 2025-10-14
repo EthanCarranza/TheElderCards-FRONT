@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export interface FriendshipNotification {
   id: string;
@@ -11,6 +12,7 @@ export interface FriendshipNotification {
   username: string;
   message?: string;
   timestamp: number;
+  userId?: string;
 }
 
 interface FriendshipToastProps {
@@ -26,6 +28,7 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
   autoClose = true,
   duration = 5000,
 }) => {
+  const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
@@ -35,9 +38,15 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
       onClose(notification.id);
     }, 300);
   }, [notification.id, onClose]);
+  const handleNotificationClick = useCallback(() => {
+    handleClose();
+    if (notification.userId) {
+    } else {
+      navigate("/friends");
+    }
+  }, [notification.userId, navigate, handleClose]);
 
   useEffect(() => {
-    // Animación de entrada
     const timer = setTimeout(() => setIsVisible(true), 50);
     return () => clearTimeout(timer);
   }, []);
@@ -81,7 +90,7 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
         return {
           icon: "💔",
           title: "Amistad eliminada",
-          message: notification.username,
+          message: `${notification.username} te ha eliminado de su lista de amigos.`,
           bgColor: "bg-orange-600",
           borderColor: "border-orange-500",
         };
@@ -89,7 +98,7 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
         return {
           icon: "🚫",
           title: "Usuario bloqueado",
-          message: notification.username,
+          message: `${notification.username} te ha bloqueado.`,
           bgColor: "bg-red-700",
           borderColor: "border-red-600",
         };
@@ -119,10 +128,11 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
       `}
     >
       <div
+        onClick={handleNotificationClick}
         className={`
           ${content.bgColor} ${content.borderColor}
           border-l-4 rounded-lg shadow-lg p-4 text-white
-          hover:shadow-xl transition-shadow duration-200
+          hover:shadow-xl transition-shadow duration-200 cursor-pointer
         `}
       >
         <div className="flex items-start gap-3">
@@ -139,7 +149,10 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
             )}
           </div>
           <button
-            onClick={handleClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClose();
+            }}
             className="text-white/80 hover:text-white flex-shrink-0 text-xl leading-none p-1"
             aria-label="Cerrar notificación"
           >
@@ -147,7 +160,6 @@ const FriendshipToast: React.FC<FriendshipToastProps> = ({
           </button>
         </div>
 
-        {/* Barra de progreso para auto-close */}
         {autoClose && (
           <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
             <div

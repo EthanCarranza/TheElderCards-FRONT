@@ -47,13 +47,7 @@ export const useSocketFriendshipNotifications = () => {
   const friendshipToast = useFriendshipToast();
   const { user } = useAuth();
   useEffect(() => {
-    console.log(
-      "🚀 useSocketFriendshipNotifications: Configurando listeners de eventos de socket"
-    );
-    console.log("🚀 Socket conectado:", socketNotifications.connected);
-    console.log("🚀 FriendshipToast disponible:", !!friendshipToast);
     socketNotifications.onNewFriendRequest((request: unknown) => {
-      console.log("🔔 Nueva solicitud de amistad recibida:", request);
       const friendRequest = request as BackendFriendRequest;
       const username = friendRequest.requester?.username;
       const email = friendRequest.requester?.email;
@@ -71,11 +65,11 @@ export const useSocketFriendshipNotifications = () => {
         type: "new_request",
         username: displayName,
         message: friendRequest.message,
+        userId: friendRequest.requester?._id,
       });
     });
 
     socketNotifications.onFriendRequestResponse((response: unknown) => {
-      console.log("✅❌ Respuesta a solicitud de amistad:", response);
       const friendResponse = response as BackendFriendRequestResponse;
       const recipientName =
         friendResponse.recipient?.username ||
@@ -85,17 +79,18 @@ export const useSocketFriendshipNotifications = () => {
         friendshipToast.showNotification({
           type: "request_accepted",
           username: recipientName,
+          userId: friendResponse.recipient?._id,
         });
       } else if (friendResponse.action === "decline") {
         friendshipToast.showNotification({
           type: "request_declined",
+          userId: friendResponse.recipient?._id,
           username: recipientName,
         });
       }
     });
 
     socketNotifications.onFriendshipRemoved((payload: unknown) => {
-      console.log("💔 Amistad/solicitud eliminada:", payload);
       const removal = payload as BackendFriendshipRemoved & {
         byUsername?: string;
         byEmail?: string;
@@ -108,17 +103,21 @@ export const useSocketFriendshipNotifications = () => {
         removal.byUsername || removal.byEmail || `ID: ${removal.byUserId}`;
       friendshipToast.showNotification({
         type: "friendship_removed",
-        username: `${name} te ha eliminado de su lista de amigos.`,
+        username: name,
+        userId: removal.byUserId,
       });
     });
 
     socketNotifications.onUserBlocked((payload: unknown) => {
-      console.log("🚫 Usuario bloqueado:", payload);
       const blocked = payload as BackendUserBlocked;
-      const name = blocked.blockedByUsername || blocked.blockedByEmail || `ID: ${blocked.blockedBy}`;
+      const name =
+        blocked.blockedByUsername ||
+        blocked.blockedByEmail ||
+        `ID: ${blocked.blockedBy}`;
       friendshipToast.showNotification({
         type: "user_blocked",
-        username: `${name} te ha bloqueado.`,
+        username: name,
+        userId: blocked.blockedBy,
       });
     });
   }, [socketNotifications, friendshipToast, user]);

@@ -17,7 +17,6 @@ import UserPublicProfile from "./Components/UserPublicProfile";
 import Friends from "./Components/Friends";
 import Messages from "./Components/Messages";
 import FriendshipToastContainer from "./Components/FriendshipToastContainer";
-import FriendshipNotificationTestPanel from "./Components/FriendshipNotificationTestPanel";
 import SocketNotificationListener from "./Components/SocketNotificationListener";
 function App() {
   return (
@@ -53,10 +52,7 @@ function App() {
                     element={<UserPublicProfile />}
                   />
                 </Routes>
-                {/* Container de notificaciones que aparece en todas las páginas */}
                 <FriendshipToastContainer />
-                {/* Panel de prueba (solo en desarrollo) */}
-                <FriendshipNotificationTestPanel />
               </Router>
             </SocketNotificationListener>
           </FriendshipToastProvider>
