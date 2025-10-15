@@ -18,6 +18,8 @@ import Friends from "./Components/Friends";
 import Messages from "./Components/Messages";
 import FriendshipToastContainer from "./Components/FriendshipToastContainer";
 import SocketNotificationListener from "./Components/SocketNotificationListener";
+import Rules from "./Components/Rules";
+import Terms from "./Components/Terms";
 function App() {
   return (
     <AuthProvider>
@@ -30,6 +32,8 @@ function App() {
                   <Route path="/" element={<Landing />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/login" element={<Login />} />
+                  <Route path="/rules" element={<Rules />} />
+                  <Route path="/terms" element={<Terms />} />
                   <Route path="/cards" element={<Cards />} />
                   <Route path="/cards/:id" element={<CardDetail />} />
                   <Route path="/collections" element={<Collections />} />
