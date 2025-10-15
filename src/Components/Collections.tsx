@@ -736,7 +736,7 @@ const Collections: React.FC = () => {
                                 className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
                                 title="Eliminar colección"
                               >
-                                🗑️
+                                ×
                               </button>
                             </div>
                           </div>
