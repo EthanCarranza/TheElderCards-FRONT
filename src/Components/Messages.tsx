@@ -228,9 +228,28 @@ const Messages = () => {
       </PageLayout>
     );
   }
-  const activeChatUser = activeChat
+  let activeChatUser = activeChat
     ? conversations.find((c) => c.userId === activeChat)?.user
     : null;
+  if (!activeChatUser && user?.role === "admin" && activeChat) {
+    const tempUserRaw = window.sessionStorage.getItem("adminTempChatUser");
+    if (tempUserRaw) {
+      try {
+        const tempUser = JSON.parse(tempUserRaw);
+        if (tempUser && tempUser._id === activeChat) {
+          activeChatUser = tempUser;
+          if (!conversations.some((c) => c.userId === activeChat)) {
+            conversations.push({
+              userId: activeChat,
+              user: tempUser,
+              lastMessage: null,
+              unreadCount: 0,
+            });
+          }
+        }
+      } catch {}
+    }
+  }
   return (
     <div className="h-screen w-full bg-black flex flex-col">
       <div className="h-full w-full flex overflow-hidden">
@@ -470,6 +489,7 @@ const Messages = () => {
                   > = ["none", "sent", "received"];
                   const notFriends =
                     nonFriendStatuses.includes(relationshipStatus);
+                  const isAdmin = user?.role === "admin";
                   const isUnknown = relationshipStatus === "unknown";
                   if (blockedBy) {
                     return (
@@ -486,11 +506,53 @@ const Messages = () => {
                     );
                   }
                   if (notFriends) {
-                    return (
-                      <div className="text-center text-gray-200 bg-gray-700/50 border border-gray-600 rounded-lg px-3 py-2 text-sm md:text-base">
-                        Este usuario no es tu amigo
-                      </div>
-                    );
+                    if (isAdmin) {
+                      return (
+                        <div className="flex gap-2 md:gap-3 items-end">
+                          <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (
+                                e.key === "Enter" &&
+                                !sending &&
+                                newMessage.trim()
+                              ) {
+                                sendMessage();
+                              }
+                            }}
+                            placeholder="Escribe un mensaje..."
+                            className="flex-1 px-3 py-2 md:px-4 md:py-2 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base"
+                            inputMode="text"
+                            autoFocus
+                            onFocus={() => {
+                              if (window.innerWidth < 768) {
+                                setTimeout(() => {
+                                  messagesEndRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                  });
+                                }, 200);
+                              }
+                            }}
+                            disabled={sending}
+                          />
+                          <button
+                            onClick={sendMessage}
+                            disabled={sending || !newMessage.trim()}
+                            className="px-4 py-2 md:px-6 md:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors text-sm md:text-base min-w-[60px] md:min-w-[80px]"
+                          >
+                            Enviar
+                          </button>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className="text-center text-gray-200 bg-gray-700/50 border border-gray-600 rounded-lg px-3 py-2 text-sm md:text-base">
+                          Este usuario no es tu amigo
+                        </div>
+                      );
+                    }
                   }
                   if (isUnknown) {
                     return (
