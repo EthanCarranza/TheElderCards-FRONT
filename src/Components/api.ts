@@ -12,9 +12,7 @@ export const apiFetch = async <T = unknown>(
   endpoint: string,
   options: ApiFetchOptions = {}
 ): Promise<AxiosResponse<T>> => {
-  const cleanBaseUrl = BASE_URL.replace(/\/+$/, "");
-  const cleanEndpoint = endpoint.replace(/^\/+/, "/");
-  const url = `${cleanBaseUrl}${cleanEndpoint}`;
+  const url = `${BASE_URL}${endpoint}`;
   const { method = "get", headers = {}, body, ...rest } = options;
   const resolvedHeaders: Record<string, string> = { ...headers };
   if (!(body instanceof FormData) && !resolvedHeaders["Content-Type"]) {
