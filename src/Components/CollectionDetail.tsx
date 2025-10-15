@@ -266,60 +266,69 @@ const CollectionDetail: React.FC = () => {
           Volver
         </button>
         {loading ? (
-          <div className="text-white text-center py-8">
-            Cargando colección...
-          </div>
+          <div className="text-white text-center py-8">Cargando colección...</div>
         ) : error ? (
-          <div className="text-red-400 text-center py-4 px-4 bg-red-100 rounded-lg">
-            {error}
-          </div>
+          <div className="text-red-400 text-center py-4 px-4 bg-red-100 rounded-lg">{error}</div>
         ) : collection ? (
           <div className="space-y-6 lg:space-y-8">
             <div className="bg-white/90 text-black rounded-lg p-4 lg:p-6 shadow-lg relative">
-              {collection.img ? (
-                <img
-                  src={collection.img}
-                  alt={collection.title}
-                  className="w-full max-h-[300px] sm:max-h-[400px] lg:max-h-[420px] object-cover rounded-lg"
-                />
-              ) : (
-                <div className="w-full h-48 sm:h-56 lg:h-64 bg-gray-200 rounded-lg flex items-center justify-center text-gray-600">
-                  Sin imagen
-                </div>
-              )}
-              <div className="flex items-center justify-between mt-4 relative">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words flex-1">
-                  {collection.title}
-                </h1>
-                {(shouldShowPublicInteractions() ||
-                  (() => {
-                    const isAdmin = user?.role === "admin";
-                    const isOwner =
-                      user &&
-                      getCreatorId(collection.creator) === String(user.userId);
-                    if (collection.isPrivate) {
-                      return isOwner;
-                    }
-                    return isOwner || isAdmin;
-                  })()) && (
+              <div className="relative">
+                {collection.img ? (
+                  <img
+                    src={collection.img}
+                    alt={collection.title}
+                    className="w-full max-h-[300px] sm:max-h-[400px] lg:max-h-[420px] object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="w-full h-48 sm:h-56 lg:h-64 bg-gray-200 rounded-lg flex items-center justify-center text-gray-600">Sin imagen</div>
+                )}
+                {user && shouldShowPublicInteractions() && (
                   <div className="absolute top-2 right-2 flex gap-1">
-                    {user &&
-                      getCreatorId(collection.creator) ===
-                        String(user.userId) && (
-                        <button
-                          onClick={handleEdit}
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
-                          title="Editar colección"
-                        >
-                          ✏️
-                        </button>
-                      )}
+                    <button
+                      title={collectionInteraction.liked ? "Quitar me gusta" : "Me gusta"}
+                      onClick={toggleLike}
+                      className={`rounded-full p-2 text-sm ${collectionInteraction.liked ? "bg-red-400 text-white" : "bg-black/60 text-white"}`}
+                    >
+                      ❤️
+                    </button>
+                    <button
+                      title={isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                      onClick={toggleFavorite}
+                      className={`rounded-full p-2 text-sm ${isFavorite ? "bg-yellow-400 text-black" : "bg-black/60 text-white"}`}
+                    >
+                      ⭐
+                    </button>
+                  </div>
+                )}
+                {isOwner && (
+                  <div className="absolute top-2 left-2 flex gap-1">
+                    <button
+                      onClick={handleEdit}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
+                      title="Editar colección"
+                    >
+                      ✏️
+                    </button>
                     <button
                       onClick={handleDelete}
                       className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
                       title="Eliminar colección"
                     >
                       🗑️
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 gap-2">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words flex-1">{collection.title}</h1>
+                {user?.role === "admin" && !isOwner && (
+                  <div className="absolute top-2 left-2 flex gap-1">
+                    <button
+                      onClick={handleDelete}
+                      className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors flex items-center justify-center"
+                      title="Eliminar colección como admin"
+                    >
+                      <span role="img" aria-label="Eliminar">🗑️</span>
                     </button>
                   </div>
                 )}
@@ -428,22 +437,19 @@ const CollectionDetail: React.FC = () => {
                   {collection.description}
                 </p>
               )}
-
-              <div className="mt-4 flex gap-6 text-gray-600">
+              <div className="mt-4 flex gap-6 text-gray-600 items-center">
                 {!isPrivateCollection() && (
                   <>
                     <div className="flex items-center gap-2">
                       <span className="text-lg">❤️</span>
                       <span className="text-sm sm:text-base font-medium">
-                        {collectionStats.likes} me gusta
-                        {collectionStats.likes !== 1 ? "s" : ""}
+                        {collectionStats.likes} me gusta{collectionStats.likes !== 1 ? "s" : ""}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-lg">⭐</span>
                       <span className="text-sm sm:text-base font-medium">
-                        {collectionStats.favorites} favorito
-                        {collectionStats.favorites !== 1 ? "s" : ""}
+                        {collectionStats.favorites} favorito{collectionStats.favorites !== 1 ? "s" : ""}
                       </span>
                     </div>
                   </>
@@ -451,16 +457,13 @@ const CollectionDetail: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-lg">📋</span>
                   <span className="text-sm sm:text-base font-medium">
-                    {collection.cards?.length || 0} carta
-                    {(collection.cards?.length || 0) !== 1 ? "s" : ""}
+                    {collection.cards?.length || 0} carta{(collection.cards?.length || 0) !== 1 ? "s" : ""}
                   </span>
                 </div>
                 {isPrivateCollection() && (
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🔒</span>
-                    <span className="text-sm sm:text-base font-medium text-gray-500">
-                      Colección privada
-                    </span>
+                    <span className="text-sm sm:text-base font-medium text-gray-500">Colección privada</span>
                   </div>
                 )}
               </div>

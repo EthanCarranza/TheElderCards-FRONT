@@ -247,7 +247,9 @@ const Messages = () => {
             });
           }
         }
-      } catch {}
+      } catch (error) {
+        console.error("Error al obtener el usuario temporal:", error);
+      }
     }
   }
   return (
