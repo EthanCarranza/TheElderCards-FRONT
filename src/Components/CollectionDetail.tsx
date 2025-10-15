@@ -30,6 +30,60 @@ interface CollectionInteraction {
   favorited: boolean;
 }
 const CollectionDetail: React.FC = () => {
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    description: "",
+    isPrivate: false,
+  });
+  const [editImage, setEditImage] = useState<File | null>(null);
+
+
+  const handleEdit = () => {
+    if (!collection) return;
+    setEditing(true);
+    setEditForm({
+      title: collection.title,
+      description: collection.description || "",
+      isPrivate: collection.isPrivate || false,
+    });
+    setEditImage(null);
+  };
+
+  const handleDelete = async () => {
+    if (!user || !collection) return;
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta colección?")) return;
+    try {
+      await apiFetch(`/collections/${collection._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      navigate("/collections");
+    } catch {
+      alert("Error al eliminar la colección");
+    }
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !collection) return;
+    try {
+      const formData = new FormData();
+      formData.append("title", editForm.title.trim());
+      formData.append("description", editForm.description.trim());
+      formData.append("isPrivate", editForm.isPrivate.toString());
+      if (editImage) formData.append("img", editImage);
+      const response = await apiFetch<CollectionDetailData>(`/collections/${collection._id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${user.token}` },
+        body: formData,
+      });
+      setCollection(response.data);
+      setEditing(false);
+    } catch {
+      alert("Error al actualizar la colección");
+    }
+  };
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -175,6 +229,8 @@ const CollectionDetail: React.FC = () => {
     if (typeof creator === "object" && creator._id) return creator._id;
     return String(creator);
   };
+  const isOwner = user && collection && getCreatorId(collection.creator) === String(user.userId);
+
 
   const isPrivateCollection = () => {
     if (!collection || !user) return false;
@@ -224,7 +280,7 @@ const CollectionDetail: React.FC = () => {
                   Sin imagen
                 </div>
               )}
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between mt-4 relative">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words flex-1">
                   {collection.title}
                 </h1>
@@ -232,37 +288,104 @@ const CollectionDetail: React.FC = () => {
                   <div className="ml-4 flex gap-2">
                     <button
                       onClick={toggleLike}
-                      title={
-                        collectionInteraction.liked
-                          ? "Quitar me gusta"
-                          : "Me gusta"
-                      }
-                      className={`rounded-full p-2 lg:p-3 text-lg lg:text-xl transition-colors ${
-                        collectionInteraction.liked
-                          ? "bg-red-400 text-white"
-                          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                      }`}
+                      title={collectionInteraction.liked ? "Quitar me gusta" : "Me gusta"}
+                      className={`rounded-full p-2 lg:p-3 text-lg lg:text-xl transition-colors ${collectionInteraction.liked ? "bg-red-400 text-white" : "bg-black/60 text-white"}`}
                     >
                       ❤️
                     </button>
                     <button
                       onClick={toggleFavorite}
-                      title={
-                        isFavorite
-                          ? "Quitar de favoritos"
-                          : "Marcar como favorito"
-                      }
-                      className={`rounded-full p-2 lg:p-3 text-lg lg:text-xl transition-colors ${
-                        isFavorite
-                          ? "bg-yellow-400 text-black"
-                          : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                      }`}
+                      title={isFavorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                      className={`rounded-full p-2 lg:p-3 text-lg lg:text-xl transition-colors ${isFavorite ? "bg-yellow-400 text-black" : "bg-black/60 text-white"}`}
                     >
                       ⭐
                     </button>
                   </div>
                 )}
+                {isOwner && (
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <button
+                      onClick={handleEdit}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
+                      title="Editar colección"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
+                      title="Eliminar colección"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
               </div>
+      {editing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4 text-black">Editar Colección</h3>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700">Título</label>
+                <input
+                  id="edit-title"
+                  type="text"
+                  value={editForm.title}
+                  onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                  className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                  maxLength={40}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">Descripción</label>
+                <textarea
+                  id="edit-description"
+                  value={editForm.description}
+                  onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                  className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                  rows={3}
+                  maxLength={1000}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="edit-isPrivate"
+                  type="checkbox"
+                  checked={editForm.isPrivate}
+                  onChange={e => setEditForm(f => ({ ...f, isPrivate: e.target.checked }))}
+                  className="rounded w-4 h-4"
+                />
+                <label htmlFor="edit-isPrivate" className="text-base text-gray-700">Colección privada</label>
+              </div>
+              <div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => setEditImage(e.target.files?.[0] || null)}
+                  className="text-sm"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold"
+                >
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
               {collection.description && (
                 <p className="mt-2 text-sm sm:text-base lg:text-lg text-gray-800 whitespace-pre-line break-words">
                   {collection.description}
