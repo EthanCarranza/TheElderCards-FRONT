@@ -603,6 +603,14 @@ const Collections: React.FC = () => {
                       ? col.creator
                       : col.creator._id;
                   const isOwner = user?.userId && creatorId === user.userId;
+                  const isAdmin = user?.role === "admin";
+                  const canDeleteCollection = () => {
+                    if (!col || !user) return false;
+                    if (col.isPrivate) {
+                      return isOwner;
+                    }
+                    return isOwner || isAdmin;
+                  };
                   return (
                     <Link
                       key={col._id}
@@ -703,20 +711,22 @@ const Collections: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        {user && isOwner && (
+                        {user && canDeleteCollection() ? (
                           <div className="absolute top-2 right-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                             <div className="flex gap-1">
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleEdit(col);
-                                }}
-                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
-                                title="Editar colección"
-                              >
-                                ✏️
-                              </button>
+                              {isOwner && (
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleEdit(col);
+                                  }}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg transition-colors"
+                                  title="Editar colección"
+                                >
+                                  ✏️
+                                </button>
+                              )}
                               <button
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -730,7 +740,7 @@ const Collections: React.FC = () => {
                               </button>
                             </div>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </Link>
                   );
