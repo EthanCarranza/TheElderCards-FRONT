@@ -10,7 +10,7 @@ import { DEFAULT_PROFILE_IMAGE } from "../constants/user";
 function Landing() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [toastMessage, setToastMessage] = useState("");
   useEffect(() => {
     const state = location.state as
@@ -229,23 +229,25 @@ function Landing() {
             </button>
           </div>
         </div>
-        <div className="text-center">
-          <button
-            onClick={() => navigate("/register")}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-xl px-12 py-4 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all"
-          >
-            ¡Únete Ahora!
-          </button>
-          <p className="text-gray-400 mt-4">
-            ¿Ya tienes cuenta?{" "}
+        {!user && (
+          <div className="text-center">
             <button
-              onClick={() => navigate("/login")}
-              className="text-blue-400 hover:text-blue-300 font-semibold underline"
+              onClick={() => navigate("/register")}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xl px-12 py-4 rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all"
             >
-              Inicia sesión aquí
+              ¡Únete Ahora!
             </button>
-          </p>
-        </div>
+            <p className="text-gray-400 mt-4">
+              ¿Ya tienes cuenta?{" "}
+              <button
+                onClick={() => navigate("/login")}
+                className="text-blue-400 hover:text-blue-300 font-semibold underline"
+              >
+                Inicia sesión aquí
+              </button>
+            </p>
+          </div>
+        )}
 
         <div className="mt-12 pt-8 pb-16 border-t border-gray-700">
           <div className="bg-gray-800 bg-opacity-30 rounded-lg p-4 text-center">
