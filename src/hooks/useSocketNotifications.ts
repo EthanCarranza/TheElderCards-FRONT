@@ -113,9 +113,11 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
       return;
     }
 
-    const serverUrl = import.meta.env.VITE_API_URL
-      ? import.meta.env.VITE_API_URL
-      : "http://localhost:3000";
+    let serverUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || "http://localhost:3000";
+    
+    serverUrl = serverUrl.replace(/\/api\/v1\/?$/, "");
+    
+    console.log("🔌 Conectando Socket.IO a:", serverUrl);
 
     const socket = io(serverUrl, {
       auth: {
@@ -130,16 +132,19 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     socketRef.current = socket;
 
     socket.on("connect", () => {
+      console.log("✅ Socket.IO conectado exitosamente");
       setConnected(true);
       setError(null);
       socket.emit("request_initial_counts");
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
+      console.log("❌ Socket.IO desconectado:", reason);
       setConnected(false);
     });
 
     socket.on("connect_error", (err) => {
+      console.error("⚠️ Socket.IO error de conexión:", err.message);
       setError(`Error de conexión: ${err.message}`);
       setConnected(false);
     });
@@ -164,12 +169,14 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     });
 
     socket.on("new_friend_request", (request) => {
+      console.log("📨 Socket: Nueva solicitud de amistad recibida", request);
       if (newFriendRequestCallbackRef.current) {
         newFriendRequestCallbackRef.current(request);
       }
     });
 
     socket.on("friend_request_response", (response) => {
+      console.log("📨 Socket: Respuesta a solicitud recibida", response);
       if (friendRequestResponseCallbackRef.current) {
         friendRequestResponseCallbackRef.current(response);
       }
