@@ -16,6 +16,7 @@ const primaryLinks: PrimaryLink[] = [
   { to: "/cards", label: "Cartas" },
   { to: "/collections", label: "Colecciones" },
   { to: "/factions", label: "Facciones" },
+  { to: "/bestiary", label: "Bestiario" },
 ];
 function Navbar() {
   const { user, logout } = useAuth();

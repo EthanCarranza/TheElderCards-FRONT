@@ -10,6 +10,7 @@ import { FriendshipNotificationsProvider } from "./contexts/FriendshipNotificati
 import { FriendshipToastProvider } from "./contexts/FriendshipToastContext";
 import Factions from "./Components/Factions";
 import FactionDetail from "./Components/FactionDetail";
+import Bestiary from "./Components/Bestiary";
 import Profile from "./Components/Profile";
 import Collections from "./Components/Collections";
 import CollectionDetail from "./Components/CollectionDetail";
@@ -43,6 +44,7 @@ function App() {
                   />
                   <Route path="/factions" element={<Factions />} />
                   <Route path="/factions/:id" element={<FactionDetail />} />
+                  <Route path="/bestiary" element={<Bestiary />} />
                   <Route path="/friends" element={<Friends />} />
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/messages/:userId" element={<Messages />} />
