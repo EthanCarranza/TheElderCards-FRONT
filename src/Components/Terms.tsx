@@ -19,7 +19,6 @@ function Terms() {
         </h1>
 
         <div className="space-y-8">
-          {/* Introducción */}
           <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <p className="text-base md:text-lg text-gray-300 leading-relaxed mb-4">
               Bienvenido a The Elder Cards. Al usar esta plataforma, aceptas los
@@ -40,7 +39,6 @@ function Terms() {
             </p>
           </div>
 
-          {/* Aceptación de Términos */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               1. Aceptación de los Términos
@@ -58,7 +56,6 @@ function Terms() {
             </p>
           </section>
 
-          {/* Naturaleza del Proyecto */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               2. Naturaleza del Proyecto - Sin Ánimo de Lucro
@@ -93,7 +90,6 @@ function Terms() {
             </ul>
           </section>
 
-          {/* Descripción del Servicio */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               3. Descripción del Servicio
@@ -125,7 +121,6 @@ function Terms() {
             </ul>
           </section>
 
-          {/* Cuentas de Usuario */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               4. Cuentas de Usuario
@@ -162,7 +157,6 @@ function Terms() {
             </ul>
           </section>
 
-          {/* Propiedad del Contenido */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               5. Contenido y Propiedad Intelectual
@@ -237,7 +231,6 @@ function Terms() {
             </div>
           </section>
 
-          {/* Marcas Registradas y Créditos */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6 border-l-4 border-blue-500">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               6. Marcas Registradas y Reconocimientos
@@ -301,7 +294,6 @@ function Terms() {
             </div>
           </section>
 
-          {/* Uso Aceptable */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               7. Política de Uso Aceptable
@@ -368,7 +360,6 @@ function Terms() {
             </div>
           </section>
 
-          {/* Privacidad */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               8. Privacidad y Protección de Datos
@@ -406,7 +397,6 @@ function Terms() {
             </ul>
           </section>
 
-          {/* Limitación de Responsabilidad */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               9. Limitación de Responsabilidad
@@ -437,7 +427,6 @@ function Terms() {
             </p>
           </section>
 
-          {/* Terminación */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               10. Terminación del Servicio
@@ -469,7 +458,6 @@ function Terms() {
             </p>
           </section>
 
-          {/* Modificaciones */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               11. Modificaciones a los Términos
@@ -482,7 +470,6 @@ function Terms() {
             </p>
           </section>
 
-          {/* Ley Aplicable */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               12. Ley Aplicable y Jurisdicción
@@ -494,7 +481,6 @@ function Terms() {
             </p>
           </section>
 
-          {/* Contacto */}
           <section className="bg-gray-700 bg-opacity-50 rounded-lg p-6 border border-gray-600">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4">
               13. Información de Contacto
@@ -512,7 +498,6 @@ function Terms() {
             </p>
           </section>
 
-          {/* Aceptación Final */}
           <div className="bg-green-900 bg-opacity-30 border border-green-500 rounded-lg p-6">
             <p className="text-base md:text-lg text-gray-300 leading-relaxed">
               Al utilizar The Elder Cards, confirmas que has leído, entendido y

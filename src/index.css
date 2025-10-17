@@ -32,7 +32,6 @@ body {
 
 body {
   font-family: "Cyrodiil", "Times New Roman", Georgia, serif;
-  /* Evitar zoom en inputs en iOS */
   -webkit-text-size-adjust: 100%;
 }
 
@@ -42,18 +41,15 @@ body {
   background-color: #000;
 }
 
-/* Mejorar UX táctil en móvil */
 @media (max-width: 767px) {
   .touch-manipulation {
     touch-action: manipulation;
   }
 
-  /* Área segura para dispositivos con notch */
   .pb-safe {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
-  /* Evitar zoom accidental en inputs */
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -61,32 +57,26 @@ body {
     font-size: 16px;
   }
 
-  /* Mejorar scrolling en listas largas */
   .overflow-y-auto {
     -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Arreglar layout en pantallas XL */
 @media (min-width: 1536px) {
-  /* Asegurar que las columnas laterales no causen overflow */
   body {
     overflow-x: hidden;
     background-color: #000;
   }
 
-  /* Mejorar el scroll en pantallas grandes */
   .overflow-y-auto {
     scroll-behavior: smooth;
   }
 
-  /* Eliminar cualquier gap o espacio */
   #root {
     width: 100vw;
     min-height: 100vh;
   }
 
-  /* Asegurar que no haya espacios en blanco */
   * {
     box-sizing: border-box;
   }

@@ -378,11 +378,12 @@ const Bestiary = () => {
   return (
     <PageLayout contentClassName="max-h-[83dvh] flex font-serif bg-gray-900">
       <div className="flex flex-col lg:flex-row max-w-[2800px] mx-auto h-full w-full">
-        {/* Panel izquierdo - Índice */}
         <div className="lg:w-1/3 xl:w-1/4 h-full border-b lg:border-b-0 lg:border-r border-gray-700 bg-gray-900 flex flex-col rounded-tl-lg rounded-bl-lg shadow-lg shadow-black/30">
           <div className="p-4 lg:p-6 border-b border-gray-700 bg-gray-800 rounded-tl-lg">
             <h2 className="text-2xl lg:text-3xl font-bold text-white text-center tracking-wide drop-shadow-lg mb-2 font-serif relative">
-              <span className="inline-block border-b-4 border-green-700 pb-1 px-2">BESTIARIO</span>
+              <span className="inline-block border-b-4 border-green-700 pb-1 px-2">
+                BESTIARIO
+              </span>
             </h2>
             <p className="text-sm text-gray-300 text-center mt-2 italic">
               {mockEntries.length} entradas descubiertas
@@ -409,7 +410,6 @@ const Bestiary = () => {
                       loading="lazy"
                     />
                   )}
-                  {/* Texto */}
                   <div className="flex-1 min-w-0">
                     <h3
                       className={`font-bold text-base lg:text-lg truncate font-serif ${
@@ -425,10 +425,17 @@ const Bestiary = () => {
                       {entry.species && ` • ${entry.species}`}
                     </p>
                   </div>
-                  {/* Indicador de selección */}
                   {selectedEntry?._id === entry._id && (
                     <div className="text-green-400 text-lg flex-shrink-0">
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="inline-block"><path d="M6 4l8 6-8 6V4z" fill="currentColor"/></svg>
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        className="inline-block"
+                      >
+                        <path d="M6 4l8 6-8 6V4z" fill="currentColor" />
+                      </svg>
                     </div>
                   )}
                 </div>
@@ -450,7 +457,6 @@ const Bestiary = () => {
                   />
                 </div>
               )}
-              {/* Cabecera */}
               <div className="mb-4 lg:mb-6 flex-shrink-0">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div>
@@ -476,7 +482,6 @@ const Bestiary = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-shrink-0">
-                {/* Clasificación */}
                 <div className="bg-gray-800 border-2 border-gray-700 rounded-lg p-4 shadow-sm">
                   <h3 className="text-lg font-bold text-white mb-3 border-b-2 border-green-700 pb-2 font-serif">
                     Clasificación
@@ -567,7 +572,7 @@ const Bestiary = () => {
               </div>
               <div className="mt-4 p-3 bg-gray-900 border-2 border-gray-700 rounded-lg flex-shrink-0 shadow-sm">
                 <p className="text-xs lg:text-sm text-gray-300 text-center truncate italic font-serif">
-                  ℹ️ Esta es una vista previa con datos de ejemplo. Las entradas
+                  Esta es una vista previa con datos de ejemplo. Las entradas
                   reales se cargarán desde el backend.
                 </p>
               </div>

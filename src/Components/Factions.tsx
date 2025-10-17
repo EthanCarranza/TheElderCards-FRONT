@@ -251,7 +251,6 @@ const Factions = () => {
           </div>
         )}
 
-        {/* Modal de edición */}
         {isAdmin && editingFaction && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -320,16 +319,18 @@ const CreateFactionForm = ({ onCreated }: CreateFactionFormProps) => {
     event.preventDefault();
     setError("");
     setSuccess("");
-    
+
     const trimmedTitle = form.title.trim();
     const trimmedDescription = form.description.trim();
     const trimmedTerritory = form.territory.trim();
-    
+
     if (!trimmedTitle || !trimmedDescription || !trimmedTerritory) {
-      setError("Todos los campos son obligatorios y no pueden contener solo espacios vacíos");
+      setError(
+        "Todos los campos son obligatorios y no pueden contener solo espacios vacíos"
+      );
       return;
     }
-    
+
     setLoading(true);
     try {
       const formData = new FormData();

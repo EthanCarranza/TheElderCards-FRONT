@@ -19,7 +19,6 @@ function Rules() {
         </h1>
 
         <div className="space-y-8">
-          {/* Introducción */}
           <div className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <p className="text-base md:text-lg text-gray-300 leading-relaxed">
               Bienvenido a las reglas de The Elder Cards. Estas normas están
@@ -28,7 +27,6 @@ function Rules() {
             </p>
           </div>
 
-          {/* Comportamiento de la Comunidad */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-white">
               1. Comportamiento de la Comunidad
@@ -57,7 +55,6 @@ function Rules() {
             </ul>
           </section>
 
-          {/* Contenido Permitido */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               2. Contenido Permitido
@@ -84,7 +81,6 @@ function Rules() {
             </ul>
           </section>
 
-          {/* Contenido Prohibido */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-red-400">
               3. Contenido Prohibido
@@ -119,7 +115,6 @@ function Rules() {
             </ul>
           </section>
 
-          {/* Derechos de Autor */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               4. Propiedad Intelectual
@@ -148,7 +143,6 @@ function Rules() {
             </ul>
           </section>
 
-          {/* Uso de la Plataforma */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               5. Uso Responsable
@@ -181,7 +175,6 @@ function Rules() {
             </ul>
           </section>
 
-          {/* Consecuencias */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-yellow-400">
               6. Consecuencias por Incumplimiento
@@ -209,7 +202,6 @@ function Rules() {
             </ul>
           </section>
 
-          {/* Modificaciones */}
           <section className="bg-gray-800 bg-opacity-50 rounded-lg p-6">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4 text-gray-300">
               7. Modificaciones a las Reglas
@@ -222,7 +214,6 @@ function Rules() {
             </p>
           </section>
 
-          {/* Contacto */}
           <section className="bg-gray-700 bg-opacity-50 rounded-lg p-6 border border-gray-600">
             <h2 className="text-3xl md:text-4xl font-semibold mb-4">
               ¿Preguntas o Reportes?

@@ -384,7 +384,6 @@ const Profile = () => {
           </button>
         </form>
 
-        {/* Sección para eliminar cuenta */}
         <div className="mt-8 border-t pt-6">
           <h2 className="text-xl font-bold text-red-600 mb-4">
             Zona peligrosa

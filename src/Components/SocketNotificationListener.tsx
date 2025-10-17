@@ -9,7 +9,7 @@ const SocketNotificationListener: React.FC<SocketNotificationListenerProps> = ({
   children,
 }) => {
   console.log(
-    "🎯 SocketNotificationListener: Componente montado - iniciando escucha de eventos"
+    "SocketNotificationListener: Componente montado - iniciando escucha de eventos"
   );
 
   useSocketFriendshipNotifications();

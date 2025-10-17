@@ -346,7 +346,6 @@ const CollectionDetail: React.FC = () => {
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold break-words">
                     {collection.title}
                   </h1>
-                  {/* Enlace al perfil del creador */}
                   {!collection.isPrivate &&
                     typeof collection.creator === "object" &&
                     collection.creator._id && (

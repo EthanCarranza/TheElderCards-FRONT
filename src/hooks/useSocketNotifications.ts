@@ -117,7 +117,7 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     
     serverUrl = serverUrl.replace(/\/api\/v1\/?$/, "");
     
-    console.log("🔌 Conectando Socket.IO a:", serverUrl);
+    console.log("Conectando Socket.IO a:", serverUrl);
 
     const socket = io(serverUrl, {
       auth: {
@@ -132,19 +132,19 @@ export const useSocketNotifications = (): UseSocketNotificationsReturn => {
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("✅ Socket.IO conectado exitosamente");
+      console.log("Socket.IO conectado exitosamente");
       setConnected(true);
       setError(null);
       socket.emit("request_initial_counts");
     });
 
     socket.on("disconnect", (reason) => {
-      console.log("❌ Socket.IO desconectado:", reason);
+      console.log("Socket.IO desconectado:", reason);
       setConnected(false);
     });
 
     socket.on("connect_error", (err) => {
-      console.error("⚠️ Socket.IO error de conexión:", err.message);
+      console.error("Socket.IO error de conexión:", err.message);
       setError(`Error de conexión: ${err.message}`);
       setConnected(false);
     });

@@ -82,7 +82,6 @@ const FriendshipNotificationTestPanel: React.FC = () => {
   );
 };
 
-// Solo mostrar en desarrollo
 const FriendshipNotificationTestPanelConditional: React.FC = () => {
   if (import.meta.env.MODE !== "development") {
     return null;
