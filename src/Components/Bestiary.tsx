@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { apiFetch } from "./api";
 import PageLayout from "./PageLayout";
 
 interface BestiaryEntry {
@@ -371,13 +373,106 @@ const mockEntries: BestiaryEntry[] = [
 ];
 
 const Bestiary = () => {
+  const [uploadStatus, setUploadStatus] = useState<
+    null | "success" | "error" | "loading"
+  >(null);
+  const [uploadMessage, setUploadMessage] = useState<string>("");
+  const { user } = useAuth();
   const [selectedEntry, setSelectedEntry] = useState<BestiaryEntry | null>(
     mockEntries[0]
   );
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [zipFile, setZipFile] = useState<File | null>(null);
+
+  const handleUpload = async () => {
+    if (!user) {
+      setUploadStatus("error");
+      setUploadMessage("No hay usuario autenticado.");
+      return;
+    }
+    if (excelFile && zipFile) {
+      const formData = new FormData();
+      formData.append("excel", excelFile);
+      formData.append("zip", zipFile);
+      setUploadStatus("loading");
+      setUploadMessage("");
+      try {
+        const response = await apiFetch("/bestiary/upload-bestiary", {
+          method: "POST",
+          body: formData,
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        if (response.status === 201) {
+          setUploadStatus("success");
+          setUploadMessage("Archivos enviados correctamente.");
+        } else {
+          setUploadStatus("error");
+          setUploadMessage(
+            "Error al enviar archivos: " + (response.statusText || "")
+          );
+        }
+      } catch (err: any) {
+        console.log("Error al enviar archivos:", err);
+        setUploadStatus("error");
+        const message = (err?.response?.data as { message?: string })?.message;
+        setUploadMessage("Error de red: " + (message || "Error desconocido"));
+      }
+    }
+  };
 
   return (
     <PageLayout contentClassName="max-h-[83dvh] flex font-serif bg-gray-900">
       <div className="flex flex-col lg:flex-row max-w-[2800px] mx-auto h-full w-full">
+        {user?.role === "admin" && (
+          <div className="w-full lg:w-1/3 xl:w-1/4 p-4 mb-4 bg-gray-800 rounded-lg shadow-lg">
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-1 text-white">
+                Cargar Excel:
+              </label>
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => setExcelFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-700 file:text-white hover:file:bg-blue-800"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-1 text-white">
+                Cargar ZIP:
+              </label>
+              <input
+                type="file"
+                accept=".zip"
+                onChange={(e) => setZipFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-green-700 file:text-white hover:file:bg-green-800"
+              />
+            </div>
+            <div className="flex gap-4 mt-2">
+              <button
+                disabled={!excelFile || !zipFile}
+                className={`px-4 py-2 rounded font-semibold bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-50`}
+                onClick={handleUpload}
+              >
+                Subir archivos
+              </button>
+            </div>
+            {uploadStatus === "loading" && (
+              <div className="w-full text-center py-2 text-yellow-300 font-semibold">
+                Enviando archivos...
+              </div>
+            )}
+            {uploadStatus === "success" && (
+              <div className="w-full text-center py-2 text-green-400 font-semibold">
+                {uploadMessage}
+              </div>
+            )}
+            {uploadStatus === "error" && (
+              <div className="w-full text-center py-2 text-red-400 font-semibold">
+                {uploadMessage}
+              </div>
+            )}
+          </div>
+        )}
         <div className="lg:w-1/3 xl:w-1/4 h-full border-b lg:border-b-0 lg:border-r border-gray-700 bg-gray-900 flex flex-col rounded-tl-lg rounded-bl-lg shadow-lg shadow-black/30">
           <div className="p-4 lg:p-6 border-b border-gray-700 bg-gray-800 rounded-tl-lg">
             <h2 className="text-2xl lg:text-3xl font-bold text-white text-center tracking-wide drop-shadow-lg mb-2 font-serif relative">

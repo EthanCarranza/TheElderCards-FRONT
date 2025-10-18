@@ -44,7 +44,7 @@ function Register() {
         });
         if (response.status === 409) {
           const message = (response.data as { message?: string })?.message;
-          if (message === "Usuario ya existente") {
+          if (message === "Ya existe un usuario con ese nombre") {
             setErrorMessage(
               "Ya existe un usuario con este nombre único. Por favor, introduce otro username."
             );
